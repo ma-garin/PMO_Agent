@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     "copilot",
     "reports",
     "knowledge",
+    "tpi",
 ]
 
 MIDDLEWARE = [

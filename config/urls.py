@@ -30,5 +30,6 @@ urlpatterns = [
     path("copilot/", include("copilot.urls")),
     path("reports/", include("reports.urls")),
     path("knowledge/", include("knowledge.urls")),
+    path("tpi/", include("tpi.urls")),
     path("", RedirectView.as_view(pattern_name="engagements:select", permanent=False)),
 ]
