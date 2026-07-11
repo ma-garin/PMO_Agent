@@ -39,6 +39,7 @@ def analysis(request):
         "nav_active": "analytics",
         "today": timezone.localdate(),
         "summary": services.summarize_defects(engagement),
+        "reopen": services.reopen_stats(engagement),
         "series": series,
         "svg": services.convergence_svg_points(series),
         "odc": services.odc_distribution(engagement),

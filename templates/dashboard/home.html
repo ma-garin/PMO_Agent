@@ -47,6 +47,13 @@
         </div>
       </div>
 
+      {% if latest_digest %}
+      <div class="card panel panel-compact" style="margin-bottom: 20px;">
+        <div class="panel-head"><h2>今週のハイライト</h2><span class="empty-note">{{ latest_digest.week_start|date:"n/j" }} 週</span></div>
+        <p style="font-size:13.5px; line-height:1.7; white-space: pre-line;">{{ latest_digest.body }}</p>
+      </div>
+      {% endif %}
+
       <div class="dash-columns">
         <div class="card panel">
           <div class="panel-head">

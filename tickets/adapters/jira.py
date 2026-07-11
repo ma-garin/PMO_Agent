@@ -4,7 +4,12 @@ from datetime import date, datetime
 
 import requests
 
-from .base import NormalizedTicket, TicketAdapter, TicketSourceConnectionError
+from .base import (
+    NormalizedTicket,
+    StatusTransitionEntry,
+    TicketAdapter,
+    TicketSourceConnectionError,
+)
 
 REQUEST_TIMEOUT_SECONDS = 15
 PAGE_SIZE = 100
@@ -44,6 +49,46 @@ class JiraAdapter(TicketAdapter):
 
         payload = response.json()
         return [self._normalize(issue, source) for issue in payload.get("issues", [])]
+
+    def fetch_status_history(self, source, ticket) -> list[StatusTransitionEntry]:
+        url = f"{source.base_url.rstrip('/')}/rest/api/3/issue/{ticket.external_id}/changelog"
+        start_at = 0
+        entries: list[StatusTransitionEntry] = []
+
+        while True:
+            try:
+                response = requests.get(
+                    url,
+                    params={"startAt": start_at, "maxResults": PAGE_SIZE},
+                    auth=(source.username, source.api_token),
+                    timeout=REQUEST_TIMEOUT_SECONDS,
+                )
+                response.raise_for_status()
+            except requests.RequestException as exc:
+                raise TicketSourceConnectionError(str(exc)) from exc
+
+            payload = response.json()
+            values = payload.get("values", [])
+            for entry in values:
+                occurred_at = _parse_datetime(entry.get("created"))
+                if occurred_at is None:
+                    continue
+                for item in entry.get("items", []):
+                    if item.get("field") != "status":
+                        continue
+                    entries.append(
+                        StatusTransitionEntry(
+                            from_status=item.get("fromString") or "",
+                            to_status=item.get("toString") or "",
+                            occurred_at=occurred_at,
+                        )
+                    )
+
+            start_at += len(values)
+            if payload.get("isLast", True) or not values:
+                break
+
+        return entries
 
     def _normalize(self, issue: dict, source) -> NormalizedTicket:
         fields = issue.get("fields", {})

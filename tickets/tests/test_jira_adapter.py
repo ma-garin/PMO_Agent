@@ -190,3 +190,38 @@ def test_fetch_tickets_returns_empty_list_when_no_issues() -> None:
     tickets = JiraAdapter().fetch_tickets(_make_source())
 
     assert tickets == []
+
+
+@pytest.mark.unit
+@responses.activate
+def test_fetch_status_history_filters_status_field_only() -> None:
+    payload = _load_fixture("jira_changelog_response.json")
+    responses.add(
+        responses.GET,
+        "https://example.atlassian.net/rest/api/3/issue/PROJ-1/changelog",
+        json=payload,
+        status=200,
+    )
+
+    ticket = SimpleNamespace(external_id="PROJ-1")
+    history = JiraAdapter().fetch_status_history(_make_source(), ticket)
+
+    assert len(history) == 2
+    assert history[0]["from_status"] == "未着手"
+    assert history[0]["to_status"] == "進行中"
+    assert history[1]["to_status"] == "完了"
+    assert history[0]["occurred_at"] == datetime(2026, 6, 10, 10, 0, 0, tzinfo=JST)
+
+
+@pytest.mark.unit
+@responses.activate
+def test_fetch_status_history_raises_connection_error_on_failure() -> None:
+    responses.add(
+        responses.GET,
+        "https://example.atlassian.net/rest/api/3/issue/PROJ-1/changelog",
+        body=requests.exceptions.ConnectionError("network down"),
+    )
+
+    ticket = SimpleNamespace(external_id="PROJ-1")
+    with pytest.raises(TicketSourceConnectionError):
+        JiraAdapter().fetch_status_history(_make_source(), ticket)

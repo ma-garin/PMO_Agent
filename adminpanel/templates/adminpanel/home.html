@@ -65,6 +65,11 @@
           <p class="empty-note">Phase 3実装後に利用可能になります。</p>
           <a href="{% url 'adminpanel:llm_logs' %}" class="btn btn-primary">開く</a>
         </div>
+        <div class="card panel">
+          <div class="panel-head"><h2>通知チャネル</h2></div>
+          <p class="empty-note">停滞・期限超過通知のメール/Slack配信先を管理します。</p>
+          <a href="{% url 'adminpanel:notification_channels' %}" class="btn btn-primary">開く</a>
+        </div>
       </div>
     </main>
   </div>

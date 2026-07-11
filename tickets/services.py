@@ -6,12 +6,36 @@ from django.utils import timezone
 
 from .adapters import get_adapter
 from .adapters.base import TicketSourceConnectionError
-from .models import Notification, StagnationRule, SyncRun, Ticket, TicketSource
+from .models import (
+    Notification,
+    StagnationRule,
+    SyncRun,
+    Ticket,
+    TicketSource,
+    TicketStatusTransition,
+)
 
 
-def sync_ticket_source(source: TicketSource) -> SyncRun:
+def _import_status_history(adapter, source: TicketSource, ticket: Ticket) -> None:
+    try:
+        history = adapter.fetch_status_history(source, ticket)
+    except TicketSourceConnectionError:
+        # 履歴取得の失敗はチケット本体の同期を妨げない(ベストエフォート)
+        return
+
+    for entry in history:
+        TicketStatusTransition.objects.get_or_create(
+            ticket=ticket,
+            occurred_at=entry["occurred_at"],
+            to_status=entry["to_status"],
+            defaults={"from_status": entry["from_status"]},
+        )
+
+
+def sync_ticket_source(source: TicketSource, fetch_history: bool = True) -> SyncRun:
     run = SyncRun.objects.create(source=source)
     adapter = get_adapter(source.kind)
+    previous_synced_at = source.last_synced_at
 
     try:
         normalized_tickets = adapter.fetch_tickets(source)
@@ -23,8 +47,9 @@ def sync_ticket_source(source: TicketSource) -> SyncRun:
         return run
 
     synced_count = 0
+    tickets_needing_history: list[Ticket] = []
     for normalized in normalized_tickets:
-        Ticket.objects.update_or_create(
+        ticket, _created = Ticket.objects.update_or_create(
             source=source,
             external_id=normalized.external_id,
             defaults={
@@ -45,6 +70,17 @@ def sync_ticket_source(source: TicketSource) -> SyncRun:
             },
         )
         synced_count += 1
+
+        # API負荷対策: 履歴取得は前回同期以降に更新されたチケットのみ対象とする
+        if fetch_history and (
+            previous_synced_at is None
+            or normalized.source_updated_at is None
+            or normalized.source_updated_at >= previous_synced_at
+        ):
+            tickets_needing_history.append(ticket)
+
+    for ticket in tickets_needing_history:
+        _import_status_history(adapter, source, ticket)
 
     run.status = SyncRun.Status.SUCCESS
     run.tickets_synced = synced_count

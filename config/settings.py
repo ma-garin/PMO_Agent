@@ -175,6 +175,18 @@ SESSION_COOKIE_AGE = 8 * 60 * 60
 SESSION_SAVE_EVERY_REQUEST = True
 
 
+# メール送信(通知の外部連携。B8)
+EMAIL_BACKEND = os.environ.get(
+    "EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend"
+)
+EMAIL_HOST = os.environ.get("EMAIL_HOST", "")
+EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
+EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "true").lower() == "true"
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "pmo-agent@example.com")
+
+
 # Procrastinate (PostgreSQLネイティブの非同期ジョブキュー、ADR 0003)
 # 接続はDjangoのDATABASES["default"]を再利用する(Procrastinateの既定値のため明示指定は不要)。
 # ジョブ実体はDjangoマイグレーション経由でスキーマ管理される(python manage.py migrate)。

@@ -69,6 +69,11 @@
           <div class="stat-value">{{ summary.density|default_if_none:"-" }}</div>
           <div class="stat-sub">{% if engagement.size_metric_name %}欠陥数 / {{ engagement.size_metric_name }}{% else %}規模を設定すると表示{% endif %}</div>
         </div>
+        <div class="card stat-card">
+          <div class="stat-head">&#128260; 再オープン率</div>
+          <div class="stat-value{% if reopen.reopened_count %} danger{% endif %}">{{ reopen.reopen_rate }}%</div>
+          <div class="stat-sub">クローズ{{ reopen.closed_count }}件中{{ reopen.reopened_count }}件が再オープン</div>
+        </div>
       </div>
 
       <div class="dash-columns">

@@ -10,6 +10,11 @@ from tickets.models import Ticket
 
 from . import services
 
+try:
+    from analytics.models import WeeklyDigest
+except ImportError:
+    WeeklyDigest = None
+
 SEARCH_LIMIT = 10
 
 
@@ -39,7 +44,12 @@ def home(request):
 
     high_priority_names = ["highest", "high", "urgent", "高", "最高"]
 
+    latest_digest = None
+    if WeeklyDigest is not None:
+        latest_digest = WeeklyDigest.objects.filter(engagement=engagement).first()
+
     context = {
+        "latest_digest": latest_digest,
         "engagement": engagement,
         "today": today,
         "nav_active": "home",

@@ -9,9 +9,11 @@ from django.db.models import Q, QuerySet
 from django.utils import timezone
 
 from engagements.models import Engagement
-from tickets.models import Ticket
+from llm.services import LlmError, run_completion
+from tickets.adapters.base import is_done_status_name
+from tickets.models import Notification, Ticket
 
-from .models import OdcClassification
+from .models import OdcClassification, WeeklyDigest
 
 DEFAULT_DEFECT_TYPES = ["bug", "バグ", "障害", "不具合", "defect"]
 
@@ -141,3 +143,121 @@ def odc_distribution(engagement: Engagement) -> dict:
         "activity": axis_counts("activity", OdcClassification.Activity),
         "impact": axis_counts("impact", OdcClassification.Impact),
     }
+
+
+def reopen_stats(engagement: Engagement) -> dict:
+    """ステータス遷移履歴から、クローズ経験のあるチケットのうち再オープンされた割合を算出する。"""
+    tickets = Ticket.objects.filter(source__engagement=engagement).prefetch_related(
+        "status_transitions"
+    )
+
+    closed_count = 0
+    reopened_count = 0
+    for ticket in tickets:
+        was_done = False
+        ever_closed = False
+        ever_reopened = False
+        for transition in ticket.status_transitions.all():
+            now_done = is_done_status_name(transition.to_status)
+            if now_done:
+                ever_closed = True
+                was_done = True
+            else:
+                if was_done:
+                    ever_reopened = True
+                was_done = False
+        if ever_closed:
+            closed_count += 1
+        if ever_reopened:
+            reopened_count += 1
+
+    reopen_rate = round(reopened_count / closed_count * 100, 1) if closed_count else 0.0
+    return {
+        "reopened_count": reopened_count,
+        "closed_count": closed_count,
+        "reopen_rate": reopen_rate,
+    }
+
+
+DIGEST_SYSTEM = (
+    "あなたはPMO(プロジェクトマネジメントオフィス)のアシスタントです。"
+    "案件の週次サマリーを3〜5行の日本語で簡潔に作成してください。"
+)
+
+
+def _week_boundaries(week_start: date) -> tuple[date, date]:
+    return week_start, week_start + timedelta(days=6)
+
+
+def weekly_digest_metrics(engagement: Engagement, week_start: date) -> dict:
+    week_start, week_end = _week_boundaries(week_start)
+    tickets = Ticket.objects.filter(source__engagement=engagement)
+    defects = get_defects(engagement)
+
+    new_defects = defects.filter(
+        source_created_at__date__gte=week_start, source_created_at__date__lte=week_end
+    ).count()
+    closed_defects = defects.filter(
+        closed_at__date__gte=week_start, closed_at__date__lte=week_end
+    ).count()
+    new_notifications = Notification.objects.filter(
+        engagement=engagement, created_at__date__gte=week_start, created_at__date__lte=week_end
+    ).count()
+
+    total = tickets.count()
+    done_as_of_end = tickets.filter(is_done=True, closed_at__date__lte=week_end).count()
+    done_as_of_start = tickets.filter(is_done=True, closed_at__date__lt=week_start).count()
+    progress_percent = round(done_as_of_end / total * 100) if total else 0
+    progress_percent_before = round(done_as_of_start / total * 100) if total else 0
+
+    return {
+        "week_start": week_start.isoformat(),
+        "week_end": week_end.isoformat(),
+        "new_defects": new_defects,
+        "closed_defects": closed_defects,
+        "new_notifications": new_notifications,
+        "progress_percent": progress_percent,
+        "progress_change": progress_percent - progress_percent_before,
+    }
+
+
+def _digest_fallback_body(metrics: dict) -> str:
+    change = metrics["progress_change"]
+    change_text = f"+{change}" if change >= 0 else str(change)
+    return (
+        f"今週は新規欠陥{metrics['new_defects']}件、クローズ{metrics['closed_defects']}件、"
+        f"新規通知{metrics['new_notifications']}件でした。"
+        f"進捗率は{metrics['progress_percent']}%（前週比{change_text}pt）です。"
+    )
+
+
+def generate_weekly_digest(
+    engagement: Engagement, week_start: date | None = None, user=None
+) -> WeeklyDigest:
+    if week_start is None:
+        today = timezone.localdate()
+        this_week_start = today - timedelta(days=today.weekday())
+        week_start = this_week_start - timedelta(days=7)
+
+    metrics = weekly_digest_metrics(engagement, week_start)
+
+    prompt = (
+        f"以下は案件「{engagement.name}」の今週の指標です。3〜5行の日本語サマリーを書いてください。\n\n"
+        f"新規欠陥: {metrics['new_defects']}件\n"
+        f"クローズ欠陥: {metrics['closed_defects']}件\n"
+        f"新規通知: {metrics['new_notifications']}件\n"
+        f"進捗率: {metrics['progress_percent']}%（前週比{metrics['progress_change']:+d}pt）\n"
+    )
+    try:
+        body = run_completion(
+            engagement, "weekly_digest", prompt, system=DIGEST_SYSTEM, user=user
+        )
+    except LlmError:
+        body = _digest_fallback_body(metrics)
+
+    digest, _ = WeeklyDigest.objects.update_or_create(
+        engagement=engagement,
+        week_start=week_start,
+        defaults={"body": body, "metrics": metrics},
+    )
+    return digest

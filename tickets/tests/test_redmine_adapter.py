@@ -181,3 +181,78 @@ def test_fetch_tickets_raises_connection_error_on_http_error_status() -> None:
 )
 def test_is_done_heuristic(status_name: str, done_ratio: int, expected: bool) -> None:
     assert _is_done(status_name, done_ratio) is expected
+
+
+@pytest.mark.unit
+@responses.activate
+def test_fetch_status_history_resolves_status_ids_to_names_and_filters_status_id_only() -> None:
+    issue_payload = _load_fixture("redmine_issue_with_journals_response.json")
+    statuses_payload = _load_fixture("redmine_statuses_response.json")
+    responses.add(
+        responses.GET,
+        "https://redmine.example.com/statuses.json",
+        json=statuses_payload,
+        status=200,
+    )
+    responses.add(
+        responses.GET,
+        "https://redmine.example.com/issues/101.json",
+        json=issue_payload,
+        status=200,
+    )
+
+    ticket = SimpleNamespace(external_id="101")
+    history = RedmineAdapter().fetch_status_history(_make_source(), ticket)
+
+    assert len(history) == 2  # priority_id側のjournalは除外される
+    assert history[0]["from_status"] == "新規"
+    assert history[0]["to_status"] == "進行中"
+    assert history[1]["from_status"] == "進行中"
+    assert history[1]["to_status"] == "終了"
+
+
+@pytest.mark.unit
+@responses.activate
+def test_fetch_status_history_caches_status_map_across_calls() -> None:
+    issue_payload = _load_fixture("redmine_issue_with_journals_response.json")
+    statuses_payload = _load_fixture("redmine_statuses_response.json")
+    responses.add(
+        responses.GET,
+        "https://redmine.example.com/statuses.json",
+        json=statuses_payload,
+        status=200,
+    )
+    responses.add(
+        responses.GET,
+        "https://redmine.example.com/issues/101.json",
+        json=issue_payload,
+        status=200,
+    )
+    responses.add(
+        responses.GET,
+        "https://redmine.example.com/issues/101.json",
+        json=issue_payload,
+        status=200,
+    )
+
+    adapter = RedmineAdapter()
+    ticket = SimpleNamespace(external_id="101")
+    adapter.fetch_status_history(_make_source(), ticket)
+    adapter.fetch_status_history(_make_source(), ticket)
+
+    status_calls = [c for c in responses.calls if c.request.url.endswith("/statuses.json")]
+    assert len(status_calls) == 1
+
+
+@pytest.mark.unit
+@responses.activate
+def test_fetch_status_history_raises_connection_error_when_statuses_fail() -> None:
+    responses.add(
+        responses.GET,
+        "https://redmine.example.com/statuses.json",
+        body=requests.exceptions.ConnectionError("network down"),
+    )
+
+    ticket = SimpleNamespace(external_id="101")
+    with pytest.raises(TicketSourceConnectionError):
+        RedmineAdapter().fetch_status_history(_make_source(), ticket)

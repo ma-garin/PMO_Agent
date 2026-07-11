@@ -6,7 +6,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from accounts.decorators import admin_required
 from engagements.forms import EngagementForm
 from engagements.models import Engagement
-from tickets.models import TicketSource
+from tickets.models import NotificationChannel, TicketSource
 
 from .forms import UserCreateForm
 
@@ -127,6 +127,43 @@ def tokens(request: HttpRequest) -> HttpResponse:
         "sources": TicketSource.objects.select_related("engagement").all(),
     }
     return render(request, "adminpanel/tokens.html", context)
+
+
+@admin_required
+def notification_channels(request: HttpRequest) -> HttpResponse:
+    if request.method == "POST":
+        action = request.POST.get("action")
+        if action == "create":
+            engagement = get_object_or_404(Engagement, pk=request.POST.get("engagement_id"))
+            kind = request.POST.get("kind", "")
+            target = request.POST.get("target", "").strip()
+            if kind in NotificationChannel.Kind.values and target:
+                NotificationChannel.objects.create(
+                    engagement=engagement, kind=kind, target=target
+                )
+                messages.success(request, "通知チャネルを追加しました。")
+            else:
+                messages.error(request, "種別と宛先を入力してください。")
+        else:
+            channel = get_object_or_404(
+                NotificationChannel, pk=request.POST.get("channel_id")
+            )
+            if action == "toggle_active":
+                channel.is_active = not channel.is_active
+                channel.save(update_fields=["is_active"])
+                messages.success(request, "通知チャネルの有効状態を更新しました。")
+            elif action == "delete":
+                channel.delete()
+                messages.success(request, "通知チャネルを削除しました。")
+        return redirect("adminpanel:notification_channels")
+
+    context = {
+        "nav_active": "manage",
+        "channels": NotificationChannel.objects.select_related("engagement").all(),
+        "engagements": Engagement.objects.order_by("name"),
+        "kind_choices": NotificationChannel.Kind.choices,
+    }
+    return render(request, "adminpanel/notification_channels.html", context)
 
 
 @admin_required

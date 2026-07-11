@@ -89,3 +89,26 @@ class OdcClassification(models.Model):
 
     def __str__(self) -> str:
         return f"ODC: {self.ticket}"
+
+
+class WeeklyDigest(models.Model):
+    """週次サマリー(自動生成)。週の開始日(月曜)ごとに1件、冪等に上書きされる。"""
+
+    engagement = models.ForeignKey(
+        "engagements.Engagement", related_name="weekly_digests", on_delete=models.CASCADE
+    )
+    week_start = models.DateField("週の開始日(月曜)")
+    body = models.TextField("要約本文")
+    metrics = models.JSONField("集計指標", default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-week_start"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["engagement", "week_start"], name="unique_digest_per_week"
+            )
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.engagement.name} {self.week_start} の週次サマリー"

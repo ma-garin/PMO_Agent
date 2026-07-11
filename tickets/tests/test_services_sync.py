@@ -5,23 +5,30 @@ get_adapter をモックし、Ticketのupsert(新規作成・更新)と SyncRun 
 """
 from __future__ import annotations
 
+from datetime import datetime, timezone as dt_timezone
 from unittest.mock import patch
 
 import pytest
 
 from tickets.adapters.base import NormalizedTicket, TicketSourceConnectionError
-from tickets.models import SyncRun, Ticket, TicketSource
+from tickets.models import SyncRun, Ticket, TicketSource, TicketStatusTransition
 from tickets.services import sync_ticket_source
 
 
 class _StaticAdapter:
     """常に固定のNormalizedTicket一覧を返すダミーアダプタ。"""
 
-    def __init__(self, tickets: list[NormalizedTicket]) -> None:
+    def __init__(
+        self, tickets: list[NormalizedTicket], history: dict[str, list[dict]] | None = None
+    ) -> None:
         self._tickets = tickets
+        self._history = history or {}
 
     def fetch_tickets(self, source: TicketSource) -> list[NormalizedTicket]:
         return self._tickets
+
+    def fetch_status_history(self, source: TicketSource, ticket) -> list[dict]:
+        return self._history.get(ticket.external_id, [])
 
 
 class _FailingAdapter:
@@ -32,6 +39,9 @@ class _FailingAdapter:
 
     def fetch_tickets(self, source: TicketSource) -> list[NormalizedTicket]:
         raise TicketSourceConnectionError(self._message)
+
+    def fetch_status_history(self, source: TicketSource, ticket) -> list[dict]:
+        return []
 
 
 @pytest.mark.django_db
@@ -137,3 +147,91 @@ def test_sync_ticket_source_creates_sync_run_record(
 
     assert SyncRun.objects.filter(source=ticket_source).count() == 1
     assert SyncRun.objects.get(pk=run.pk).status == SyncRun.Status.SUCCESS
+
+
+@pytest.mark.django_db
+def test_sync_ticket_source_imports_status_history_for_new_tickets(
+    ticket_source: TicketSource,
+) -> None:
+    normalized = [
+        NormalizedTicket(external_id="PROJ-1", summary="新規チケット", status="進行中")
+    ]
+    history = {
+        "PROJ-1": [
+            {
+                "from_status": "未着手",
+                "to_status": "進行中",
+                "occurred_at": datetime(2026, 6, 10, tzinfo=dt_timezone.utc),
+            }
+        ]
+    }
+
+    with patch(
+        "tickets.services.get_adapter",
+        return_value=_StaticAdapter(normalized, history=history),
+    ):
+        sync_ticket_source(ticket_source)
+
+    ticket = Ticket.objects.get(source=ticket_source, external_id="PROJ-1")
+    transitions = TicketStatusTransition.objects.filter(ticket=ticket)
+    assert transitions.count() == 1
+    assert transitions.first().to_status == "進行中"
+
+
+@pytest.mark.django_db
+def test_sync_ticket_source_skips_history_for_tickets_not_updated_since_last_sync(
+    ticket_source: TicketSource,
+) -> None:
+    old_time = datetime(2026, 1, 1, tzinfo=dt_timezone.utc)
+    ticket_source.last_synced_at = datetime(2026, 6, 1, tzinfo=dt_timezone.utc)
+    ticket_source.save(update_fields=["last_synced_at"])
+
+    normalized = [
+        NormalizedTicket(
+            external_id="PROJ-1",
+            summary="更新なしチケット",
+            status="進行中",
+            source_updated_at=old_time,
+        )
+    ]
+    history = {
+        "PROJ-1": [
+            {"from_status": "未着手", "to_status": "進行中", "occurred_at": old_time}
+        ]
+    }
+
+    adapter = _StaticAdapter(normalized, history=history)
+    with patch("tickets.services.get_adapter", return_value=adapter):
+        with patch.object(
+            adapter, "fetch_status_history", wraps=adapter.fetch_status_history
+        ) as spy:
+            sync_ticket_source(ticket_source)
+
+    spy.assert_not_called()
+    assert TicketStatusTransition.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_sync_ticket_source_fetch_history_false_skips_history_entirely(
+    ticket_source: TicketSource,
+) -> None:
+    normalized = [
+        NormalizedTicket(external_id="PROJ-1", summary="新規チケット", status="進行中")
+    ]
+    history = {
+        "PROJ-1": [
+            {
+                "from_status": "未着手",
+                "to_status": "進行中",
+                "occurred_at": datetime(2026, 6, 10, tzinfo=dt_timezone.utc),
+            }
+        ]
+    }
+
+    with patch(
+        "tickets.services.get_adapter",
+        return_value=_StaticAdapter(normalized, history=history),
+    ):
+        sync_ticket_source(ticket_source, fetch_history=False)
+
+    assert TicketStatusTransition.objects.count() == 0

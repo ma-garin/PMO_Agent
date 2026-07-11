@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}通知チャネル管理 | PMO Agent{% endblock %}
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/app_shell.css' %}">
+  <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+  <link rel="stylesheet" href="{% static 'css/tickets.css' %}">
+{% endblock %}
+{% block body %}
+<div class="app-shell">
+  {% include "partials/sidebar.html" %}
+
+  <div style="flex:1; display:flex; flex-direction:column; min-width:0;">
+    {% include "partials/header.html" %}
+
+    <main class="app-main">
+      <div class="breadcrumb">/ manage / notification-channels</div>
+      <h1 class="page-title">通知チャネル管理</h1>
+      <p class="page-lead">停滞・期限超過の通知をメール/Slackへ配信する宛先を管理します。文面は固定テンプレートで送信されます。</p>
+
+      {% if messages %}
+        {% for message in messages %}<div class="alert">{{ message }}</div>{% endfor %}
+      {% endif %}
+
+      <div class="dash-columns" style="grid-template-columns: 2fr 1fr;">
+        <div class="card panel">
+          <div class="panel-head"><h2>登録済みチャネル</h2></div>
+          <div style="overflow-x: auto;">
+            <table class="ticket-table">
+              <thead>
+                <tr>
+                  <th>案件</th>
+                  <th>種別</th>
+                  <th>宛先</th>
+                  <th>有効</th>
+                  <th></th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for channel in channels %}
+                  <tr>
+                    <td>{{ channel.engagement.name }}</td>
+                    <td>{{ channel.get_kind_display }}</td>
+                    <td style="word-break: break-all;">{{ channel.target }}</td>
+                    <td>{% if channel.is_active %}<span class="badge badge-active">有効</span>{% else %}<span class="badge badge-completed">無効</span>{% endif %}</td>
+                    <td>
+                      <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="toggle_active">
+                        <input type="hidden" name="channel_id" value="{{ channel.pk }}">
+                        <button type="submit" class="btn btn-secondary">{% if channel.is_active %}無効化{% else %}有効化{% endif %}</button>
+                      </form>
+                    </td>
+                    <td>
+                      <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="delete">
+                        <input type="hidden" name="channel_id" value="{{ channel.pk }}">
+                        <button type="submit" class="btn btn-secondary">削除</button>
+                      </form>
+                    </td>
+                  </tr>
+                {% empty %}
+                  <tr><td colspan="6"><p class="empty-note">通知チャネルはまだ登録されていません。</p></td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card panel">
+          <div class="panel-head"><h2>チャネルを追加</h2></div>
+          <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="create">
+            <div class="form-group">
+              <label class="form-label">案件</label>
+              <select name="engagement_id" class="form-select">
+                {% for e in engagements %}<option value="{{ e.pk }}">{{ e.name }}</option>{% endfor %}
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">種別</label>
+              <select name="kind" class="form-select">
+                {% for value, label in kind_choices %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">宛先（メールアドレス / Webhook URL）</label>
+              <input type="text" name="target" class="form-input" placeholder="pmo@example.com">
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">追加する</button>
+          </form>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+{% endblock %}

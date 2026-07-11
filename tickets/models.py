@@ -77,6 +77,47 @@ class Ticket(models.Model):
         return self.source.engagement
 
 
+class TicketStatusTransition(models.Model):
+    """チケットのステータス遷移履歴(読み取り専用取込)。再オープン率算出に使う。"""
+
+    ticket = models.ForeignKey(
+        Ticket, related_name="status_transitions", on_delete=models.CASCADE
+    )
+    from_status = models.CharField("変更前ステータス", max_length=100, blank=True)
+    to_status = models.CharField("変更後ステータス", max_length=100)
+    occurred_at = models.DateTimeField("発生日時")
+
+    class Meta:
+        ordering = ["occurred_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["ticket", "occurred_at", "to_status"], name="unique_status_transition"
+            )
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.ticket}: {self.from_status} → {self.to_status}"
+
+
+class NotificationChannel(models.Model):
+    """通知の外部連携先(メール/Slack)。文面はテンプレート固定、LLM生成文は送らない。"""
+
+    class Kind(models.TextChoices):
+        EMAIL = "email", "メール"
+        SLACK_WEBHOOK = "slack_webhook", "Slack Incoming Webhook"
+
+    engagement = models.ForeignKey(
+        Engagement, related_name="notification_channels", on_delete=models.CASCADE
+    )
+    kind = models.CharField("種別", max_length=20, choices=Kind.choices)
+    target = models.CharField("宛先(メールアドレス/Webhook URL)", max_length=500)
+    is_active = models.BooleanField("有効", default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self) -> str:
+        return f"{self.engagement.name}: {self.get_kind_display()} ({self.target})"
+
+
 class SyncRun(models.Model):
     class Status(models.TextChoices):
         RUNNING = "running", "実行中"
