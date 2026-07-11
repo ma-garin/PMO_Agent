@@ -25,5 +25,6 @@ urlpatterns = [
     path("engagements/", include("engagements.urls")),
     path("dashboard/", include("dashboard.urls")),
     path("tickets/", include("tickets.urls")),
+    path("analytics/", include("analytics.urls")),
     path("", RedirectView.as_view(pattern_name="engagements:select", permanent=False)),
 ]

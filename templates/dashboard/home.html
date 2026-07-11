@@ -9,11 +9,10 @@
 <div class="app-shell">
   {% include "partials/sidebar.html" %}
 
-  <div style="flex:1; display:flex; flex-direction:column;">
+  <div style="flex:1; display:flex; flex-direction:column; min-width:0;">
     {% include "partials/header.html" %}
 
-    <main class="app-main">
-      <div class="breadcrumb">/ home</div>
+    <main class="app-main app-main-compact">
       <div class="app-main-header">
         <div>
           <h1 class="page-title">おはようございます、{{ user.first_name|default:user.username }}さん</h1>
@@ -54,7 +53,7 @@
             <h2>今日のチケット</h2>
             <a href="{% url 'tickets:list' %}">すべて表示</a>
           </div>
-          {% for ticket in today_tasks %}
+          {% for ticket in today_tasks|slice:":4" %}
             <div class="task-row">
               <input type="checkbox" disabled {% if ticket.is_done %}checked{% endif %}>
               <span class="task-title{% if ticket.is_done %} done{% endif %}">
@@ -67,30 +66,32 @@
           {% endfor %}
         </div>
 
-        <div class="card panel">
-          <div class="panel-head"><h2>今週の進捗</h2></div>
-          <div class="donut-wrap">
-            <div class="donut" style="--pct: {{ progress_percent }};">
-              <div class="donut-inner">{{ progress_percent }}%</div>
+        <div class="dash-right-stack">
+          <div class="card panel panel-compact">
+            <div class="panel-head"><h2>今週の進捗</h2></div>
+            <div class="donut-wrap donut-wrap-compact">
+              <div class="donut donut-compact" style="--pct: {{ progress_percent }};">
+                <div class="donut-inner donut-inner-compact">{{ progress_percent }}%</div>
+              </div>
+              <div class="donut-label">{{ done_tasks }} / {{ total_tasks }} 完了</div>
             </div>
-            <div class="donut-label">{{ done_tasks }} / {{ total_tasks }} 完了</div>
+          </div>
+
+          <div class="card panel panel-compact">
+            <div class="panel-head"><h2>最近のアクティビティ</h2></div>
+            {% for activity in activities|slice:":3" %}
+              <div class="activity-row">
+                <span class="dot"></span>
+                <div>
+                  {{ activity.message }}
+                  <span class="activity-time">{{ activity.created_at|timesince }}前</span>
+                </div>
+              </div>
+            {% empty %}
+              <p class="empty-note">まだアクティビティはありません。</p>
+            {% endfor %}
           </div>
         </div>
-      </div>
-
-      <div class="card panel" style="margin-top: 18px;">
-        <div class="panel-head"><h2>最近のアクティビティ</h2></div>
-        {% for activity in activities %}
-          <div class="activity-row">
-            <span class="dot"></span>
-            <div>
-              {{ activity.message }}
-              <span class="activity-time">{{ activity.created_at|timesince }}前</span>
-            </div>
-          </div>
-        {% empty %}
-          <p class="empty-note">まだアクティビティはありません。</p>
-        {% endfor %}
       </div>
     </main>
   </div>

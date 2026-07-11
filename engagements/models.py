@@ -33,6 +33,17 @@ class Engagement(models.Model):
         choices=LlmProvider.choices,
         default=LlmProvider.OLLAMA,
     )
+    # 種別マッピング: 元システムのticket_typeのうち欠陥として扱う値(大文字小文字は無視)
+    defect_ticket_types = models.JSONField(
+        "欠陥として扱う種別", default=list, blank=True
+    )
+    # 欠陥密度の分母(任意)。未入力なら欠陥密度は非表示
+    size_metric_name = models.CharField(
+        "規模の単位", max_length=50, blank=True, help_text="例: テストケース数, KLOC"
+    )
+    size_metric_value = models.DecimalField(
+        "規模の値", max_digits=12, decimal_places=2, null=True, blank=True
+    )
     updated_at = models.DateTimeField("更新日時", auto_now=True)
     created_at = models.DateTimeField("作成日時", auto_now_add=True)
 

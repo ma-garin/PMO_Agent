@@ -40,6 +40,7 @@ def sync_ticket_source(source: TicketSource) -> SyncRun:
                 "due_date": normalized.due_date,
                 "source_created_at": normalized.source_created_at,
                 "source_updated_at": normalized.source_updated_at,
+                "closed_at": normalized.closed_at,
                 "raw_payload": normalized.raw_payload,
             },
         )

@@ -46,6 +46,7 @@ class Ticket(models.Model):
     due_date = models.DateField("期限", null=True, blank=True)
     source_created_at = models.DateTimeField("元システムでの作成日時", null=True, blank=True)
     source_updated_at = models.DateTimeField("元システムでの更新日時", null=True, blank=True)
+    closed_at = models.DateTimeField("クローズ日時", null=True, blank=True)
     raw_payload = models.JSONField("元データ", default=dict, blank=True)
     synced_at = models.DateTimeField("取込日時", auto_now=True)
 

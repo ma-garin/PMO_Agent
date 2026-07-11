@@ -21,6 +21,7 @@ class NormalizedTicket:
     due_date: date | None = None
     source_created_at: datetime | None = None
     source_updated_at: datetime | None = None
+    closed_at: datetime | None = None
     raw_payload: dict[str, Any] = field(default_factory=dict)
 
 

@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}分析 | PMO Agent{% endblock %}
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/app_shell.css' %}">
+  <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+  <link rel="stylesheet" href="{% static 'css/tickets.css' %}">
+  <link rel="stylesheet" href="{% static 'css/analytics.css' %}">
+{% endblock %}
+{% block body %}
+<div class="app-shell">
+  {% include "partials/sidebar.html" %}
+
+  <div style="flex:1; display:flex; flex-direction:column;">
+    {% include "partials/header.html" %}
+
+    <main class="app-main">
+      <div class="breadcrumb">/ analytics</div>
+      <div class="app-main-header">
+        <div>
+          <h1 class="page-title">品質分析</h1>
+          <p class="page-lead">
+            欠陥{{ summary.total }}件（未クローズ{{ summary.open }}件）。ODC確定済み{{ odc.confirmed_count }}件・未分類{{ odc.unclassified_count }}件。
+          </p>
+        </div>
+        <details class="analysis-settings card" style="padding: 12px 16px; max-width: 560px;">
+          <summary>分析設定（欠陥種別・規模）</summary>
+          <form method="post" action="{% url 'analytics:update_settings' %}" class="settings-body">
+            {% csrf_token %}
+            <div>
+              <label>欠陥として扱う種別（カンマ区切り）</label>
+              <input type="text" name="defect_ticket_types" class="form-input" value="{{ defect_type_values }}">
+            </div>
+            <div>
+              <label>規模の単位</label>
+              <input type="text" name="size_metric_name" class="form-input" value="{{ engagement.size_metric_name }}" placeholder="テストケース数">
+            </div>
+            <div>
+              <label>規模の値</label>
+              <input type="number" step="0.01" name="size_metric_value" class="form-input" value="{{ engagement.size_metric_value|default_if_none:'' }}">
+            </div>
+            <button type="submit" class="btn btn-primary">保存</button>
+          </form>
+        </details>
+      </div>
+
+      {% if messages %}
+        {% for message in messages %}<div class="alert">{{ message }}</div>{% endfor %}
+      {% endif %}
+
+      <div class="stat-grid">
+        <div class="card stat-card">
+          <div class="stat-head">&#128027; 欠陥総数</div>
+          <div class="stat-value">{{ summary.total }}</div>
+          <div class="stat-sub">クローズ済み {{ summary.closed }}件</div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-head">&#128994; 未クローズ</div>
+          <div class="stat-value{% if summary.overdue %} danger{% endif %}">{{ summary.open }}</div>
+          <div class="stat-sub">うち期限超過 {{ summary.overdue }}件</div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-head">&#9203; 平均滞留日数</div>
+          <div class="stat-value">{{ summary.avg_open_age_days|default_if_none:"-" }}</div>
+          <div class="stat-sub">未クローズ欠陥の経過日数</div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-head">&#128200; 欠陥密度</div>
+          <div class="stat-value">{{ summary.density|default_if_none:"-" }}</div>
+          <div class="stat-sub">{% if engagement.size_metric_name %}欠陥数 / {{ engagement.size_metric_name }}{% else %}規模を設定すると表示{% endif %}</div>
+        </div>
+      </div>
+
+      <div class="dash-columns">
+        <div class="card panel">
+          <div class="panel-head"><h2>収束曲線（週次累積）</h2></div>
+          {% if series %}
+            <div class="chart-wrap">
+              <svg class="chart-svg" viewBox="-8 -8 616 176" preserveAspectRatio="none">
+                <polyline points="{{ svg.opened }}" fill="none" stroke="var(--danger)" stroke-width="2"/>
+                <polyline points="{{ svg.closed }}" fill="none" stroke="var(--primary)" stroke-width="2"/>
+              </svg>
+              {% with last_point=series|last %}
+              <div class="chart-legend">
+                <span><span class="swatch" style="background: var(--danger);"></span>累積検出 (最大{{ svg.max }})</span>
+                <span><span class="swatch" style="background: var(--primary);"></span>累積クローズ</span>
+                <span>{{ series.0.label }} 〜 {{ last_point.label }}</span>
+              </div>
+              {% endwith %}
+            </div>
+          {% else %}
+            <p class="empty-note">欠陥データがまだありません。チケット同期と欠陥種別の設定を確認してください。</p>
+          {% endif %}
+        </div>
+
+        <div class="card panel">
+          <div class="panel-head"><h2>ODC分布（確定済み）</h2></div>
+          {% if odc.confirmed_count %}
+            <h3 style="font-size:12.5px; margin:6px 0;">欠陥タイプ</h3>
+            <div class="axis-bars">
+              {% for item in odc.defect_type %}
+                <div class="axis-bar">
+                  <span>{{ item.label }}</span>
+                  <div class="track"><div class="fill" style="width: {{ item.percent }}%;"></div></div>
+                  <span class="count">{{ item.count }}</span>
+                </div>
+              {% endfor %}
+            </div>
+            <h3 style="font-size:12.5px; margin:14px 0 6px;">検出アクティビティ</h3>
+            <div class="axis-bars">
+              {% for item in odc.activity %}
+                <div class="axis-bar">
+                  <span>{{ item.label }}</span>
+                  <div class="track"><div class="fill" style="width: {{ item.percent }}%;"></div></div>
+                  <span class="count">{{ item.count }}</span>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p class="empty-note">確定済みのODC分類がまだありません。下の表から分類してください。</p>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="card panel" style="margin-top: 18px;">
+        <div class="panel-head">
+          <h2>ODC分類（欠陥ごとに4軸を選んで確定）</h2>
+        </div>
+        <div style="overflow-x: auto;">
+          <table class="odc-table">
+            <thead>
+              <tr>
+                <th style="min-width: 220px;">欠陥</th>
+                <th>欠陥タイプ</th>
+                <th>トリガー</th>
+                <th>検出アクティビティ</th>
+                <th>影響度</th>
+                <th>状態</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for ticket in defects %}
+                <tr>
+                  <td>
+                    <strong>{{ ticket.summary|truncatechars:40 }}</strong><br>
+                    <span style="color: var(--ink-2); font-size: 11.5px;">{{ ticket.external_id }} / {{ ticket.source.name }}</span>
+                  </td>
+                  <td>
+                    <select name="defect_type" form="odc-{{ ticket.pk }}">
+                      <option value="">-</option>
+                      {% for value, label in defect_type_choices %}
+                        <option value="{{ value }}" {% if ticket.odc_classification.defect_type == value %}selected{% endif %}>{{ label }}</option>
+                      {% endfor %}
+                    </select>
+                  </td>
+                  <td>
+                    <select name="trigger" form="odc-{{ ticket.pk }}">
+                      <option value="">-</option>
+                      {% for value, label in trigger_choices %}
+                        <option value="{{ value }}" {% if ticket.odc_classification.trigger == value %}selected{% endif %}>{{ label }}</option>
+                      {% endfor %}
+                    </select>
+                  </td>
+                  <td>
+                    <select name="activity" form="odc-{{ ticket.pk }}">
+                      <option value="">-</option>
+                      {% for value, label in activity_choices %}
+                        <option value="{{ value }}" {% if ticket.odc_classification.activity == value %}selected{% endif %}>{{ label }}</option>
+                      {% endfor %}
+                    </select>
+                  </td>
+                  <td>
+                    <select name="impact" form="odc-{{ ticket.pk }}">
+                      <option value="">-</option>
+                      {% for value, label in impact_choices %}
+                        <option value="{{ value }}" {% if ticket.odc_classification.impact == value %}selected{% endif %}>{{ label }}</option>
+                      {% endfor %}
+                    </select>
+                  </td>
+                  <td>
+                    {% if ticket.odc_classification.status == 'confirmed' %}
+                      <span class="odc-status confirmed">確定済み</span>
+                    {% elif ticket.odc_classification %}
+                      <span class="odc-status pending">レビュー待ち</span>
+                    {% else %}
+                      <span class="odc-status none">未分類</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <form id="odc-{{ ticket.pk }}" method="post" action="{% url 'analytics:classify' ticket.pk %}">
+                      {% csrf_token %}
+                      <button type="submit" class="btn btn-primary">確定</button>
+                    </form>
+                  </td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="7"><p class="empty-note">欠陥チケットがありません。分析設定の「欠陥として扱う種別」を確認してください。</p></td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+{% endblock %}

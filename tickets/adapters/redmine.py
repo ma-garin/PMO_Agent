@@ -76,5 +76,6 @@ class RedmineAdapter(TicketAdapter):
             due_date=_parse_date(issue.get("due_date")),
             source_created_at=_parse_datetime(issue.get("created_on")),
             source_updated_at=_parse_datetime(issue.get("updated_on")),
+            closed_at=_parse_datetime(issue.get("closed_on")),
             raw_payload=issue,
         )

@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     "engagements",
     "dashboard",
     "tickets",
+    "analytics",
 ]
 
 MIDDLEWARE = [

@@ -29,7 +29,7 @@ class JiraAdapter(TicketAdapter):
             "jql": f"project = {source.project_key} ORDER BY updated DESC",
             "maxResults": PAGE_SIZE,
             "fields": "summary,status,priority,assignee,reporter,duedate,"
-            "created,updated,issuetype,description",
+            "created,updated,resolutiondate,issuetype,description",
         }
         try:
             response = requests.get(
@@ -71,5 +71,6 @@ class JiraAdapter(TicketAdapter):
             due_date=_parse_date(fields.get("duedate")),
             source_created_at=_parse_datetime(fields.get("created")),
             source_updated_at=_parse_datetime(fields.get("updated")),
+            closed_at=_parse_datetime(fields.get("resolutiondate")),
             raw_payload=issue,
         )

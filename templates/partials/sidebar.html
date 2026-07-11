@@ -17,15 +17,11 @@
       &#128203; チケット一覧
       {% if total_tickets %}<span class="badge-count">{{ total_tickets }}</span>{% endif %}
     </a>
+    <a href="{% url 'analytics:analysis' %}" class="nav-item{% if nav_active == 'analytics' %} active{% endif %}">
+      &#128202; 分析
+    </a>
     <a href="#" class="nav-item">&#128197; カレンダー</a>
     <a href="#" class="nav-item">&#128101; メンバー</a>
     <a href="{% url 'accounts:profile' %}" class="nav-item{% if nav_active == 'settings' %} active{% endif %}">&#9881; 設定</a>
   </nav>
-
-  <div class="sidebar-footer">
-    <form method="post" action="{% url 'accounts:logout' %}">
-      {% csrf_token %}
-      <button type="submit" class="sidebar-logout">&#8592; ログアウト</button>
-    </form>
-  </div>
 </aside>
