@@ -1,6 +1,6 @@
 # PMO Agent
 
-第三者検証会社のPMO業務（チケット追跡・品質分析・報告・相談）をAIで支援するシステムのコンテキスト。設計の全体像は [docs/DESIGN.md](docs/DESIGN.md) を参照。
+第三者検証会社のPMO業務（チケット追跡・品質分析・報告・相談）をAIで支援するシステムのコンテキスト。設計の全体像は [docs/DESIGN.md](docs/DESIGN.md)、実装者向けの前提知識は [docs/HANDBOOK.md](docs/HANDBOOK.md)、残フェーズの詳細実装仕様は [docs/phases/](docs/phases/) を参照。
 
 ## Language
 
