@@ -7,6 +7,8 @@ from django.urls import reverse_lazy
 from django.utils import timezone
 from django.views.generic import CreateView, ListView
 
+from audit.services import record
+
 from .forms import EngagementForm, EngagementLlmSettingsForm
 from .models import Engagement
 
@@ -103,6 +105,7 @@ class EngagementCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
         form.instance.owner = self.request.user
         response = super().form_valid(form)
         self.object.members.add(self.request.user)
+        record(self.request.user, "engagement_create", self.object, detail=self.object.name)
         return response
 
 

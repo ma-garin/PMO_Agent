@@ -14,13 +14,44 @@
 
     <main class="app-main">
       <div class="breadcrumb">/ manage / llm-logs</div>
-      <h1 class="page-title">LLM呼び出しログ</h1>
-      <p class="page-lead">Phase 3実装後に利用可能になります。</p>
+      <h1 class="page-title">LLM利用状況</h1>
+      <p class="page-lead">案件別×プロバイダ別×用途別の呼び出し実績です。機密案件(ローカルLLM指定)でクラウド呼び出しが記録されている行は警告表示します。</p>
 
-      <div class="card panel">
-        <div class="panel-head"><h2>ログ</h2></div>
-        <p class="empty-note">Phase 3実装後に利用可能になります。</p>
+      {% for section_label, rows in sections %}
+      <div class="card panel" style="margin-bottom: 20px;">
+        <div class="panel-head"><h2>{{ section_label }}</h2></div>
+        <div style="overflow-x: auto;">
+          <table class="ticket-table">
+            <thead>
+              <tr>
+                <th>案件</th>
+                <th>プロバイダ</th>
+                <th>用途</th>
+                <th>呼び出し回数</th>
+                <th>合計文字数</th>
+                <th>失敗率</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in rows %}
+                <tr{% if row.warning %} style="background: var(--danger-soft);"{% endif %}>
+                  <td>{{ row.engagement_name }}</td>
+                  <td>{{ row.provider }}</td>
+                  <td>{{ row.purpose }}</td>
+                  <td>{{ row.call_count }}</td>
+                  <td>{{ row.total_chars }}</td>
+                  <td>{{ row.failure_rate }}%</td>
+                  <td>{% if row.warning %}<span class="badge badge-danger">&#9888; 機密案件でクラウド呼び出し</span>{% endif %}</td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="7"><p class="empty-note">この期間の呼び出し実績はありません。</p></td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
       </div>
+      {% endfor %}
     </main>
   </div>
 </div>

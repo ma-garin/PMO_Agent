@@ -5,7 +5,8 @@ from decimal import Decimal
 from functools import reduce
 from operator import or_
 
-from django.db.models import Q, QuerySet
+from django.db.models import Count, Q, QuerySet
+from django.db.models.functions import TruncMonth
 from django.utils import timezone
 
 from engagements.models import Engagement
@@ -16,6 +17,17 @@ from tickets.models import Notification, Ticket
 from .models import OdcClassification, WeeklyDigest
 
 DEFAULT_DEFECT_TYPES = ["bug", "バグ", "障害", "不具合", "defect"]
+
+DEFECT_TYPE_COLORS = {
+    "function": "#4C6FFF",
+    "assignment": "#22C55E",
+    "checking": "#F59E0B",
+    "algorithm": "#EF4444",
+    "timing": "#8B5CF6",
+    "interface": "#06B6D4",
+    "relationship": "#EC4899",
+    "documentation": "#84CC16",
+}
 
 
 def defect_type_values(engagement: Engagement) -> list[str]:
@@ -143,6 +155,116 @@ def odc_distribution(engagement: Engagement) -> dict:
         "activity": axis_counts("activity", OdcClassification.Activity),
         "impact": axis_counts("impact", OdcClassification.Impact),
     }
+
+
+def monthly_odc_trend(engagement: Engagement) -> dict:
+    """確定済みODCの月別×欠陥タイプの件数(updated_at基準)。積み上げ棒グラフ用データ。"""
+    confirmed = (
+        OdcClassification.objects.filter(
+            ticket__in=get_defects(engagement), status=OdcClassification.Status.CONFIRMED
+        )
+        .exclude(defect_type="")
+    )
+
+    rows = list(
+        confirmed.annotate(month=TruncMonth("updated_at"))
+        .values("month", "defect_type")
+        .annotate(count=Count("id"))
+        .order_by("month")
+    )
+
+    defect_type_meta = [
+        {
+            "value": value,
+            "label": label,
+            "color": DEFECT_TYPE_COLORS.get(value, "#94A3B8"),
+        }
+        for value, label in OdcClassification.DefectType.choices
+    ]
+
+    months = sorted({row["month"] for row in rows})
+    series = []
+    for month in months:
+        by_type = {row["defect_type"]: row["count"] for row in rows if row["month"] == month}
+        series.append(
+            {
+                "label": f"{month.year}/{month.month}",
+                "by_type": by_type,
+                "total": sum(by_type.values()),
+            }
+        )
+
+    return {"series": series, "defect_types": defect_type_meta}
+
+
+def monthly_odc_bars(trend: dict, width: int = 600, height: int = 160) -> list[dict]:
+    """monthly_odc_trend()の結果をSVG rect描画用の積み上げ棒座標に変換する。"""
+    series = trend["series"]
+    if not series:
+        return []
+
+    max_total = max(point["total"] for point in series) or 1
+    n = len(series)
+    slot_width = width / n
+    bar_width = slot_width * 0.6
+
+    bars = []
+    for i, point in enumerate(series):
+        x = round(i * slot_width + (slot_width - bar_width) / 2, 1)
+        y_cursor = float(height)
+        segments = []
+        for defect_type in trend["defect_types"]:
+            count = point["by_type"].get(defect_type["value"], 0)
+            if not count:
+                continue
+            seg_height = round(count / max_total * height, 1)
+            y_cursor -= seg_height
+            segments.append(
+                {
+                    "x": x,
+                    "y": round(y_cursor, 1),
+                    "width": round(bar_width, 1),
+                    "height": seg_height,
+                    "color": DEFECT_TYPE_COLORS.get(defect_type["value"], "#94A3B8"),
+                    "label": defect_type["label"],
+                    "count": count,
+                }
+            )
+        bars.append({"label": point["label"], "segments": segments, "total": point["total"]})
+    return bars
+
+
+def _anonymized_label(index: int) -> str:
+    """0→A, 25→Z, 26→AA... のようにインデックスをアルファベットラベルへ変換する。"""
+    letters = ""
+    n = index
+    while True:
+        n, remainder = divmod(n, 26)
+        letters = chr(65 + remainder) + letters
+        if n == 0:
+            return f"案件{letters}"
+        n -= 1
+
+
+def benchmark_rows() -> list[dict]:
+    """全案件のODC分布・再オープン率・平均滞留を匿名化して比較するための集計。
+
+    案件名は出さず、同一リクエスト内で安定した「案件A/B/C…」ラベルを振る。
+    """
+    engagements = list(Engagement.objects.order_by("pk"))
+    rows = []
+    for index, engagement in enumerate(engagements):
+        summary = summarize_defects(engagement)
+        reopen = reopen_stats(engagement)
+        rows.append(
+            {
+                "label": _anonymized_label(index),
+                "defect_total": summary["total"],
+                "avg_open_age_days": summary["avg_open_age_days"],
+                "reopen_rate": reopen["reopen_rate"],
+            }
+        )
+    return rows
 
 
 def reopen_stats(engagement: Engagement) -> dict:

@@ -26,3 +26,19 @@ class Report(models.Model):
 
     def __str__(self) -> str:
         return self.title
+
+
+class ReportTemplate(models.Model):
+    """AIドラフト生成時のシステムプロンプト(章立て)を管理者が差し替えられるようにするテンプレート。"""
+
+    name = models.CharField("テンプレート名", max_length=200)
+    system_prompt = models.TextField("システムプロンプト")
+    is_default = models.BooleanField("既定テンプレート", default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-is_default", "name"]
+
+    def __str__(self) -> str:
+        return self.name

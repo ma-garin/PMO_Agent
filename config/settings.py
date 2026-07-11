@@ -64,6 +64,7 @@ INSTALLED_APPS = [
     "risks",
     "testmgmt",
     "members",
+    "audit",
     "axes",
 ]
 

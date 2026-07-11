@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import include, path
 
 from . import views
 
@@ -16,4 +16,6 @@ urlpatterns = [
         name="notification_channels",
     ),
     path("llm-logs/", views.llm_logs, name="llm_logs"),
+    path("audit/", include("audit.urls")),
+    path("benchmark/", views.benchmark, name="benchmark"),
 ]

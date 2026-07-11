@@ -70,6 +70,16 @@
           <p class="empty-note">停滞・期限超過通知のメール/Slack配信先を管理します。</p>
           <a href="{% url 'adminpanel:notification_channels' %}" class="btn btn-primary">開く</a>
         </div>
+        <div class="card panel">
+          <div class="panel-head"><h2>監査ログ</h2></div>
+          <p class="empty-note">トークン・案件・ユーザー・承認操作の履歴を確認します。</p>
+          <a href="{% url 'adminpanel:audit:list' %}" class="btn btn-primary">開く</a>
+        </div>
+        <div class="card panel">
+          <div class="panel-head"><h2>案件間比較</h2></div>
+          <p class="empty-note">ODC分布・再オープン率・平均滞留を匿名化して比較します。</p>
+          <a href="{% url 'adminpanel:benchmark' %}" class="btn btn-primary">開く</a>
+        </div>
       </div>
     </main>
   </div>

@@ -124,6 +124,7 @@ button { font-family: inherit; }
 .badge-active { background: var(--success-soft); color: var(--success); }
 .badge-on_hold { background: #FFF3E0; color: var(--warning); }
 .badge-completed { background: var(--primary-soft); color: var(--primary-deep); }
+.badge-danger { background: var(--danger-soft); color: var(--danger); }
 
 /* ---------- カード ---------- */
 .card {

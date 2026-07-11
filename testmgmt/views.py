@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
+from audit.services import record
 from config.csv_utils import csv_response
 from engagements.models import Engagement
 from llm.providers.base import LlmError
@@ -81,6 +82,7 @@ def plan_edit(request, pk):
             plan.approved_by = request.user
             plan.approved_at = timezone.now()
             plan.save(update_fields=["status", "approved_by", "approved_at"])
+            record(request.user, "test_plan_approve", plan, detail=plan.title)
             messages.success(request, "計画を承認しました。")
         else:
             plan.body = request.POST.get("body", "")
@@ -222,6 +224,9 @@ def gate_detail(request, pk):
             gate.judged_at = timezone.now()
             gate.note = request.POST.get("note", "")
             gate.save(update_fields=["verdict", "judged_by", "judged_at", "note"])
+            record(
+                request.user, "quality_gate_judge", gate, detail=f"{gate.name}: {verdict}"
+            )
             messages.success(request, "判定を記録しました。")
         return redirect("testmgmt:gate_detail", pk=pk)
 

@@ -15,7 +15,7 @@ DRAFT_SYSTEM = (
 )
 
 
-def generate_draft(engagement, period_start, period_end, user=None) -> str:
+def generate_draft(engagement, period_start, period_end, user=None, template=None) -> str:
     summary = summarize_defects(engagement)
     series = convergence_series(engagement)[-8:]
     odc = odc_distribution(engagement)
@@ -72,11 +72,12 @@ def generate_draft(engagement, period_start, period_end, user=None) -> str:
         f"{risk_section}"
         f"{rag_section}"
     )
+    system_prompt = template.system_prompt if template is not None else DRAFT_SYSTEM
     return run_completion(
         engagement,
         "report_draft",
         prompt,
-        system=DRAFT_SYSTEM,
+        system=system_prompt,
         max_tokens=3000,
         user=user,
     )

@@ -4,6 +4,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
+from audit.services import record
 from config.csv_utils import csv_response
 from engagements.models import Engagement
 
@@ -33,6 +34,7 @@ def analysis(request):
         .order_by("is_done", "-source_updated_at")[:50]
     )
     series = services.convergence_series(engagement)
+    monthly_trend = services.monthly_odc_trend(engagement)
 
     context = {
         "engagement": engagement,
@@ -42,6 +44,8 @@ def analysis(request):
         "reopen": services.reopen_stats(engagement),
         "series": series,
         "svg": services.convergence_svg_points(series),
+        "monthly_bars": services.monthly_odc_bars(monthly_trend),
+        "monthly_defect_types": monthly_trend["defect_types"],
         "odc": services.odc_distribution(engagement),
         "defects": defects,
         "defect_type_choices": OdcClassification.DefectType.choices,
@@ -72,6 +76,7 @@ def classify_ticket(request, ticket_id):
     classification.status = OdcClassification.Status.CONFIRMED
     classification.classified_by = request.user
     classification.save()
+    record(request.user, "odc_confirm", classification, detail=ticket.external_id)
     messages.success(request, f"{ticket.external_id} のODC分類を確定しました。")
     return redirect("analytics:analysis")
 

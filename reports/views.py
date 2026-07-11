@@ -4,10 +4,11 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
+from audit.services import record
 from engagements.models import Engagement
 from llm.providers.base import LlmError
 
-from .models import Report
+from .models import Report, ReportTemplate
 from .services import generate_draft
 
 
@@ -29,6 +30,7 @@ def report_list(request):
         "nav_active": "reports",
         "reports": engagement.reports.all(),
         "today": timezone.localdate(),
+        "templates": ReportTemplate.objects.all(),
     }
     return render(request, "reports/list.html", context)
 
@@ -45,6 +47,12 @@ def report_create(request):
     title = request.POST.get("title", "").strip() or "品質状況報告書"
     period_start = request.POST.get("period_start")
     period_end = request.POST.get("period_end")
+    template_id = request.POST.get("template_id")
+    template = (
+        ReportTemplate.objects.filter(pk=template_id).first()
+        if template_id
+        else ReportTemplate.objects.filter(is_default=True).first()
+    )
 
     report = Report.objects.create(
         engagement=engagement,
@@ -54,7 +62,9 @@ def report_create(request):
         created_by=request.user,
     )
     try:
-        report.body = generate_draft(engagement, period_start, period_end, user=request.user)
+        report.body = generate_draft(
+            engagement, period_start, period_end, user=request.user, template=template
+        )
         report.save(update_fields=["body"])
     except LlmError as exc:
         messages.error(request, f"AIドラフト生成に失敗しました: {exc}")
@@ -79,6 +89,7 @@ def report_edit(request, pk):
         if action == "approve":
             report.status = Report.Status.APPROVED
             report.save(update_fields=["status"])
+            record(request.user, "report_approve", report, detail=report.title)
             messages.success(request, "報告書を承認しました。")
         else:
             report.body = request.POST.get("body", "")

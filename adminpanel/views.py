@@ -1,11 +1,17 @@
+from datetime import timedelta
+
 from django.contrib import messages
 from django.contrib.auth.models import User
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 
 from accounts.decorators import admin_required
+from analytics.services import benchmark_rows
+from audit.services import record
 from engagements.forms import EngagementForm
 from engagements.models import Engagement
+from llm.services import usage_summary
 from tickets.models import NotificationChannel, TicketSource
 
 from .forms import UserCreateForm
@@ -32,7 +38,8 @@ def users(request: HttpRequest) -> HttpResponse:
         if action == "create":
             form = UserCreateForm(request.POST)
             if form.is_valid():
-                form.save()
+                new_user = form.save()
+                record(request.user, "user_create", new_user, detail=new_user.username)
                 messages.success(request, "ユーザーを作成しました。")
                 return redirect("adminpanel:users")
         elif action == "toggle_staff":
@@ -42,12 +49,21 @@ def users(request: HttpRequest) -> HttpResponse:
             else:
                 target.is_staff = not target.is_staff
                 target.save(update_fields=["is_staff"])
+                record(
+                    request.user,
+                    "user_permission_change",
+                    target,
+                    detail=f"is_staff={target.is_staff}",
+                )
                 messages.success(request, "管理者権限を更新しました。")
             return redirect("adminpanel:users")
         elif action == "toggle_active":
             target = get_object_or_404(User, pk=request.POST.get("user_id"))
             target.is_active = not target.is_active
             target.save(update_fields=["is_active"])
+            record(
+                request.user, "user_active_change", target, detail=f"is_active={target.is_active}"
+            )
             messages.success(request, "ユーザーの有効状態を更新しました。")
             return redirect("adminpanel:users")
 
@@ -87,6 +103,7 @@ def engagement_edit(request: HttpRequest, pk: int) -> HttpResponse:
             engagement = form.save()
             member_ids = request.POST.getlist("members")
             engagement.members.set(User.objects.filter(pk__in=member_ids))
+            record(request.user, "engagement_edit", engagement, detail=engagement.name)
             messages.success(request, "案件を更新しました。")
             return redirect("adminpanel:engagements")
     else:
@@ -112,12 +129,14 @@ def tokens(request: HttpRequest) -> HttpResponse:
             if api_token:
                 source.api_token = api_token
                 source.save(update_fields=["_api_token_encrypted"])
+                record(request.user, "token_update", source, detail=source.name)
                 messages.success(request, "トークンを更新しました。")
         elif action == "toggle_active":
             source.is_active = not source.is_active
             source.save(update_fields=["is_active"])
             messages.success(request, "接続の有効状態を更新しました。")
         elif action == "delete":
+            record(request.user, "token_delete", source, detail=source.name)
             source.delete()
             messages.success(request, "接続を削除しました。")
         return redirect("adminpanel:tokens")
@@ -168,8 +187,26 @@ def notification_channels(request: HttpRequest) -> HttpResponse:
 
 @admin_required
 def llm_logs(request: HttpRequest) -> HttpResponse:
-    return render(
-        request,
-        "adminpanel/llm_logs.html",
-        {"nav_active": "manage"},
-    )
+    today = timezone.localdate()
+    previous_month_date = today.replace(day=1) - timedelta(days=1)
+
+    context = {
+        "nav_active": "manage",
+        "sections": [
+            (f"{today.year}年{today.month}月", usage_summary(today.year, today.month)),
+            (
+                f"{previous_month_date.year}年{previous_month_date.month}月",
+                usage_summary(previous_month_date.year, previous_month_date.month),
+            ),
+        ],
+    }
+    return render(request, "adminpanel/llm_logs.html", context)
+
+
+@admin_required
+def benchmark(request: HttpRequest) -> HttpResponse:
+    context = {
+        "nav_active": "manage",
+        "rows": benchmark_rows(),
+    }
+    return render(request, "adminpanel/benchmark.html", context)

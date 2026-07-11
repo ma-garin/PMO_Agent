@@ -78,7 +78,15 @@
 
       <div class="dash-columns">
         <div class="card panel">
-          <div class="panel-head"><h2>収束曲線（週次累積）</h2></div>
+          <div class="panel-head">
+            <h2>推移分析</h2>
+            <div class="tab-switch">
+              <button type="button" class="tab-btn active" data-tab="convergence">週次収束</button>
+              <button type="button" class="tab-btn" data-tab="monthly">月次推移（欠陥タイプ別）</button>
+            </div>
+          </div>
+
+          <div data-tab-panel="convergence">
           {% if series %}
             <div class="chart-wrap">
               <svg class="chart-svg" viewBox="-8 -8 616 176" preserveAspectRatio="none">
@@ -96,6 +104,33 @@
           {% else %}
             <p class="empty-note">欠陥データがまだありません。チケット同期と欠陥種別の設定を確認してください。</p>
           {% endif %}
+          </div>
+
+          <div data-tab-panel="monthly" style="display:none;">
+          {% if monthly_bars %}
+            <div class="chart-wrap">
+              <svg class="chart-svg" viewBox="-8 -8 616 176" preserveAspectRatio="none">
+                {% for bar in monthly_bars %}
+                  {% for seg in bar.segments %}
+                    <rect x="{{ seg.x }}" y="{{ seg.y }}" width="{{ seg.width }}" height="{{ seg.height }}" fill="{{ seg.color }}">
+                      <title>{{ bar.label }} {{ seg.label }}: {{ seg.count }}件</title>
+                    </rect>
+                  {% endfor %}
+                {% endfor %}
+              </svg>
+              <div class="chart-legend">
+                {% for dt in monthly_defect_types %}
+                  <span><span class="swatch" style="background: {{ dt.color }};"></span>{{ dt.label }}</span>
+                {% endfor %}
+              </div>
+              <div class="chart-legend">
+                {% for bar in monthly_bars %}<span>{{ bar.label }} ({{ bar.total }}件)</span>{% endfor %}
+              </div>
+            </div>
+          {% else %}
+            <p class="empty-note">確定済みのODC分類がまだありません。</p>
+          {% endif %}
+          </div>
         </div>
 
         <div class="card panel">
@@ -216,4 +251,16 @@
     </main>
   </div>
 </div>
+<script>
+  document.querySelectorAll(".tab-btn").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      document.querySelectorAll(".tab-btn").forEach(function (b) { b.classList.remove("active"); });
+      btn.classList.add("active");
+      var target = btn.dataset.tab;
+      document.querySelectorAll("[data-tab-panel]").forEach(function (panel) {
+        panel.style.display = panel.dataset.tabPanel === target ? "" : "none";
+      });
+    });
+  });
+</script>
 {% endblock %}

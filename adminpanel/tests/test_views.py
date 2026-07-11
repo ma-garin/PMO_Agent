@@ -53,7 +53,10 @@ def test_general_user_is_redirected_from_all_admin_pages(
         reverse("adminpanel:engagements"),
         reverse("adminpanel:engagement_edit", args=[other_engagement.pk]),
         reverse("adminpanel:tokens"),
+        reverse("adminpanel:notification_channels"),
         reverse("adminpanel:llm_logs"),
+        reverse("adminpanel:audit:list"),
+        reverse("adminpanel:benchmark"),
     ]
 
     for url in urls:
@@ -383,3 +386,20 @@ def test_llm_logs_get_renders_without_error(client, admin_user) -> None:
     response = client.get(reverse("adminpanel:llm_logs"))
 
     assert response.status_code == 200
+
+
+# ---------------------------------------------------------------------------
+# adminpanel:benchmark (案件間比較、匿名化ラベル)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.django_db
+def test_benchmark_hides_real_engagement_names(client, admin_user) -> None:
+    Engagement.objects.create(name="極秘プロジェクト", owner=admin_user)
+    client.force_login(admin_user)
+
+    response = client.get(reverse("adminpanel:benchmark"))
+
+    assert response.status_code == 200
+    assert "極秘プロジェクト".encode() not in response.content
+    assert "案件A".encode() in response.content

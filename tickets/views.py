@@ -4,6 +4,7 @@ from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
+from audit.services import record
 from config.csv_utils import csv_response
 from engagements.models import Engagement
 
@@ -117,6 +118,7 @@ def source_settings(request):
             source = form.save(commit=False)
             source.engagement = engagement
             source.save()
+            record(request.user, "token_create", source, detail=source.name)
             messages.success(request, "接続設定を追加しました。")
             return redirect("tickets:source_settings")
     else:
