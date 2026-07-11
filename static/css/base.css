@@ -132,3 +132,5 @@ button { font-family: inherit; }
   border-radius: 12px;
   box-shadow: var(--shadow);
 }
+
+.section-note { color: var(--ink-2); font-size: 13px; margin: 0 0 16px; }

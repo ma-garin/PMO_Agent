@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}アカウント設定 | PMO Agent{% endblock %}
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/app_shell.css' %}">
+  <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+  <link rel="stylesheet" href="{% static 'css/tickets.css' %}">
+{% endblock %}
+{% block body %}
+<div class="app-shell">
+  {% include "partials/sidebar.html" %}
+
+  <div style="flex:1; display:flex; flex-direction:column;">
+    {% include "partials/header.html" %}
+
+    <main class="app-main">
+      <div class="breadcrumb">/ settings</div>
+      <h1 class="page-title">設定</h1>
+      <p class="page-lead">アカウント情報・パスワード・LLMプロバイダ・チケット接続を管理します。</p>
+
+      {% include "partials/settings_tabs.html" %}
+
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+
+      <div class="card panel" style="max-width: 480px;">
+        <div class="panel-head"><h2>アカウント情報</h2></div>
+        <form method="post" novalidate>
+          {% csrf_token %}
+          <div class="form-group">
+            <label class="form-label" for="{{ form.last_name.id_for_label }}">姓</label>
+            {{ form.last_name }}
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="{{ form.first_name.id_for_label }}">名</label>
+            {{ form.first_name }}
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="{{ form.email.id_for_label }}">メールアドレス</label>
+            {{ form.email }}
+            {% for error in form.email.errors %}<div class="form-error-text">{{ error }}</div>{% endfor %}
+          </div>
+          <button type="submit" class="btn btn-primary">保存する</button>
+        </form>
+      </div>
+    </main>
+  </div>
+</div>
+{% endblock %}

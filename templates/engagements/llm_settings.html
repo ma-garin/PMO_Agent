@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}LLM設定 | PMO Agent{% endblock %}
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/app_shell.css' %}">
+  <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+  <link rel="stylesheet" href="{% static 'css/tickets.css' %}">
+{% endblock %}
+{% block body %}
+<div class="app-shell">
+  {% include "partials/sidebar.html" %}
+
+  <div style="flex:1; display:flex; flex-direction:column;">
+    {% include "partials/header.html" %}
+
+    <main class="app-main">
+      <div class="breadcrumb">/ settings / llm</div>
+      <h1 class="page-title">設定</h1>
+      <p class="page-lead">アカウント情報・パスワード・LLMプロバイダ・チケット接続を管理します。</p>
+
+      {% include "partials/settings_tabs.html" %}
+
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+
+      <div class="card panel" style="max-width: 480px;">
+        <div class="panel-head"><h2>{{ engagement.name }} のLLMプロバイダ</h2></div>
+        <p class="section-note">
+          顧客との契約・機密区分に応じて、この案件で使用するLLMを選択してください。
+          機密性が高い案件はローカルLLM(Ollama)を推奨します。実行系の接続はPhase 3で提供予定です。
+        </p>
+        <form method="post" novalidate>
+          {% csrf_token %}
+          <div class="form-group">
+            <label class="form-label" for="{{ form.llm_provider.id_for_label }}">既定LLMプロバイダ</label>
+            {{ form.llm_provider }}
+          </div>
+          <button type="submit" class="btn btn-primary">保存する</button>
+        </form>
+      </div>
+    </main>
+  </div>
+</div>
+{% endblock %}

@@ -6,3 +6,6 @@ db.sqlite3
 .playwright-mcp/
 staticfiles/
 *.log
+.env
+.pytest_cache/
+.coverage

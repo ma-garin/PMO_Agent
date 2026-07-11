@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 {% load static %}
-{% block title %}プロジェクトを選択 | PMO Agent{% endblock %}
+{% block title %}案件を選択 | PMO Agent{% endblock %}
 {% block extra_css %}
   <link rel="stylesheet" href="{% static 'css/app_shell.css' %}">
-  <link rel="stylesheet" href="{% static 'css/projects.css' %}">
+  <link rel="stylesheet" href="{% static 'css/engagements.css' %}">
 {% endblock %}
 {% block body %}
 <header class="select-header">
@@ -26,48 +26,48 @@
 <main class="select-main">
   <div class="app-main-header">
     <div>
-      <h1 class="page-title">プロジェクトを選択</h1>
-      <p class="page-lead">担当しているプロジェクトから、作業するプロジェクトを選んでください。</p>
+      <h1 class="page-title">案件を選択</h1>
+      <p class="page-lead">担当している案件から、作業する案件を選んでください。</p>
     </div>
-    <a href="{% url 'projects:create' %}" class="btn btn-primary">＋ 新規プロジェクト</a>
+    <a href="{% url 'engagements:create' %}" class="btn btn-primary">＋ 新規案件</a>
   </div>
 
   <div class="project-grid">
-    {% for project in projects %}
-      <a href="{% url 'projects:enter' project.pk %}" class="card project-card">
+    {% for engagement in engagements %}
+      <a href="{% url 'engagements:enter' engagement.pk %}" class="card project-card">
         <div class="project-card-top">
-          <h3>{{ project.name }}</h3>
-          <span class="badge badge-{{ project.status }}">{{ project.get_status_display }}</span>
+          <h3>{{ engagement.name }}</h3>
+          <span class="badge badge-{{ engagement.status }}">{{ engagement.get_status_display }}</span>
         </div>
-        <p class="desc">{{ project.description|default:"概要は未設定です" }}</p>
+        <p class="desc">{{ engagement.description|default:"概要は未設定です" }}</p>
         <div>
           <div class="progress-bar-track">
-            <div class="progress-bar-fill" style="width: {{ project.progress }}%;"></div>
+            <div class="progress-bar-fill" style="width: {{ engagement.progress }}%;"></div>
           </div>
           <div class="progress-bar-label">
             <span>進捗</span>
-            <span>{{ project.progress }}%</span>
+            <span>{{ engagement.progress }}%</span>
           </div>
         </div>
         <div class="project-card-footer">
           <div class="member-stack">
-            {% for member in project.members.all|slice:":4" %}
+            {% for member in engagement.members.all|slice:":4" %}
               <div class="avatar">{{ member.username|slice:":2"|upper }}</div>
             {% endfor %}
           </div>
-          <span>{{ project.member_count }}名</span>
+          <span>{{ engagement.member_count }}名</span>
         </div>
       </a>
     {% endfor %}
 
-    <a href="{% url 'projects:create' %}" class="new-project-card">
+    <a href="{% url 'engagements:create' %}" class="new-project-card">
       <span class="plus-icon">＋</span>
-      新規プロジェクトを作成
+      新規案件を作成
     </a>
   </div>
 
-  {% if not projects %}
-    <p class="empty-note">参加しているプロジェクトはまだありません。右上から新規プロジェクトを作成してください。</p>
+  {% if not engagements %}
+    <p class="empty-note">担当している案件はまだありません。右上から新規案件を作成してください。</p>
   {% endif %}
 </main>
 {% endblock %}

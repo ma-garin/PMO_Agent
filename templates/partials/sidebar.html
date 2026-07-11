@@ -5,21 +5,21 @@
   </div>
 
   <div class="sidebar-project">
-    <span class="name">{{ project.name }}</span>
-    <a href="{% url 'projects:select' %}">プロジェクトを切替</a>
+    <span class="name">{{ engagement.name }}</span>
+    <a href="{% url 'engagements:select' %}">案件を切替</a>
   </div>
 
   <nav class="sidebar-nav">
     <a href="{% url 'dashboard:home' %}" class="nav-item{% if nav_active == 'home' %} active{% endif %}">
       &#127968; ホーム
     </a>
-    <a href="#" class="nav-item">
-      &#128203; ToDo一覧
-      {% if total_tasks %}<span class="badge-count">{{ total_tasks }}</span>{% endif %}
+    <a href="{% url 'tickets:list' %}" class="nav-item{% if nav_active == 'tickets' %} active{% endif %}">
+      &#128203; チケット一覧
+      {% if total_tickets %}<span class="badge-count">{{ total_tickets }}</span>{% endif %}
     </a>
     <a href="#" class="nav-item">&#128197; カレンダー</a>
     <a href="#" class="nav-item">&#128101; メンバー</a>
-    <a href="#" class="nav-item">&#9881; 設定</a>
+    <a href="{% url 'accounts:profile' %}" class="nav-item{% if nav_active == 'settings' %} active{% endif %}">&#9881; 設定</a>
   </nav>
 
   <div class="sidebar-footer">

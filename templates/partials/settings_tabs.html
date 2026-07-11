@@ -1,0 +1,6 @@
+<div class="tabs">
+  <a href="{% url 'accounts:profile' %}" class="{% if settings_tab == 'profile' %}active{% endif %}">アカウント</a>
+  <a href="{% url 'accounts:password_change' %}" class="{% if settings_tab == 'password' %}active{% endif %}">パスワード変更</a>
+  <a href="{% url 'engagements:llm_settings' %}" class="{% if settings_tab == 'llm' %}active{% endif %}">LLM設定</a>
+  <a href="{% url 'tickets:source_settings' %}" class="{% if settings_tab == 'tickets' %}active{% endif %}">チケット接続</a>
+</div>

@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}チケット一覧 | PMO Agent{% endblock %}
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/app_shell.css' %}">
+  <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+  <link rel="stylesheet" href="{% static 'css/tickets.css' %}">
+{% endblock %}
+{% block body %}
+<div class="app-shell">
+  {% include "partials/sidebar.html" %}
+
+  <div style="flex:1; display:flex; flex-direction:column;">
+    {% include "partials/header.html" %}
+
+    <main class="app-main">
+      <div class="breadcrumb">/ tickets</div>
+      <div class="app-main-header">
+        <div>
+          <h1 class="page-title">チケット一覧</h1>
+          <p class="page-lead">
+            全{{ counts.all }}件のチケット・うち{{ counts.overdue }}件が期限超過です。
+          </p>
+        </div>
+        <a href="{% url 'tickets:source_settings' %}" class="btn btn-secondary">接続設定</a>
+      </div>
+
+      <div class="tabs">
+        <a href="?tab=all" class="{% if tab == 'all' %}active{% endif %}">すべて {{ counts.all }}</a>
+        <a href="?tab=in_progress" class="{% if tab == 'in_progress' %}active{% endif %}">進行中 {{ counts.in_progress }}</a>
+        <a href="?tab=done" class="{% if tab == 'done' %}active{% endif %}">完了 {{ counts.done }}</a>
+        <a href="?tab=overdue" class="{% if tab == 'overdue' %}active{% endif %}">期限超過 {{ counts.overdue }}</a>
+      </div>
+
+      <form method="get" class="filter-bar">
+        <input type="hidden" name="tab" value="{{ tab }}">
+        <div class="search-input">
+          <span>&#128269;</span>
+          <input type="text" name="q" value="{{ query }}" placeholder="チケット名で絞り込む">
+        </div>
+        <button type="submit" class="btn btn-secondary">検索</button>
+      </form>
+
+      <div class="card panel">
+        <table class="ticket-table">
+          <thead>
+            <tr>
+              <th>チケット</th>
+              <th>接続元</th>
+              <th>優先度</th>
+              <th>担当</th>
+              <th>期限</th>
+              <th>状態</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for ticket in page_obj %}
+              <tr>
+                <td>
+                  <a class="ticket-link" href="{{ ticket.external_url }}" target="_blank" rel="noopener">
+                    <span class="ticket-summary">{{ ticket.summary }}</span>
+                    <span class="ticket-id">{{ ticket.source.name }} / {{ ticket.external_id }}</span>
+                  </a>
+                </td>
+                <td>{{ ticket.source.get_kind_display }}</td>
+                <td>{{ ticket.priority|default:"-" }}</td>
+                <td>{{ ticket.assignee_name|default:"未割当" }}</td>
+                <td>{{ ticket.due_date|date:"n/j"|default:"-" }}</td>
+                <td>
+                  {% if ticket.is_done %}
+                    <span class="status-pill done">{{ ticket.status|default:"完了" }}</span>
+                  {% elif ticket.due_date and ticket.due_date < today %}
+                    <span class="status-pill overdue">{{ ticket.status|default:"期限超過" }}</span>
+                  {% else %}
+                    <span class="status-pill open">{{ ticket.status|default:"進行中" }}</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="6"><p class="empty-note">該当するチケットはありません。接続設定からJIRA/Redmineを連携してください。</p></td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+
+        <div class="pagination">
+          <span>{{ page_obj.start_index }}-{{ page_obj.end_index }} / {{ page_obj.paginator.count }}件</span>
+          <div class="page-links">
+            {% if page_obj.has_previous %}
+              <a href="?tab={{ tab }}&q={{ query }}&page={{ page_obj.previous_page_number }}">&#8249;</a>
+            {% endif %}
+            {% for num in page_obj.paginator.page_range %}
+              {% if num == page_obj.number %}
+                <span class="current">{{ num }}</span>
+              {% else %}
+                <a href="?tab={{ tab }}&q={{ query }}&page={{ num }}">{{ num }}</a>
+              {% endif %}
+            {% endfor %}
+            {% if page_obj.has_next %}
+              <a href="?tab={{ tab }}&q={{ query }}&page={{ page_obj.next_page_number }}">&#8250;</a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+{% endblock %}

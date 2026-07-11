@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 {% load static %}
-{% block title %}新規プロジェクト | PMO Agent{% endblock %}
+{% block title %}新規案件 | PMO Agent{% endblock %}
 {% block extra_css %}
   <link rel="stylesheet" href="{% static 'css/app_shell.css' %}">
-  <link rel="stylesheet" href="{% static 'css/projects.css' %}">
+  <link rel="stylesheet" href="{% static 'css/engagements.css' %}">
 {% endblock %}
 {% block body %}
 <header class="select-header">
@@ -12,19 +12,19 @@
     PMO Agent.
   </div>
   <div class="app-header-actions">
-    <a href="{% url 'projects:select' %}" class="btn btn-secondary">キャンセル</a>
+    <a href="{% url 'engagements:select' %}" class="btn btn-secondary">キャンセル</a>
   </div>
 </header>
 
 <main class="select-main" style="max-width: 520px;">
-  <h1 class="page-title">新規プロジェクト</h1>
-  <p class="page-lead">プロジェクトの基本情報を入力してください。</p>
+  <h1 class="page-title">新規案件</h1>
+  <p class="page-lead">案件の基本情報を入力してください。</p>
 
   <div class="card" style="padding: 24px;">
     <form method="post" novalidate>
       {% csrf_token %}
       <div class="form-group">
-        <label class="form-label" for="{{ form.name.id_for_label }}">プロジェクト名</label>
+        <label class="form-label" for="{{ form.name.id_for_label }}">案件名</label>
         {{ form.name }}
         {% for error in form.name.errors %}<div class="form-error-text">{{ error }}</div>{% endfor %}
       </div>
