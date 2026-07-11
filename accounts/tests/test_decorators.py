@@ -23,7 +23,7 @@ def _prepare_request(request):
     return request
 
 
-@pytest.mark.unit
+@pytest.mark.django_db
 def test_admin_required_redirects_anonymous_to_login(rf) -> None:
     request = rf.get("/manage/")
     request.user = AnonymousUser()
