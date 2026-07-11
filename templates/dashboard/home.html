@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}ホーム | PMO Agent{% endblock %}
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/app_shell.css' %}">
+  <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+{% block body %}
+<div class="app-shell">
+  {% include "partials/sidebar.html" %}
+
+  <div style="flex:1; display:flex; flex-direction:column;">
+    {% include "partials/header.html" %}
+
+    <main class="app-main">
+      <div class="breadcrumb">/ home</div>
+      <div class="app-main-header">
+        <div>
+          <h1 class="page-title">おはようございます、{{ user.first_name|default:user.username }}さん</h1>
+          <p class="page-lead">
+            今日は{{ today|date:"Y年n月j日 (D)" }}です。
+            {% if today_tasks_count %}期限が近いタスクが{{ today_tasks_count }}件あります。{% else %}本日期限のタスクはありません。{% endif %}
+          </p>
+        </div>
+        <a href="#" class="btn btn-primary">＋ 新規タスク</a>
+      </div>
+
+      <div class="stat-grid">
+        <div class="card stat-card">
+          <div class="stat-head">&#9200; 今日のタスク</div>
+          <div class="stat-value">{{ today_tasks_count }}</div>
+          <div class="stat-sub">うち高優先度 {{ today_tasks_high_count }}件</div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-head">&#9989; 今週の完了</div>
+          <div class="stat-value">{{ completed_this_week_count }}</div>
+          <div class="stat-sub">全{{ total_tasks }}件中</div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-head">&#9888; 期限超過</div>
+          <div class="stat-value{% if overdue_tasks_count %} danger{% endif %}">{{ overdue_tasks_count }}</div>
+          <div class="stat-sub">対応が必要です</div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-head">&#128260; 進行中</div>
+          <div class="stat-value">{{ in_progress_tasks_count }}</div>
+          <div class="stat-sub">{{ project.name }}</div>
+        </div>
+      </div>
+
+      <div class="dash-columns">
+        <div class="card panel">
+          <div class="panel-head">
+            <h2>今日のタスク</h2>
+            <a href="#">すべて表示</a>
+          </div>
+          {% for task in today_tasks %}
+            <div class="task-row">
+              <input type="checkbox" disabled {% if task.status == 'done' %}checked{% endif %}>
+              <span class="task-title{% if task.status == 'done' %} done{% endif %}">
+                <span class="prio-dot prio-{{ task.priority }}"></span>{{ task.title }}
+              </span>
+              <span class="task-time">{{ task.due_date|date:"n/j"|default:"-" }}</span>
+            </div>
+          {% empty %}
+            <p class="empty-note">本日期限のタスクはありません。</p>
+          {% endfor %}
+        </div>
+
+        <div class="card panel">
+          <div class="panel-head"><h2>今週の進捗</h2></div>
+          <div class="donut-wrap">
+            <div class="donut" style="--pct: {{ progress_percent }};">
+              <div class="donut-inner">{{ progress_percent }}%</div>
+            </div>
+            <div class="donut-label">{{ done_tasks }} / {{ total_tasks }} 完了</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card panel" style="margin-top: 18px;">
+        <div class="panel-head"><h2>最近のアクティビティ</h2></div>
+        {% for activity in activities %}
+          <div class="activity-row">
+            <span class="dot"></span>
+            <div>
+              {{ activity.message }}
+              <span class="activity-time">{{ activity.created_at|timesince }}前</span>
+            </div>
+          </div>
+        {% empty %}
+          <p class="empty-note">まだアクティビティはありません。</p>
+        {% endfor %}
+      </div>
+    </main>
+  </div>
+</div>
+{% endblock %}

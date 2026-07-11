@@ -1,0 +1,65 @@
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.stat-card { padding: 16px 18px; }
+.stat-card .stat-head {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12.5px; color: var(--ink-2); margin-bottom: 10px;
+}
+.stat-card .stat-value { font-size: 26px; font-weight: 700; }
+.stat-card .stat-value.danger { color: var(--danger); }
+.stat-card .stat-sub { font-size: 12px; color: var(--ink-2); margin-top: 4px; }
+
+.dash-columns {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 18px;
+  align-items: start;
+}
+.panel { padding: 20px; }
+.panel-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.panel-head h2 { font-size: 15px; margin: 0; }
+.panel-head a { font-size: 12.5px; color: var(--primary); text-decoration: none; font-weight: 600; }
+
+.task-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13.5px;
+}
+.task-row:last-child { border-bottom: none; }
+.task-row input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--primary); }
+.task-row .task-title { flex: 1; }
+.task-row .task-title.done { text-decoration: line-through; color: var(--ink-2); }
+.task-row .prio-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 4px; }
+.prio-high { background: var(--danger); }
+.prio-medium { background: var(--warning); }
+.prio-low { background: var(--success); }
+.task-row .task-time { color: var(--ink-2); font-size: 12.5px; width: 48px; text-align: right; }
+
+.donut-wrap { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 10px 0; }
+.donut {
+  width: 120px; height: 120px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: conic-gradient(var(--primary) calc(var(--pct) * 1%), var(--ground) 0);
+}
+.donut-inner {
+  width: 88px; height: 88px; border-radius: 50%;
+  background: var(--surface);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; font-weight: 700;
+}
+.donut-label { font-size: 12.5px; color: var(--ink-2); }
+
+.activity-row { display: flex; gap: 10px; padding: 9px 0; font-size: 13px; }
+.activity-row .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--primary); margin-top: 6px; flex-shrink: 0; }
+.activity-row .activity-time { display: block; color: var(--ink-2); font-size: 12px; margin-top: 2px; }
+
+.empty-note { color: var(--ink-2); font-size: 13px; padding: 12px 0; }
+
+@media (max-width: 980px) {
+  .dash-columns { grid-template-columns: 1fr; }
+}

@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}ログイン | PMO Agent{% endblock %}
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/login.css' %}">
+{% endblock %}
+{% block body %}
+<div class="login-screen">
+  <div class="login-brand">
+    <div class="login-logo">
+      <span class="mark">✓</span>
+      PMO Agent.
+    </div>
+    <div class="login-copy">
+      <h1>プロジェクトを、<br>思考する自動化で。</h1>
+      <p>優先度・期限・体制を横断的に可視化し、複数プロジェクトの進行をエージェントが支援します。</p>
+    </div>
+    <div class="login-stats">
+      <div>
+        <div class="stat-value">12</div>
+        <div class="stat-label">稼働中プロジェクト</div>
+      </div>
+      <div>
+        <div class="stat-value">87%</div>
+        <div class="stat-label">今月の完了率</div>
+      </div>
+      <div>
+        <div class="stat-value">4</div>
+        <div class="stat-label">稼働中エージェント</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="login-form-side">
+    <div class="login-form-wrap">
+      <h2>おかえりなさい</h2>
+      <p class="lead">アカウントにログインして続けます。</p>
+
+      {% if form.non_field_errors %}
+        <div class="alert alert-danger">
+          <strong>ログインできませんでした</strong><br>
+          {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+        </div>
+      {% endif %}
+
+      <form method="post" novalidate>
+        {% csrf_token %}
+        <div class="form-group">
+          <label class="form-label" for="{{ form.username.id_for_label }}">メールアドレス</label>
+          <input
+            type="text"
+            name="{{ form.username.html_name }}"
+            id="{{ form.username.id_for_label }}"
+            class="form-input{% if form.username.errors %} has-error{% endif %}"
+            value="{{ form.username.value|default:'' }}"
+            autocomplete="username"
+            autofocus
+          >
+          {% for error in form.username.errors %}
+            <div class="form-error-text">{{ error }}</div>
+          {% endfor %}
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="{{ form.password.id_for_label }}">パスワード</label>
+          <input
+            type="password"
+            name="{{ form.password.html_name }}"
+            id="{{ form.password.id_for_label }}"
+            class="form-input{% if form.password.errors %} has-error{% endif %}"
+            autocomplete="current-password"
+          >
+          {% for error in form.password.errors %}
+            <div class="form-error-text">{{ error }}</div>
+          {% endfor %}
+          <div class="login-links">
+            <a href="#">パスワードをお忘れですか？</a>
+          </div>
+        </div>
+        <input type="hidden" name="next" value="{{ next }}">
+        <button type="submit" class="btn btn-primary btn-block">ログイン</button>
+      </form>
+
+      <p class="login-signup">アカウントをお持ちでないですか？ <a href="#">管理者にお問い合わせください</a></p>
+    </div>
+  </div>
+</div>
+{% endblock %}

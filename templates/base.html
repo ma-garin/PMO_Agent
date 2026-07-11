@@ -1,0 +1,14 @@
+{% load static %}<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}PMO Agent{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/base.css' %}">
+  {% block extra_css %}{% endblock %}
+  <script src="{% static 'js/theme.js' %}" defer></script>
+</head>
+<body>
+  {% block body %}{% endblock %}
+</body>
+</html>

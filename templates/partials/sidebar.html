@@ -1,0 +1,31 @@
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <span class="mark">✓</span>
+    PMO Agent.
+  </div>
+
+  <div class="sidebar-project">
+    <span class="name">{{ project.name }}</span>
+    <a href="{% url 'projects:select' %}">プロジェクトを切替</a>
+  </div>
+
+  <nav class="sidebar-nav">
+    <a href="{% url 'dashboard:home' %}" class="nav-item{% if nav_active == 'home' %} active{% endif %}">
+      &#127968; ホーム
+    </a>
+    <a href="#" class="nav-item">
+      &#128203; ToDo一覧
+      {% if total_tasks %}<span class="badge-count">{{ total_tasks }}</span>{% endif %}
+    </a>
+    <a href="#" class="nav-item">&#128197; カレンダー</a>
+    <a href="#" class="nav-item">&#128101; メンバー</a>
+    <a href="#" class="nav-item">&#9881; 設定</a>
+  </nav>
+
+  <div class="sidebar-footer">
+    <form method="post" action="{% url 'accounts:logout' %}">
+      {% csrf_token %}
+      <button type="submit" class="sidebar-logout">&#8592; ログアウト</button>
+    </form>
+  </div>
+</aside>

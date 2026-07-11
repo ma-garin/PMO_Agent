@@ -1,0 +1,134 @@
+:root {
+  --primary: #1976D2;
+  --primary-deep: #0D47A1;
+  --primary-soft: #EEF5FD;
+  --ground: #F4F6F9;
+  --surface: #FFFFFF;
+  --border: #E3E8EE;
+  --ink: #1A212B;
+  --ink-2: #56616F;
+  --danger: #D32F2F;
+  --danger-soft: #FDECEC;
+  --success: #2E7D32;
+  --success-soft: #E8F5E9;
+  --warning: #ED6C02;
+  --shadow: 0 1px 2px rgba(20, 32, 50, .06);
+}
+
+:root[data-theme="dark"] {
+  --primary: #4B9EF2;
+  --primary-deep: #7FB6F5;
+  --primary-soft: #163554;
+  --ground: #12161C;
+  --surface: #1B2029;
+  --border: #2B323D;
+  --ink: #EDF0F4;
+  --ink-2: #9AA5B1;
+  --danger: #F28B82;
+  --danger-soft: #3A2222;
+  --success: #7BC67E;
+  --success-soft: #1E3320;
+  --warning: #F5A356;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .3);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --primary: #4B9EF2;
+    --primary-deep: #7FB6F5;
+    --primary-soft: #163554;
+    --ground: #12161C;
+    --surface: #1B2029;
+    --border: #2B323D;
+    --ink: #EDF0F4;
+    --ink-2: #9AA5B1;
+    --danger: #F28B82;
+    --danger-soft: #3A2222;
+    --success: #7BC67E;
+    --success-soft: #1E3320;
+    --warning: #F5A356;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3);
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", "Noto Sans JP", Meiryo, sans-serif;
+  line-height: 1.7;
+}
+
+a { color: inherit; }
+
+button { font-family: inherit; }
+
+/* ---------- ボタン ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease;
+}
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-primary:hover { background: var(--primary-deep); }
+.btn-secondary { background: var(--surface); color: var(--ink); border-color: var(--border); }
+.btn-secondary:hover { background: var(--ground); }
+.btn-block { width: 100%; }
+
+/* ---------- フォーム ---------- */
+.form-group { margin-bottom: 18px; }
+.form-label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--ink); }
+.form-input, .form-select {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 14px;
+  outline: none;
+  transition: border-color .15s ease;
+}
+.form-input:focus, .form-select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
+.form-input.has-error, .form-select.has-error { border-color: var(--danger); }
+.form-error-text { color: var(--danger); font-size: 12.5px; margin-top: 6px; }
+
+.alert {
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 13.5px;
+  margin-bottom: 18px;
+}
+.alert-danger { background: var(--danger-soft); color: var(--danger); border: 1px solid var(--danger); }
+
+/* ---------- バッジ ---------- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.badge-active { background: var(--success-soft); color: var(--success); }
+.badge-on_hold { background: #FFF3E0; color: var(--warning); }
+.badge-completed { background: var(--primary-soft); color: var(--primary-deep); }
+
+/* ---------- カード ---------- */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+}
