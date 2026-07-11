@@ -6,7 +6,7 @@ from engagements.models import Engagement
 from llm.providers.base import LlmError
 from llm.services import run_completion
 
-from .context_builder import build_system_prompt
+from .context_builder import build_rag_context, build_system_prompt
 from .models import ChatMessage, ChatThread
 
 HISTORY_LIMIT = 10
@@ -90,7 +90,15 @@ def send(request, pk):
     history_text = "\n".join(
         f"[{m.get_role_display()}] {m.content}" for m in history
     )
-    prompt = f"{history_text}\n\n上記の会話を踏まえて、直近の質問に回答してください。"
+    rag_context = build_rag_context(engagement, question)
+    if rag_context:
+        prompt = (
+            f"## 参考資料\n{rag_context}\n\n## 会話\n{history_text}\n\n"
+            "上記の会話を踏まえて、直近の質問に回答してください。"
+            "参考資料を使った場合は文末に[出典n]を明記してください。"
+        )
+    else:
+        prompt = f"{history_text}\n\n上記の会話を踏まえて、直近の質問に回答してください。"
 
     try:
         answer = run_completion(

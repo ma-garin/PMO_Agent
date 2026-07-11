@@ -2,6 +2,28 @@ from analytics.services import odc_distribution, summarize_defects
 from tickets.models import Notification
 
 
+def build_rag_context(engagement, query: str) -> str:
+    try:
+        from knowledge.search import search_knowledge
+    except ImportError:
+        return ""
+
+    from llm.providers.base import LlmError
+
+    try:
+        hits = search_knowledge(engagement, query, top_k=5)
+    except LlmError:
+        return ""
+
+    if not hits:
+        return ""
+
+    return "\n\n".join(
+        f"[出典{i}: {hit.document_title}]\n{hit.content}"
+        for i, hit in enumerate(hits, start=1)
+    )
+
+
 def build_system_prompt(engagement) -> str:
     summary = summarize_defects(engagement)
     odc = odc_distribution(engagement)

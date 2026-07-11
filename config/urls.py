@@ -29,5 +29,6 @@ urlpatterns = [
     path("manage/", include("adminpanel.urls")),
     path("copilot/", include("copilot.urls")),
     path("reports/", include("reports.urls")),
+    path("knowledge/", include("knowledge.urls")),
     path("", RedirectView.as_view(pattern_name="engagements:select", permanent=False)),
 ]

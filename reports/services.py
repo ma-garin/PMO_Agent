@@ -18,12 +18,23 @@ def generate_draft(engagement, period_start, period_end, user=None) -> str:
     series = convergence_series(engagement)[-8:]
     odc = odc_distribution(engagement)
 
+    rag_section = ""
+    try:
+        from copilot.context_builder import build_rag_context
+
+        rag_context = build_rag_context(engagement, "品質基準 テスト標準")
+        if rag_context:
+            rag_section = f"\n参考資料:\n{rag_context}\n"
+    except ImportError:
+        pass
+
     prompt = (
         f"案件名: {engagement.name}\n"
         f"対象期間: {period_start} 〜 {period_end}\n\n"
         f"欠陥サマリー: {summary}\n\n"
         f"週次収束データ(直近8点): {series}\n\n"
         f"ODC分布(確定済み): {odc}\n"
+        f"{rag_section}"
     )
     return run_completion(
         engagement,
