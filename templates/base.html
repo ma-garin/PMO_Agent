@@ -1,5 +1,5 @@
-{% load static %}<!doctype html>
-<html lang="ja">
+{% load static %}{% firstof user.preference.theme "auto" as saved_theme %}<!doctype html>
+<html lang="ja"{% if user.is_authenticated and saved_theme != "auto" %} data-theme="{{ saved_theme }}"{% endif %}>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">

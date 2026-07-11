@@ -1,5 +1,6 @@
 from django.db import models
 
+from config.crypto import decrypt, encrypt
 from engagements.models import Engagement
 
 
@@ -16,7 +17,9 @@ class TicketSource(models.Model):
     base_url = models.URLField("接続先URL")
     project_key = models.CharField("プロジェクトキー", max_length=100)
     username = models.CharField("ユーザー名/メール", max_length=200, blank=True)
-    api_token = models.CharField("APIトークン", max_length=300, blank=True)
+    _api_token_encrypted = models.TextField(
+        "APIトークン(暗号化)", blank=True, db_column="api_token_encrypted"
+    )
     is_active = models.BooleanField("同期を有効にする", default=True)
     last_synced_at = models.DateTimeField("最終同期日時", null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -27,6 +30,14 @@ class TicketSource(models.Model):
 
     def __str__(self) -> str:
         return f"{self.get_kind_display()}: {self.name}"
+
+    @property
+    def api_token(self) -> str:
+        return decrypt(self._api_token_encrypted)
+
+    @api_token.setter
+    def api_token(self, value: str) -> None:
+        self._api_token_encrypted = encrypt(value)
 
 
 class Ticket(models.Model):

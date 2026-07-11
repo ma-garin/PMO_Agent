@@ -111,7 +111,7 @@ def tokens(request: HttpRequest) -> HttpResponse:
             api_token = request.POST.get("api_token", "")
             if api_token:
                 source.api_token = api_token
-                source.save(update_fields=["api_token"])
+                source.save(update_fields=["_api_token_encrypted"])
                 messages.success(request, "トークンを更新しました。")
         elif action == "toggle_active":
             source.is_active = not source.is_active

@@ -63,6 +63,12 @@ INSTALLED_APPS = [
     "tpi",
     "risks",
     "testmgmt",
+    "axes",
+]
+
+AUTHENTICATION_BACKENDS = [
+    "axes.backends.AxesStandaloneBackend",
+    "django.contrib.auth.backends.ModelBackend",
 ]
 
 MIDDLEWARE = [
@@ -73,7 +79,11 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "axes.middleware.AxesMiddleware",
 ]
+
+AXES_FAILURE_LIMIT = 5
+AXES_COOLOFF_TIME = 0.5
 
 ROOT_URLCONF = "config.urls"
 
@@ -120,6 +130,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
     {
         "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        "OPTIONS": {"min_length": 12},
     },
     {
         "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
@@ -158,6 +169,9 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LOGIN_URL = "accounts:login"
 LOGIN_REDIRECT_URL = "engagements:select"
 LOGOUT_REDIRECT_URL = "accounts:login"
+
+SESSION_COOKIE_AGE = 8 * 60 * 60
+SESSION_SAVE_EVERY_REQUEST = True
 
 
 # Procrastinate (PostgreSQLネイティブの非同期ジョブキュー、ADR 0003)
