@@ -20,8 +20,14 @@
     <a href="{% url 'analytics:analysis' %}" class="nav-item{% if nav_active == 'analytics' %} active{% endif %}">
       &#128202; 分析
     </a>
+    <a href="{% url 'copilot:home' %}" class="nav-item{% if nav_active == 'copilot' %} active{% endif %}">&#129302; Copilot</a>
+    <a href="{% url 'reports:list' %}" class="nav-item{% if nav_active == 'reports' %} active{% endif %}">&#128196; レポート</a>
     <a href="#" class="nav-item">&#128197; カレンダー</a>
     <a href="#" class="nav-item">&#128101; メンバー</a>
     <a href="{% url 'accounts:profile' %}" class="nav-item{% if nav_active == 'settings' %} active{% endif %}">&#9881; 設定</a>
+    {% if user.is_staff %}
+    <div class="sidebar-section-label">管理</div>
+    <a href="{% url 'adminpanel:home' %}" class="nav-item{% if nav_active == 'manage' %} active{% endif %}">&#128737; 管理</a>
+    {% endif %}
   </nav>
 </aside>

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}LLMログ | PMO Agent{% endblock %}
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/app_shell.css' %}">
+  <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+{% block body %}
+<div class="app-shell">
+  {% include "partials/sidebar.html" %}
+
+  <div style="flex:1; display:flex; flex-direction:column; min-width:0;">
+    {% include "partials/header.html" %}
+
+    <main class="app-main">
+      <div class="breadcrumb">/ manage / llm-logs</div>
+      <h1 class="page-title">LLM呼び出しログ</h1>
+      <p class="page-lead">Phase 3実装後に利用可能になります。</p>
+
+      <div class="card panel">
+        <div class="panel-head"><h2>ログ</h2></div>
+        <p class="empty-note">Phase 3実装後に利用可能になります。</p>
+      </div>
+    </main>
+  </div>
+</div>
+{% endblock %}

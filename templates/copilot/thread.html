@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Copilot | PMO Agent{% endblock %}
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/app_shell.css' %}">
+  <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+  <link rel="stylesheet" href="{% static 'css/copilot.css' %}">
+{% endblock %}
+{% block body %}
+<div class="app-shell">
+  {% include "partials/sidebar.html" %}
+
+  <div style="flex:1; display:flex; flex-direction:column; min-width:0;">
+    {% include "partials/header.html" %}
+
+    <main class="app-main">
+      <div class="app-main-header">
+        <div>
+          <h1 class="page-title">PMO Copilot</h1>
+          <p class="page-lead">案件のデータをもとに相談できます。</p>
+        </div>
+        <form method="post" action="{% url 'copilot:new_thread' %}">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-primary">＋ 新しい相談</button>
+        </form>
+      </div>
+
+      {% if messages %}
+        {% for message in messages %}<div class="alert alert-danger">{{ message }}</div>{% endfor %}
+      {% endif %}
+
+      <div class="copilot-layout">
+        <div class="card copilot-threads" style="padding: 12px;">
+          {% for t in threads %}
+            <a href="{% url 'copilot:thread' t.pk %}" class="copilot-thread-link{% if thread and t.pk == thread.pk %} active{% endif %}">{{ t.title }}</a>
+          {% empty %}
+            <p class="empty-note">相談スレッドはまだありません。</p>
+          {% endfor %}
+        </div>
+
+        <div class="card copilot-chat" style="padding: 16px;">
+          {% if thread %}
+            <div class="copilot-messages">
+              {% for m in chat_messages %}
+                <div class="copilot-bubble {{ m.role }}">{{ m.content }}</div>
+              {% empty %}
+                <p class="empty-note">質問を入力して相談を始めてください。</p>
+              {% endfor %}
+            </div>
+            <form method="post" action="{% url 'copilot:send' thread.pk %}" class="copilot-input-row">
+              {% csrf_token %}
+              <textarea name="content" placeholder="例: このプロジェクトの今週のリスクは？" required></textarea>
+              <button type="submit" class="btn btn-primary">送信</button>
+            </form>
+          {% else %}
+            <p class="empty-note">「＋ 新しい相談」からスレッドを作成してください。</p>
+          {% endif %}
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+{% endblock %}

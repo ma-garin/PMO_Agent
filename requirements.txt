@@ -3,3 +3,4 @@ psycopg[binary]==3.3.4
 python-dotenv==1.2.2
 requests==2.34.2
 procrastinate==3.9.0
+markdown==3.10.2

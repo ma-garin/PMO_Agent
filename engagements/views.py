@@ -1,5 +1,5 @@
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib import messages
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
@@ -24,11 +24,20 @@ class EngagementSelectView(LoginRequiredMixin, ListView):
         )
 
 
-class EngagementCreateView(LoginRequiredMixin, CreateView):
+class EngagementCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     model = Engagement
     form_class = EngagementForm
     template_name = "engagements/engagement_form.html"
     success_url = reverse_lazy("engagements:select")
+
+    def test_func(self) -> bool:
+        return self.request.user.is_staff
+
+    def handle_no_permission(self):
+        if not self.request.user.is_authenticated:
+            return super().handle_no_permission()
+        messages.error(self.request, "この操作には管理者権限が必要です。")
+        return redirect("dashboard:home")
 
     def form_valid(self, form):
         form.instance.owner = self.request.user

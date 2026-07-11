@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}案件編集 | PMO Agent{% endblock %}
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/app_shell.css' %}">
+  <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+  <link rel="stylesheet" href="{% static 'css/tickets.css' %}">
+{% endblock %}
+{% block body %}
+<div class="app-shell">
+  {% include "partials/sidebar.html" %}
+
+  <div style="flex:1; display:flex; flex-direction:column; min-width:0;">
+    {% include "partials/header.html" %}
+
+    <main class="app-main">
+      <div class="breadcrumb">/ manage / engagements / {{ engagement.pk }}</div>
+      <h1 class="page-title">案件編集</h1>
+      <p class="page-lead">{{ engagement.name }} の基本情報とメンバーを更新します。</p>
+
+      {% if messages %}
+        {% for message in messages %}<div class="alert">{{ message }}</div>{% endfor %}
+      {% endif %}
+
+      <div class="card panel" style="max-width: 720px;">
+        <div class="panel-head"><h2>案件情報</h2></div>
+        <form method="post" novalidate>
+          {% csrf_token %}
+          <div class="form-group">
+            <label class="form-label" for="{{ form.name.id_for_label }}">案件名</label>
+            {{ form.name }}
+            {% for error in form.name.errors %}<div class="form-error-text">{{ error }}</div>{% endfor %}
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="{{ form.description.id_for_label }}">概要</label>
+            {{ form.description }}
+            {% for error in form.description.errors %}<div class="form-error-text">{{ error }}</div>{% endfor %}
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="{{ form.status.id_for_label }}">ステータス</label>
+            {{ form.status }}
+            {% for error in form.status.errors %}<div class="form-error-text">{{ error }}</div>{% endfor %}
+          </div>
+
+          <div class="form-group">
+            <div class="form-label">メンバー</div>
+            {% for member in users %}
+              <label class="form-label">
+                <input type="checkbox" name="members" value="{{ member.pk }}" {% if member.pk in member_ids %}checked{% endif %}>
+                {{ member.username }}
+              </label>
+            {% empty %}
+              <p class="empty-note">ユーザーはまだ登録されていません。</p>
+            {% endfor %}
+          </div>
+
+          <button type="submit" class="btn btn-primary">保存する</button>
+          <a href="{% url 'adminpanel:engagements' %}" class="btn btn-secondary">戻る</a>
+        </form>
+      </div>
+    </main>
+  </div>
+</div>
+{% endblock %}

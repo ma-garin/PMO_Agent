@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}トークン管理 | PMO Agent{% endblock %}
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/app_shell.css' %}">
+  <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+  <link rel="stylesheet" href="{% static 'css/tickets.css' %}">
+{% endblock %}
+{% block body %}
+<div class="app-shell">
+  {% include "partials/sidebar.html" %}
+
+  <div style="flex:1; display:flex; flex-direction:column; min-width:0;">
+    {% include "partials/header.html" %}
+
+    <main class="app-main">
+      <div class="breadcrumb">/ manage / tokens</div>
+      <h1 class="page-title">トークン管理</h1>
+      <p class="page-lead">全案件のチケット接続トークンを更新します。入力欄は常に空で、入力した場合だけ更新します。</p>
+
+      {% if messages %}
+        {% for message in messages %}<div class="alert">{{ message }}</div>{% endfor %}
+      {% endif %}
+
+      <div class="card panel">
+        <div class="panel-head"><h2>接続一覧</h2></div>
+        <div style="overflow-x: auto;">
+          <table class="ticket-table">
+            <thead>
+              <tr>
+                <th>案件</th>
+                <th>種別</th>
+                <th>接続名</th>
+                <th>接続先</th>
+                <th>トークン</th>
+                <th>最終同期</th>
+                <th>有効</th>
+                <th>更新</th>
+                <th></th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for source in sources %}
+                <tr>
+                  <td>{{ source.engagement.name }}</td>
+                  <td>{{ source.get_kind_display }}</td>
+                  <td><strong>{{ source.name }}</strong></td>
+                  <td>{{ source.base_url }} / {{ source.project_key }}</td>
+                  <td>****{{ source.api_token|slice:"-4:" }}</td>
+                  <td>{{ source.last_synced_at|default:"未実行" }}</td>
+                  <td>{% if source.is_active %}<span class="badge badge-active">有効</span>{% else %}<span class="badge badge-completed">無効</span>{% endif %}</td>
+                  <td>
+                    <form method="post">
+                      {% csrf_token %}
+                      <input type="hidden" name="action" value="update_token">
+                      <input type="hidden" name="source_id" value="{{ source.pk }}">
+                      <input type="password" name="api_token" class="form-input" placeholder="新しいトークン">
+                      <button type="submit" class="btn btn-secondary">保存</button>
+                    </form>
+                  </td>
+                  <td>
+                    <form method="post">
+                      {% csrf_token %}
+                      <input type="hidden" name="action" value="toggle_active">
+                      <input type="hidden" name="source_id" value="{{ source.pk }}">
+                      <button type="submit" class="btn btn-secondary">{% if source.is_active %}無効化{% else %}有効化{% endif %}</button>
+                    </form>
+                  </td>
+                  <td>
+                    <form method="post">
+                      {% csrf_token %}
+                      <input type="hidden" name="action" value="delete">
+                      <input type="hidden" name="source_id" value="{{ source.pk }}">
+                      <button type="submit" class="btn btn-secondary">削除</button>
+                    </form>
+                  </td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="10"><p class="empty-note">接続はまだ登録されていません。</p></td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+{% endblock %}

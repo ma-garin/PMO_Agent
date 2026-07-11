@@ -39,6 +39,7 @@
                 <strong>{{ source.name }}</strong>（{{ source.get_kind_display }}）
                 <div class="meta">
                   {{ source.base_url }} / {{ source.project_key }}<br>
+                  {% if user.is_staff %}トークン: ****{{ source.api_token|slice:"-4:" }}<br>{% endif %}
                   最終同期: {{ source.last_synced_at|default:"未実行" }}
                 </div>
               </div>
@@ -52,37 +53,39 @@
           {% endfor %}
         </div>
 
-        <div class="card panel">
-          <div class="panel-head"><h2>新しい接続を追加</h2></div>
-          <form method="post">
-            {% csrf_token %}
-            <div class="form-group">
-              <label class="form-label" for="{{ form.kind.id_for_label }}">種別</label>
-              {{ form.kind }}
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="{{ form.name.id_for_label }}">表示名</label>
-              {{ form.name }}
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="{{ form.base_url.id_for_label }}">接続先URL</label>
-              {{ form.base_url }}
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="{{ form.project_key.id_for_label }}">プロジェクトキー</label>
-              {{ form.project_key }}
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="{{ form.username.id_for_label }}">ユーザー名/メール</label>
-              {{ form.username }}
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="{{ form.api_token.id_for_label }}">APIトークン</label>
-              {{ form.api_token }}
-            </div>
-            <button type="submit" class="btn btn-primary btn-block">接続を追加</button>
-          </form>
-        </div>
+        {% if user.is_staff %}
+          <div class="card panel">
+            <div class="panel-head"><h2>新しい接続を追加</h2></div>
+            <form method="post">
+              {% csrf_token %}
+              <div class="form-group">
+                <label class="form-label" for="{{ form.kind.id_for_label }}">種別</label>
+                {{ form.kind }}
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="{{ form.name.id_for_label }}">表示名</label>
+                {{ form.name }}
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="{{ form.base_url.id_for_label }}">接続先URL</label>
+                {{ form.base_url }}
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="{{ form.project_key.id_for_label }}">プロジェクトキー</label>
+                {{ form.project_key }}
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="{{ form.username.id_for_label }}">ユーザー名/メール</label>
+                {{ form.username }}
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="{{ form.api_token.id_for_label }}">APIトークン</label>
+                {{ form.api_token }}
+              </div>
+              <button type="submit" class="btn btn-primary btn-block">接続を追加</button>
+            </form>
+          </div>
+        {% endif %}
       </div>
     </main>
   </div>

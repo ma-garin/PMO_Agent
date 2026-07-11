@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}管理 | PMO Agent{% endblock %}
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/app_shell.css' %}">
+  <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+{% block body %}
+<div class="app-shell">
+  {% include "partials/sidebar.html" %}
+
+  <div style="flex:1; display:flex; flex-direction:column; min-width:0;">
+    {% include "partials/header.html" %}
+
+    <main class="app-main">
+      <div class="breadcrumb">/ manage</div>
+      <h1 class="page-title">管理</h1>
+      <p class="page-lead">ユーザー、案件、チケット接続、LLM呼び出しログを管理します。</p>
+
+      {% if messages %}
+        {% for message in messages %}<div class="alert">{{ message }}</div>{% endfor %}
+      {% endif %}
+
+      <div class="stat-grid">
+        <div class="card stat-card">
+          <div class="stat-head">&#128101; ユーザー</div>
+          <div class="stat-value">{{ user_count }}</div>
+          <div class="stat-sub">登録ユーザー数</div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-head">&#128193; 案件</div>
+          <div class="stat-value">{{ engagement_count }}</div>
+          <div class="stat-sub">全案件数</div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-head">&#128279; 接続</div>
+          <div class="stat-value">{{ source_count }}</div>
+          <div class="stat-sub">チケット接続数</div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-head">&#129302; LLMログ</div>
+          <div class="stat-value">{{ llm_log_count }}</div>
+          <div class="stat-sub">Phase 3実装後に集計</div>
+        </div>
+      </div>
+
+      <div class="dash-columns">
+        <div class="card panel">
+          <div class="panel-head"><h2>ユーザー管理</h2></div>
+          <p class="empty-note">ユーザーの作成、管理者権限、有効状態を管理します。</p>
+          <a href="{% url 'adminpanel:users' %}" class="btn btn-primary">開く</a>
+        </div>
+        <div class="card panel">
+          <div class="panel-head"><h2>案件管理</h2></div>
+          <p class="empty-note">全案件の状態確認、編集、メンバー割当を行います。</p>
+          <a href="{% url 'adminpanel:engagements' %}" class="btn btn-primary">開く</a>
+        </div>
+        <div class="card panel">
+          <div class="panel-head"><h2>トークン管理</h2></div>
+          <p class="empty-note">接続トークンの更新、有効化、削除を行います。</p>
+          <a href="{% url 'adminpanel:tokens' %}" class="btn btn-primary">開く</a>
+        </div>
+        <div class="card panel">
+          <div class="panel-head"><h2>LLMログ</h2></div>
+          <p class="empty-note">Phase 3実装後に利用可能になります。</p>
+          <a href="{% url 'adminpanel:llm_logs' %}" class="btn btn-primary">開く</a>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+{% endblock %}

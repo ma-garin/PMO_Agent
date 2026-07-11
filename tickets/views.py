@@ -77,6 +77,10 @@ def source_settings(request):
         return redirect("engagements:select")
 
     if request.method == "POST":
+        if not request.user.is_staff:
+            messages.error(request, "この操作には管理者権限が必要です。")
+            return redirect("tickets:source_settings")
+
         form = TicketSourceForm(request.POST)
         if form.is_valid():
             source = form.save(commit=False)

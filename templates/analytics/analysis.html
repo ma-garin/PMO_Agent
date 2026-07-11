@@ -125,6 +125,10 @@
       <div class="card panel" style="margin-top: 18px;">
         <div class="panel-head">
           <h2>ODC分類（欠陥ごとに4軸を選んで確定）</h2>
+          <form method="post" action="{% url 'analytics:suggest_bulk' %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-secondary">AI推定を実行（未分類から最大10件）</button>
+          </form>
         </div>
         <div style="overflow-x: auto;">
           <table class="odc-table">

@@ -32,7 +32,5 @@ class TicketSourceForm(forms.ModelForm):
             "username": forms.TextInput(
                 attrs={"class": "form-input", "placeholder": "APIユーザー名またはメール"}
             ),
-            "api_token": forms.PasswordInput(
-                attrs={"class": "form-input"}, render_value=True
-            ),
+            "api_token": forms.PasswordInput(attrs={"class": "form-input"}),
         }

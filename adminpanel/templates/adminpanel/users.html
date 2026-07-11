@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}ユーザー管理 | PMO Agent{% endblock %}
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/app_shell.css' %}">
+  <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+  <link rel="stylesheet" href="{% static 'css/tickets.css' %}">
+{% endblock %}
+{% block body %}
+<div class="app-shell">
+  {% include "partials/sidebar.html" %}
+
+  <div style="flex:1; display:flex; flex-direction:column; min-width:0;">
+    {% include "partials/header.html" %}
+
+    <main class="app-main">
+      <div class="breadcrumb">/ manage / users</div>
+      <h1 class="page-title">ユーザー管理</h1>
+      <p class="page-lead">ユーザー作成、管理者権限、有効状態を管理します。</p>
+
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert {% if message.tags == 'error' %}alert-danger{% endif %}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+
+      <div class="dash-columns" style="grid-template-columns: 1fr 360px;">
+        <div class="card panel">
+          <div class="panel-head"><h2>ユーザー一覧</h2></div>
+          <div style="overflow-x: auto;">
+            <table class="ticket-table">
+              <thead>
+                <tr>
+                  <th>ユーザー名</th>
+                  <th>メール</th>
+                  <th>管理者</th>
+                  <th>有効</th>
+                  <th>最終ログイン</th>
+                  <th></th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for target in users %}
+                  <tr>
+                    <td><strong>{{ target.username }}</strong></td>
+                    <td>{{ target.email|default:"-" }}</td>
+                    <td>{% if target.is_staff %}<span class="badge badge-active">管理者</span>{% else %}-{% endif %}</td>
+                    <td>{% if target.is_active %}<span class="badge badge-active">有効</span>{% else %}<span class="badge badge-completed">無効</span>{% endif %}</td>
+                    <td>{{ target.last_login|default:"-" }}</td>
+                    <td>
+                      <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="toggle_staff">
+                        <input type="hidden" name="user_id" value="{{ target.pk }}">
+                        <button type="submit" class="btn btn-secondary">{% if target.is_staff %}管理者を外す{% else %}管理者にする{% endif %}</button>
+                      </form>
+                    </td>
+                    <td>
+                      <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="toggle_active">
+                        <input type="hidden" name="user_id" value="{{ target.pk }}">
+                        <button type="submit" class="btn btn-secondary">{% if target.is_active %}無効化{% else %}有効化{% endif %}</button>
+                      </form>
+                    </td>
+                  </tr>
+                {% empty %}
+                  <tr><td colspan="7"><p class="empty-note">ユーザーはまだ登録されていません。</p></td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card panel">
+          <div class="panel-head"><h2>新規ユーザー</h2></div>
+          <form method="post" novalidate>
+            {% csrf_token %}
+            <input type="hidden" name="action" value="create">
+            <div class="form-group">
+              <label class="form-label" for="{{ form.username.id_for_label }}">ユーザー名</label>
+              {{ form.username }}
+              {% for error in form.username.errors %}<div class="form-error-text">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="{{ form.email.id_for_label }}">メールアドレス</label>
+              {{ form.email }}
+              {% for error in form.email.errors %}<div class="form-error-text">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="{{ form.password.id_for_label }}">初期パスワード</label>
+              {{ form.password }}
+              {% for error in form.password.errors %}<div class="form-error-text">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="form-group">
+              <label class="form-label">{{ form.is_staff }} 管理者にする</label>
+              {% for error in form.is_staff.errors %}<div class="form-error-text">{{ error }}</div>{% endfor %}
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">作成する</button>
+          </form>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+{% endblock %}

@@ -6,7 +6,10 @@ from django.views.decorators.http import require_POST
 
 from engagements.models import Engagement
 
+from llm.services import LlmError
+
 from . import services
+from .llm_suggest import suggest_classification
 from .models import OdcClassification
 
 
@@ -68,6 +71,36 @@ def classify_ticket(request, ticket_id):
     classification.classified_by = request.user
     classification.save()
     messages.success(request, f"{ticket.external_id} のODC分類を確定しました。")
+    return redirect("analytics:analysis")
+
+
+@require_POST
+@login_required
+def suggest_bulk(request):
+    engagement = _current_engagement(request)
+    if engagement is None:
+        return redirect("engagements:select")
+
+    targets = (
+        services.get_defects(engagement)
+        .exclude(odc_classification__status=OdcClassification.Status.CONFIRMED)
+        .order_by("source_created_at")[:10]
+    )
+    succeeded = 0
+    failed = 0
+    for ticket in targets:
+        try:
+            suggest_classification(ticket, user=request.user)
+            succeeded += 1
+        except LlmError:
+            failed += 1
+
+    if succeeded:
+        messages.success(request, f"{succeeded}件のAI推定を作成しました。")
+    if failed:
+        messages.error(request, f"{failed}件はLLM呼び出しに失敗しました。")
+    if not succeeded and not failed:
+        messages.info(request, "対象の欠陥がありません。")
     return redirect("analytics:analysis")
 
 

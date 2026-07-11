@@ -55,6 +55,10 @@ INSTALLED_APPS = [
     "dashboard",
     "tickets",
     "analytics",
+    "adminpanel",
+    "llm",
+    "copilot",
+    "reports",
 ]
 
 MIDDLEWARE = [

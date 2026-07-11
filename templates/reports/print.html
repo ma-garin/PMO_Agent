@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}{{ report.title }} | PMO Agent{% endblock %}
+{% block extra_css %}
+<style>
+  body { background: #fff; }
+  .print-page { max-width: 800px; margin: 40px auto; padding: 0 24px; color: #1A212B; }
+  .print-hint { background: #EEF5FD; padding: 12px 16px; border-radius: 8px; font-size: 13px; margin-bottom: 24px; }
+  @media print { .print-hint { display: none; } }
+</style>
+{% endblock %}
+{% block body %}
+<div class="print-page">
+  <p class="print-hint">PDFとして保存するには、ブラウザの印刷機能（Cmd+P / Ctrl+P）から「PDFに保存」を選択してください。</p>
+  <h1>{{ report.title }}</h1>
+  <p>{{ engagement.name }} / {{ report.period_start|date:"Y/n/j" }} 〜 {{ report.period_end|date:"Y/n/j" }}</p>
+  <div>{{ body_html|safe }}</div>
+</div>
+{% endblock %}
