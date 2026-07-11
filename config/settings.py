@@ -48,6 +48,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    # 自前アプリより前に置き、Procrastinateの初期化を早める(公式Django統合の推奨順)
+    "procrastinate.contrib.django",
     "accounts",
     "engagements",
     "dashboard",
@@ -144,3 +146,9 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LOGIN_URL = "accounts:login"
 LOGIN_REDIRECT_URL = "engagements:select"
 LOGOUT_REDIRECT_URL = "accounts:login"
+
+
+# Procrastinate (PostgreSQLネイティブの非同期ジョブキュー、ADR 0003)
+# 接続はDjangoのDATABASES["default"]を再利用する(Procrastinateの既定値のため明示指定は不要)。
+# ジョブ実体はDjangoマイグレーション経由でスキーマ管理される(python manage.py migrate)。
+PROCRASTINATE_DATABASE_ALIAS = "default"
