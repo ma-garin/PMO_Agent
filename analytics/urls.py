@@ -8,5 +8,6 @@ urlpatterns = [
     path("", views.analysis, name="analysis"),
     path("classify/<int:ticket_id>/", views.classify_ticket, name="classify"),
     path("suggest/", views.suggest_bulk, name="suggest_bulk"),
+    path("export/odc.csv", views.export_odc_csv, name="export_odc_csv"),
     path("settings/", views.update_settings, name="update_settings"),
 ]

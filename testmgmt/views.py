@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
+from config.csv_utils import csv_response
 from engagements.models import Engagement
 from llm.providers.base import LlmError
 
@@ -93,6 +94,21 @@ def plan_edit(request, pk):
 
 
 # --- テスト進捗 ---
+
+
+@login_required
+def progress_export_csv(request):
+    engagement = _current_engagement(request)
+    if engagement is None:
+        return redirect("engagements:select")
+
+    entries = TestProgressEntry.objects.filter(engagement=engagement).order_by("test_level", "date")
+    header = ["テストレベル", "日付", "計画累計", "実行累計", "合格累計", "メモ"]
+    rows = (
+        [e.test_level, e.date, e.planned_cases, e.executed_cases, e.passed_cases, e.note]
+        for e in entries
+    )
+    return csv_response("test_progress.csv", header, rows)
 
 
 @login_required

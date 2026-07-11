@@ -156,6 +156,15 @@
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
 }
+.sidebar-brand .brand-text { flex: 1; white-space: nowrap; overflow: hidden; }
+.sidebar-toggle {
+  width: 24px; height: 24px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  border: none; background: transparent; color: var(--ink-2);
+  border-radius: 6px; cursor: pointer; font-size: 11px;
+  transition: transform .15s ease;
+}
+.sidebar-toggle:hover { background: var(--ground); color: var(--ink); }
 .sidebar-project {
   margin: 0 8px 16px;
   padding: 10px 12px;
@@ -202,6 +211,35 @@
   width: 100%; cursor: pointer; font-family: inherit;
 }
 .sidebar-logout:hover { background: var(--ground); color: var(--ink); }
+
+/* ---------- サイドバー折りたたみ ---------- */
+.sidebar.collapsed { width: 68px; padding: 20px 10px; }
+.sidebar.collapsed .brand-text,
+.sidebar.collapsed .sidebar-project,
+.sidebar.collapsed .sidebar-section-label,
+.sidebar.collapsed .nav-label,
+.sidebar.collapsed .badge-count {
+  display: none;
+}
+.sidebar.collapsed .sidebar-toggle { transform: rotate(180deg); }
+.sidebar.collapsed .sidebar-brand { justify-content: center; padding: 0 0 20px; }
+.sidebar.collapsed .sidebar-nav .nav-item { justify-content: center; padding: 9px; }
+
+/* ---------- レスポンシブ ---------- */
+@media (max-width: 900px) {
+  .sidebar { width: 68px; padding: 20px 10px; }
+  .sidebar .brand-text,
+  .sidebar .sidebar-project,
+  .sidebar .sidebar-section-label,
+  .sidebar .nav-label,
+  .sidebar .badge-count,
+  .sidebar .sidebar-toggle {
+    display: none;
+  }
+  .sidebar .sidebar-brand { justify-content: center; padding: 0 0 20px; }
+  .sidebar .sidebar-nav .nav-item { justify-content: center; padding: 9px; }
+  .app-main { padding: 20px; }
+}
 
 .app-main { flex: 1; padding: 32px; max-width: 1400px; }
 .app-main .breadcrumb { font-size: 12.5px; color: var(--ink-2); margin-bottom: 6px; }

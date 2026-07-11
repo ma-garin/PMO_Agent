@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}カレンダー | PMO Agent{% endblock %}
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/app_shell.css' %}">
+  <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+  <style>
+    .cal-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    .cal-table th { padding: 8px; font-size: 11.5px; color: var(--ink-2); text-align: left; }
+    .cal-table td { border: 1px solid var(--border); vertical-align: top; height: 90px; padding: 6px; font-size: 12px; }
+    .cal-table td.out-month { color: var(--ink-3, var(--ink-2)); opacity: 0.4; }
+    .cal-table td.today { background: var(--primary-soft); }
+    .cal-day-num { font-weight: 600; margin-bottom: 4px; }
+    .cal-ticket { display: block; font-size: 11px; margin-bottom: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .cal-ticket::before { content: "●"; color: var(--danger); margin-right: 3px; font-size: 8px; }
+    .cal-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  </style>
+{% endblock %}
+{% block body %}
+<div class="app-shell">
+  {% include "partials/sidebar.html" %}
+  <div style="flex:1; display:flex; flex-direction:column; min-width:0;">
+    {% include "partials/header.html" %}
+    <main class="app-main">
+      <h1 class="page-title">カレンダー</h1>
+      <div class="card panel">
+        <div class="cal-nav">
+          <a href="?year={{ prev_year }}&month={{ prev_month }}" class="btn btn-secondary">&#8249; 前月</a>
+          <strong>{{ year }}年{{ month }}月</strong>
+          <a href="?year={{ next_year }}&month={{ next_month }}" class="btn btn-secondary">翌月 &#8250;</a>
+        </div>
+        <table class="cal-table">
+          <thead>
+            <tr><th>月</th><th>火</th><th>水</th><th>木</th><th>金</th><th>土</th><th>日</th></tr>
+          </thead>
+          <tbody>
+            {% for week in weeks %}
+              <tr>
+                {% for day in week %}
+                  <td class="{% if not day.in_month %}out-month{% endif %}{% if day.date == today %} today{% endif %}">
+                    <div class="cal-day-num">{{ day.date.day }}</div>
+                    {% for ticket in day.tickets|slice:":3" %}
+                      <a href="/tickets/?q={{ ticket.external_id }}" class="cal-ticket">{{ ticket.summary }}</a>
+                    {% endfor %}
+                  </td>
+                {% endfor %}
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+</div>
+{% endblock %}

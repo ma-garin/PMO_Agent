@@ -1,9 +1,9 @@
 <header class="app-header">
-  <div class="app-search">
+  <form class="app-search" action="/search/" method="get">
     <span>&#128269;</span>
-    <span>チケット・案件を検索</span>
+    <input type="text" name="q" id="global-search-input" placeholder="チケット・案件を検索" autocomplete="off" style="border:none; background:transparent; outline:none; flex:1; color:var(--ink); font-size:13.5px;">
     <kbd>&#8984;K</kbd>
-  </div>
+  </form>
   <div class="app-header-actions">
     <details class="notif-dropdown">
       <summary class="icon-btn" title="通知">

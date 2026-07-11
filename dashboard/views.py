@@ -1,11 +1,16 @@
 from datetime import timedelta
 
+from django.apps import apps
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
 from engagements.models import Engagement
 from tickets.models import Ticket
+
+from . import services
+
+SEARCH_LIMIT = 10
 
 
 @login_required
@@ -53,3 +58,110 @@ def home(request):
         "activities": engagement.activities.select_related("actor")[:5],
     }
     return render(request, "dashboard/home.html", context)
+
+
+@login_required
+def search_results(request):
+    from django.db.models import Q
+
+    query = request.GET.get("q", "").strip()
+    groups = []
+
+    if query:
+        engagement_id = request.session.get("current_engagement_id")
+
+        engagement_matches = Engagement.objects.filter(
+            Q(owner=request.user) | Q(members=request.user), name__icontains=query
+        ).distinct()[:SEARCH_LIMIT]
+        if engagement_matches:
+            groups.append({"label": "案件", "items": [
+                {"title": e.name, "url": f"/engagements/{e.pk}/enter/"} for e in engagement_matches
+            ]})
+
+        if engagement_id:
+            ticket_matches = Ticket.objects.filter(
+                source__engagement_id=engagement_id
+            ).filter(Q(summary__icontains=query) | Q(external_id__icontains=query))[:SEARCH_LIMIT]
+            if ticket_matches:
+                groups.append({"label": "チケット", "items": [
+                    {"title": f"{t.external_id}: {t.summary}", "url": "/tickets/?q=" + query}
+                    for t in ticket_matches
+                ]})
+
+            if apps.is_installed("testmgmt"):
+                from testmgmt.models import TestPlan
+
+                plan_matches = TestPlan.objects.filter(
+                    engagement_id=engagement_id, title__icontains=query
+                )[:SEARCH_LIMIT]
+                if plan_matches:
+                    groups.append({"label": "テスト計画", "items": [
+                        {"title": p.title, "url": f"/testmgmt/plans/{p.pk}/"} for p in plan_matches
+                    ]})
+
+            if apps.is_installed("reports"):
+                from reports.models import Report
+
+                report_matches = Report.objects.filter(
+                    engagement_id=engagement_id, title__icontains=query
+                )[:SEARCH_LIMIT]
+                if report_matches:
+                    groups.append({"label": "レポート", "items": [
+                        {"title": r.title, "url": f"/reports/{r.pk}/"} for r in report_matches
+                    ]})
+
+            if apps.is_installed("knowledge"):
+                from django.db.models import Q as KQ
+
+                from knowledge.models import Document
+
+                doc_matches = Document.objects.filter(
+                    KQ(engagement_id=engagement_id) | KQ(engagement__isnull=True),
+                    title__icontains=query,
+                )[:SEARCH_LIMIT]
+                if doc_matches:
+                    groups.append({"label": "ナレッジ", "items": [
+                        {"title": d.title, "url": "/knowledge/"} for d in doc_matches
+                    ]})
+
+    return render(request, "dashboard/search.html", {"query": query, "groups": groups, "nav_active": ""})
+
+
+@login_required
+def calendar_view(request):
+    engagement_id = request.session.get("current_engagement_id")
+    if not engagement_id:
+        return redirect("engagements:select")
+    engagement = get_object_or_404(Engagement, pk=engagement_id)
+
+    today = timezone.localdate()
+    year = int(request.GET.get("year", today.year))
+    month = int(request.GET.get("month", today.month))
+
+    if month < 1:
+        month = 12
+        year -= 1
+    elif month > 12:
+        month = 1
+        year += 1
+
+    weeks = services.month_grid(engagement, year, month)
+
+    prev_month = month - 1 or 12
+    prev_year = year if month > 1 else year - 1
+    next_month = month + 1 if month < 12 else 1
+    next_year = year if month < 12 else year + 1
+
+    context = {
+        "engagement": engagement,
+        "nav_active": "calendar",
+        "weeks": weeks,
+        "year": year,
+        "month": month,
+        "today": today,
+        "prev_year": prev_year,
+        "prev_month": prev_month,
+        "next_year": next_year,
+        "next_month": next_month,
+    }
+    return render(request, "dashboard/calendar.html", context)

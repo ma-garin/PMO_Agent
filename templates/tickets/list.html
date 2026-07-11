@@ -22,7 +22,10 @@
             全{{ counts.all }}件のチケット・うち{{ counts.overdue }}件が期限超過です。
           </p>
         </div>
-        <a href="{% url 'tickets:source_settings' %}" class="btn btn-secondary">接続設定</a>
+        <div style="display:flex; gap:10px;">
+          <a href="{% url 'tickets:export_csv' %}?tab={{ tab }}&q={{ query }}" class="btn btn-secondary">CSVエクスポート</a>
+          <a href="{% url 'tickets:source_settings' %}" class="btn btn-secondary">接続設定</a>
+        </div>
       </div>
 
       <div class="tabs">

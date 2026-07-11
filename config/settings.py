@@ -63,6 +63,7 @@ INSTALLED_APPS = [
     "tpi",
     "risks",
     "testmgmt",
+    "members",
     "axes",
 ]
 

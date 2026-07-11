@@ -41,6 +41,7 @@
           <h3>{{ engagement.name }}</h3>
           <span class="badge badge-{{ engagement.status }}">{{ engagement.get_status_display }}</span>
         </div>
+        {% if engagement.is_non_member %}<span class="badge" style="background:var(--ground); color:var(--ink-2);">参加していません</span>{% endif %}
         <p class="desc">{{ engagement.description|default:"概要は未設定です" }}</p>
         <div>
           <div class="progress-bar-track">
@@ -50,6 +51,12 @@
             <span>進捗</span>
             <span>{{ engagement.progress }}%</span>
           </div>
+        </div>
+        <div class="portfolio-stats-row">
+          <span title="未クローズ">&#128027; {{ engagement.stats.open }}</span>
+          <span title="期限超過" class="{% if engagement.stats.overdue %}stat-danger{% endif %}">&#9888; {{ engagement.stats.overdue }}</span>
+          <span title="未読通知" class="{% if engagement.stats.unread %}stat-danger{% endif %}">&#128276; {{ engagement.stats.unread }}</span>
+          <span title="最終同期" class="stat-muted">{% if engagement.stats.last_sync %}{{ engagement.stats.last_sync|timesince }}前{% else %}未同期{% endif %}</span>
         </div>
         <div class="project-card-footer">
           <div class="member-stack">

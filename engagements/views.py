@@ -1,13 +1,53 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib import messages
-from django.db.models import Q
+from django.db.models import Count, Max, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
+from django.utils import timezone
 from django.views.generic import CreateView, ListView
 
 from .forms import EngagementForm, EngagementLlmSettingsForm
 from .models import Engagement
+
+
+def portfolio_stats(engagement_ids: list[int]) -> dict:
+    """案件横断のポートフォリオ統計。N+1を避けるため集計クエリ3本のみ実行する。"""
+    from tickets.models import Notification, Ticket
+
+    today = timezone.localdate()
+    open_counts = dict(
+        Ticket.objects.filter(source__engagement_id__in=engagement_ids)
+        .exclude(is_done=True)
+        .values_list("source__engagement_id")
+        .annotate(count=Count("id"))
+    )
+    overdue_counts = dict(
+        Ticket.objects.filter(source__engagement_id__in=engagement_ids, due_date__lt=today)
+        .exclude(is_done=True)
+        .values_list("source__engagement_id")
+        .annotate(count=Count("id"))
+    )
+    unread_counts = dict(
+        Notification.objects.filter(engagement_id__in=engagement_ids, is_read=False)
+        .values_list("engagement_id")
+        .annotate(count=Count("id"))
+    )
+    sync_dates = dict(
+        Engagement.objects.filter(pk__in=engagement_ids)
+        .values_list("pk")
+        .annotate(last_sync=Max("ticket_sources__last_synced_at"))
+    )
+
+    return {
+        eid: {
+            "open": open_counts.get(eid, 0),
+            "overdue": overdue_counts.get(eid, 0),
+            "unread": unread_counts.get(eid, 0),
+            "last_sync": sync_dates.get(eid),
+        }
+        for eid in engagement_ids
+    }
 
 
 class EngagementSelectView(LoginRequiredMixin, ListView):
@@ -17,11 +57,31 @@ class EngagementSelectView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         user = self.request.user
-        return (
+        member_qs = (
             Engagement.objects.filter(Q(owner=user) | Q(members=user))
             .distinct()
             .prefetch_related("members")
         )
+        if not user.is_staff:
+            return member_qs
+
+        member_list = list(member_qs)
+        member_ids = [e.pk for e in member_list]
+        others = list(
+            Engagement.objects.exclude(pk__in=member_ids).prefetch_related("members")
+        )
+        for e in others:
+            e.is_non_member = True
+        return member_list + others
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        engagements = context[self.context_object_name]
+        ids = [e.pk for e in engagements]
+        stats = portfolio_stats(ids)
+        for e in engagements:
+            e.stats = stats.get(e.pk, {"open": 0, "overdue": 0, "unread": 0, "last_sync": None})
+        return context
 
 
 class EngagementCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):

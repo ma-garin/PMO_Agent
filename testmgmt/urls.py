@@ -11,6 +11,7 @@ urlpatterns = [
     path("progress/", views.progress_view, name="progress"),
     path("progress/entry/", views.progress_entry_create, name="progress_entry_create"),
     path("progress/import/", views.progress_csv_import, name="progress_import"),
+    path("progress/export.csv", views.progress_export_csv, name="progress_export_csv"),
     path("gates/", views.gate_list, name="gates"),
     path("gates/new/", views.gate_create, name="gate_create"),
     path("gates/<int:pk>/", views.gate_detail, name="gate_detail"),

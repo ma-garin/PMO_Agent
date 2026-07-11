@@ -4,6 +4,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
+from config.csv_utils import csv_response
 from engagements.models import Engagement
 
 from llm.services import LlmError
@@ -102,6 +103,25 @@ def suggest_bulk(request):
     if not succeeded and not failed:
         messages.info(request, "対象の欠陥がありません。")
     return redirect("analytics:analysis")
+
+
+@login_required
+def export_odc_csv(request):
+    engagement = _current_engagement(request)
+    if engagement is None:
+        return redirect("engagements:select")
+
+    confirmed = OdcClassification.objects.filter(
+        ticket__in=services.get_defects(engagement), status=OdcClassification.Status.CONFIRMED
+    ).select_related("ticket")
+
+    header = ["チケットID", "概要", "欠陥タイプ", "トリガー", "検出アクティビティ", "影響度"]
+    rows = (
+        [c.ticket.external_id, c.ticket.summary, c.get_defect_type_display(),
+         c.get_trigger_display(), c.get_activity_display(), c.get_impact_display()]
+        for c in confirmed
+    )
+    return csv_response("odc_classifications.csv", header, rows)
 
 
 @require_POST

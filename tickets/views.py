@@ -4,6 +4,7 @@ from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
+from config.csv_utils import csv_response
 from engagements.models import Engagement
 
 from .forms import TicketSourceForm
@@ -68,6 +69,36 @@ def ticket_list(request):
         "today": today,
     }
     return render(request, "tickets/list.html", context)
+
+
+@login_required
+def ticket_export_csv(request):
+    engagement = _current_engagement(request)
+    if engagement is None:
+        return redirect("engagements:select")
+
+    today = timezone.localdate()
+    tickets = Ticket.objects.filter(source__engagement=engagement).select_related("source")
+
+    tab = request.GET.get("tab", "all")
+    if tab == "in_progress":
+        tickets = tickets.exclude(is_done=True)
+    elif tab == "done":
+        tickets = tickets.filter(is_done=True)
+    elif tab == "overdue":
+        tickets = tickets.filter(is_done=False, due_date__lt=today)
+
+    query = request.GET.get("q", "").strip()
+    if query:
+        tickets = tickets.filter(summary__icontains=query)
+
+    header = ["チケットID", "概要", "接続元", "優先度", "担当", "期限", "状態", "完了"]
+    rows = (
+        [t.external_id, t.summary, t.source.get_kind_display(), t.priority, t.assignee_name,
+         t.due_date or "", t.status, "完了" if t.is_done else "未完了"]
+        for t in tickets
+    )
+    return csv_response("tickets.csv", header, rows)
 
 
 @login_required
