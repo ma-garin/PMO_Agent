@@ -1,0 +1,25 @@
+.risk-matrix { border-collapse: collapse; width: 100%; }
+.risk-matrix th, .risk-matrix td { border: 1px solid var(--border); text-align: center; padding: 6px; font-size: 12px; }
+.risk-matrix th { background: var(--surface-2, var(--ground)); color: var(--ink-2); font-weight: 600; }
+.risk-cell { display: block; width: 100%; height: 100%; padding: 10px 4px; border-radius: 6px; text-decoration: none; color: var(--ink); font-weight: 700; }
+.risk-cell.high { background: var(--danger-soft); color: var(--danger); }
+.risk-cell.medium { background: #FFF3E0; color: var(--warning); }
+.risk-cell.low { background: var(--success-soft); color: var(--success); }
+.risk-cell.empty { background: var(--ground); color: var(--ink-2); font-weight: 400; }
+
+.severity-badge { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; }
+.severity-badge.high { background: var(--danger-soft); color: var(--danger); }
+.severity-badge.medium { background: #FFF3E0; color: var(--warning); }
+.severity-badge.low { background: var(--success-soft); color: var(--success); }
+
+.kanban { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.kanban-col { background: var(--ground); border-radius: 10px; padding: 12px; min-height: 200px; }
+.kanban-col h3 { font-size: 13px; margin: 0 0 10px; color: var(--ink-2); }
+.kanban-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; font-size: 12.5px; }
+.kanban-card .title { font-weight: 600; margin-bottom: 4px; }
+.kanban-card .meta { color: var(--ink-2); font-size: 11.5px; }
+.kanban-card select { margin-top: 8px; font-size: 11.5px; }
+
+.proposal-card { border: 1px dashed var(--spec, var(--primary)); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; background: var(--spec-soft, var(--primary-soft)); }
+.proposal-card .title { font-weight: 700; margin-bottom: 4px; }
+.proposal-card .desc { font-size: 12.5px; color: var(--ink-2); margin-bottom: 8px; }

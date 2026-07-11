@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}改善アクション | PMO Agent{% endblock %}
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/app_shell.css' %}">
+  <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+  <link rel="stylesheet" href="{% static 'css/risks.css' %}">
+{% endblock %}
+{% block body %}
+<div class="app-shell">
+  {% include "partials/sidebar.html" %}
+  <div style="flex:1; display:flex; flex-direction:column; min-width:0;">
+    {% include "partials/header.html" %}
+    <main class="app-main">
+      <div class="app-main-header">
+        <div>
+          <h1 class="page-title">改善アクション</h1>
+          <p class="page-lead"><a href="{% url 'risks:list' %}">← リスク台帳に戻る</a></p>
+        </div>
+        <a href="{% url 'risks:action_create' %}" class="btn btn-primary">＋ 新規アクション</a>
+      </div>
+
+      <div class="kanban">
+        <div class="kanban-col">
+          <h3>計画（{{ planned|length }}）</h3>
+          {% for a in planned %}
+            <div class="kanban-card">
+              <div class="title">{{ a.title }}</div>
+              {% if a.due_date %}<div class="meta">期限: {{ a.due_date }}</div>{% endif %}
+              <form method="post" action="{% url 'risks:action_status' a.pk %}">
+                {% csrf_token %}
+                <select name="status" onchange="this.form.submit()">
+                  <option value="planned" selected>計画</option>
+                  <option value="in_progress">実行中</option>
+                  <option value="done">完了</option>
+                  <option value="cancelled">中止</option>
+                </select>
+              </form>
+            </div>
+          {% empty %}<p class="empty-note">なし</p>{% endfor %}
+        </div>
+        <div class="kanban-col">
+          <h3>実行中（{{ in_progress|length }}）</h3>
+          {% for a in in_progress %}
+            <div class="kanban-card">
+              <div class="title">{{ a.title }}</div>
+              {% if a.due_date %}<div class="meta">期限: {{ a.due_date }}</div>{% endif %}
+              <form method="post" action="{% url 'risks:action_status' a.pk %}">
+                {% csrf_token %}
+                <select name="status" onchange="this.form.submit()">
+                  <option value="planned">計画</option>
+                  <option value="in_progress" selected>実行中</option>
+                  <option value="done">完了</option>
+                  <option value="cancelled">中止</option>
+                </select>
+              </form>
+            </div>
+          {% empty %}<p class="empty-note">なし</p>{% endfor %}
+        </div>
+        <div class="kanban-col">
+          <h3>完了（{{ done|length }}）</h3>
+          {% for a in done %}
+            <div class="kanban-card">
+              <div class="title">{{ a.title }}</div>
+              {% if a.effect_note %}<div class="meta">{{ a.effect_note }}</div>{% endif %}
+            </div>
+          {% empty %}<p class="empty-note">なし</p>{% endfor %}
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+{% endblock %}

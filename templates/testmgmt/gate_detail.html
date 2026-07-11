@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{{ gate.name }} | PMO Agent{% endblock %}
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/app_shell.css' %}">
+  <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+  <link rel="stylesheet" href="{% static 'css/testmgmt.css' %}">
+{% endblock %}
+{% block body %}
+<div class="app-shell">
+  {% include "partials/sidebar.html" %}
+  <div style="flex:1; display:flex; flex-direction:column; min-width:0;">
+    {% include "partials/header.html" %}
+    <main class="app-main">
+      <div class="breadcrumb"><a href="{% url 'testmgmt:gates' %}">← 品質ゲート一覧</a></div>
+      <h1 class="page-title">{{ gate.name }}</h1>
+      <p class="page-lead">
+        {% if gate.verdict == 'passed' %}<span class="status-pill done">合格</span>
+        {% elif gate.verdict == 'failed' %}<span class="status-pill overdue">不合格</span>
+        {% else %}<span class="status-pill open">判定前</span>{% endif %}
+      </p>
+
+      {% if messages %}
+        {% for message in messages %}<div class="alert">{{ message }}</div>{% endfor %}
+      {% endif %}
+
+      <div class="card panel">
+        <div class="panel-head"><h2>自動判定結果</h2></div>
+        {% for r in evaluation.results %}
+          <div class="gate-result-row {% if r.ok %}ok{% else %}ng{% endif %}">
+            <span>{{ r.label }}</span>
+            <span>期待値: {{ r.expected }} / 実績: {{ r.actual }}</span>
+            <span class="ok-icon">{% if r.ok %}○{% else %}×{% endif %}</span>
+          </div>
+        {% empty %}
+          <p class="empty-note">判定条件が設定されていません。</p>
+        {% endfor %}
+        {% if evaluation.results %}
+          <p style="margin-top:12px; font-weight:700;">総合: {% if evaluation.all_ok %}全条件を満たしています{% else %}未達の条件があります{% endif %}</p>
+        {% endif %}
+      </div>
+
+      <div class="card panel" style="margin-top:18px;">
+        <div class="panel-head"><h2>人による確定</h2></div>
+        <form method="post">
+          {% csrf_token %}
+          <div class="form-group">
+            <label class="form-label">判定</label>
+            <select name="verdict" class="form-select">
+              <option value="pending" {% if gate.verdict == 'pending' %}selected{% endif %}>判定前</option>
+              <option value="passed" {% if gate.verdict == 'passed' %}selected{% endif %}>合格</option>
+              <option value="failed" {% if gate.verdict == 'failed' %}selected{% endif %}>不合格</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">コメント</label>
+            <textarea name="note" class="form-input" rows="3">{{ gate.note }}</textarea>
+          </div>
+          <button type="submit" class="btn btn-primary">確定する</button>
+        </form>
+        {% if gate.judged_by %}<p style="font-size:12px; color:var(--ink-2); margin-top:10px;">判定者: {{ gate.judged_by }} / {{ gate.judged_at }}</p>{% endif %}
+      </div>
+    </main>
+  </div>
+</div>
+{% endblock %}

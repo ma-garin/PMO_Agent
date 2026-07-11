@@ -31,5 +31,7 @@ urlpatterns = [
     path("reports/", include("reports.urls")),
     path("knowledge/", include("knowledge.urls")),
     path("tpi/", include("tpi.urls")),
+    path("risks/", include("risks.urls")),
+    path("testmgmt/", include("testmgmt.urls")),
     path("", RedirectView.as_view(pattern_name="engagements:select", permanent=False)),
 ]

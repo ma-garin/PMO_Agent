@@ -8,7 +8,9 @@ DRAFT_SYSTEM = (
     "# 品質状況報告書\n"
     "## サマリー\n"
     "## 定量分析\n"
+    "## テスト進捗\n"
     "## ODC分析所見\n"
+    "## リスク状況\n"
     "## リスクと提言\n"
 )
 
@@ -17,6 +19,39 @@ def generate_draft(engagement, period_start, period_end, user=None) -> str:
     summary = summarize_defects(engagement)
     series = convergence_series(engagement)[-8:]
     odc = odc_distribution(engagement)
+
+    risk_section = ""
+    try:
+        from risks.models import RiskItem
+        from testmgmt.services import evaluate_gate, progress_summary
+        from testmgmt.models import QualityGate
+
+        risks = (
+            RiskItem.objects.filter(engagement=engagement)
+            .exclude(status=RiskItem.Status.CLOSED)
+            .order_by("-probability", "-impact")[:10]
+        )
+        risk_counts = {"high": 0, "medium": 0, "low": 0}
+        for r in risks:
+            risk_counts[r.severity] += 1
+        progress_rows = progress_summary(engagement)
+        latest_gate = (
+            QualityGate.objects.filter(engagement=engagement).order_by("-created_at").first()
+        )
+        gate_summary = None
+        if latest_gate is not None:
+            gate_summary = {
+                "name": latest_gate.name,
+                "verdict": latest_gate.get_verdict_display(),
+                **evaluate_gate(latest_gate),
+            }
+        risk_section = (
+            f"\nリスク件数(高/中/低): {risk_counts}\n"
+            f"テスト進捗サマリー: {progress_rows}\n"
+            f"直近の品質ゲート判定: {gate_summary}\n"
+        )
+    except ImportError:
+        pass
 
     rag_section = ""
     try:
@@ -34,6 +69,7 @@ def generate_draft(engagement, period_start, period_end, user=None) -> str:
         f"欠陥サマリー: {summary}\n\n"
         f"週次収束データ(直近8点): {series}\n\n"
         f"ODC分布(確定済み): {odc}\n"
+        f"{risk_section}"
         f"{rag_section}"
     )
     return run_completion(

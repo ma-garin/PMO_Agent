@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}テスト計画 | PMO Agent{% endblock %}
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/app_shell.css' %}">
+  <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+  <link rel="stylesheet" href="{% static 'css/tickets.css' %}">
+{% endblock %}
+{% block body %}
+<div class="app-shell">
+  {% include "partials/sidebar.html" %}
+  <div style="flex:1; display:flex; flex-direction:column; min-width:0;">
+    {% include "partials/header.html" %}
+    <main class="app-main">
+      <div class="app-main-header">
+        <div>
+          <h1 class="page-title">テスト計画</h1>
+          <p class="page-lead">
+            <a href="{% url 'testmgmt:progress' %}">進捗</a> ・
+            <a href="{% url 'testmgmt:gates' %}">品質ゲート</a>
+          </p>
+        </div>
+      </div>
+
+      <div class="dash-columns" style="grid-template-columns: 2fr 1fr;">
+        <div class="card panel">
+          <div class="panel-head"><h2>計画一覧</h2></div>
+          <table class="ticket-table">
+            <thead><tr><th>タイトル</th><th>種別</th><th>状態</th><th></th></tr></thead>
+            <tbody>
+              {% for plan in plans %}
+                <tr>
+                  <td>{{ plan.title }}{% if plan.test_level %}<br><span style="font-size:11.5px; color:var(--ink-2);">{{ plan.test_level }}</span>{% endif %}</td>
+                  <td>{{ plan.get_kind_display }}</td>
+                  <td>{% if plan.status == 'approved' %}<span class="status-pill done">承認済み</span>{% else %}<span class="status-pill open">ドラフト</span>{% endif %}</td>
+                  <td><a href="{% url 'testmgmt:plan_edit' plan.pk %}" class="btn btn-secondary">開く</a></td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="4"><p class="empty-note">計画はまだありません。</p></td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="card panel">
+          <div class="panel-head"><h2>新規作成</h2></div>
+          <form method="post" action="{% url 'testmgmt:plan_create' %}">
+            {% csrf_token %}
+            <div class="form-group">
+              <label class="form-label">種別</label>
+              <select name="kind" class="form-select">
+                <option value="master">マスターテスト計画</option>
+                <option value="level">レベルテスト計画</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">タイトル</label>
+              <input type="text" name="title" class="form-input" placeholder="例: システムテスト計画 v1" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">対象テストレベル（レベル計画の場合）</label>
+              <input type="text" name="test_level" class="form-input" placeholder="単体/結合/システム/受入">
+            </div>
+            <div class="form-group">
+              <label style="font-weight:400; font-size:13px;"><input type="checkbox" name="use_ai" value="1" checked> AIドラフトを生成する</label>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">作成する</button>
+          </form>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+{% endblock %}

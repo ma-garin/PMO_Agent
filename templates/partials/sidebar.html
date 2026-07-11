@@ -24,6 +24,8 @@
     <a href="{% url 'reports:list' %}" class="nav-item{% if nav_active == 'reports' %} active{% endif %}">&#128196; レポート</a>
     <a href="{% url 'knowledge:list' %}" class="nav-item{% if nav_active == 'knowledge' %} active{% endif %}">&#128218; ナレッジ</a>
     <a href="{% url 'tpi:list' %}" class="nav-item{% if nav_active == 'tpi' %} active{% endif %}">&#128209; TPI評価</a>
+    <a href="{% url 'risks:list' %}" class="nav-item{% if nav_active == 'risks' %} active{% endif %}">&#9888; リスク・改善</a>
+    <a href="{% url 'testmgmt:plans' %}" class="nav-item{% if nav_active == 'testmgmt' %} active{% endif %}">&#128221; テスト計画</a>
     <a href="#" class="nav-item">&#128197; カレンダー</a>
     <a href="#" class="nav-item">&#128101; メンバー</a>
     <a href="{% url 'accounts:profile' %}" class="nav-item{% if nav_active == 'settings' %} active{% endif %}">&#9881; 設定</a>

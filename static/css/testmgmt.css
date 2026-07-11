@@ -1,0 +1,12 @@
+.gate-result-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.gate-result-row:last-child { border-bottom: none; }
+.gate-result-row .ok-icon { font-weight: 800; }
+.gate-result-row.ok .ok-icon { color: var(--success); }
+.gate-result-row.ng .ok-icon { color: var(--danger); }
+
+.level-tabs { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+.level-tabs a {
+  padding: 6px 12px; border-radius: 999px; font-size: 12.5px; text-decoration: none;
+  background: var(--ground); color: var(--ink-2);
+}
+.level-tabs a.active { background: var(--primary); color: #fff; }

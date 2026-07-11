@@ -61,6 +61,8 @@ INSTALLED_APPS = [
     "reports",
     "knowledge",
     "tpi",
+    "risks",
+    "testmgmt",
 ]
 
 MIDDLEWARE = [

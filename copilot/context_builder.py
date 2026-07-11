@@ -58,6 +58,21 @@ def build_system_prompt(engagement) -> str:
         lines.append("ODC分布(確定済み上位): " + " / ".join(top_axes))
     if unread:
         lines.append("未読通知: " + " / ".join(unread))
+
+    try:
+        from risks.models import RiskItem
+
+        high_risks = list(
+            RiskItem.objects.filter(engagement=engagement)
+            .exclude(status=RiskItem.Status.CLOSED)
+            .order_by("-probability", "-impact")[:20]
+        )
+        high_titles = [r.title for r in high_risks if r.severity == "high"][:5]
+        if high_titles:
+            lines.append("高リスク: " + " / ".join(high_titles))
+    except ImportError:
+        pass
+
     lines.append(
         "データに基づいて簡潔に回答してください。わからないことは推測せず、その旨を伝えてください。"
     )
