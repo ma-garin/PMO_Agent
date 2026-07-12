@@ -112,6 +112,10 @@ button { font-family: inherit; }
   margin-bottom: 18px;
 }
 .alert-danger { background: var(--danger-soft); color: var(--danger); border: 1px solid var(--danger); }
+.alert-success { background: var(--success-soft); color: var(--success); border: 1px solid var(--success); }
+.alert::before { font-weight: 700; margin-right: 6px; }
+.alert-danger::before { content: "⚠ "; }
+.alert-success::before { content: "✓ "; }
 
 /* ---------- バッジ ---------- */
 .badge {

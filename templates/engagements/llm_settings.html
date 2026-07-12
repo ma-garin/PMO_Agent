@@ -5,6 +5,7 @@
   <link rel="stylesheet" href="{% static 'css/app_shell.css' %}">
   <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
   <link rel="stylesheet" href="{% static 'css/tickets.css' %}">
+  <link rel="stylesheet" href="{% static 'css/engagements.css' %}">
 {% endblock %}
 {% block body %}
 <div class="app-shell">
@@ -22,11 +23,13 @@
 
       {% if messages %}
         {% for message in messages %}
-          <div class="alert">{{ message }}</div>
+          {% if "llm_test" not in message.tags %}
+            <div class="alert{% if 'error' in message.tags %} alert-danger{% else %} alert-success{% endif %}">{{ message }}</div>
+          {% endif %}
         {% endfor %}
       {% endif %}
 
-      <div class="card panel" style="max-width: 520px;">
+      <div class="card panel llm-settings-card" style="max-width: 560px;">
         <div class="panel-head"><h2>{{ engagement.name }} のLLM API設定</h2></div>
         <p class="section-note">
           顧客との契約・機密区分に応じて、この案件で使用するLLMプロバイダとモデルを選択してください。
@@ -38,6 +41,8 @@
         <form method="post" novalidate>
           {% csrf_token %}
           <input type="hidden" name="action" value="save">
+
+          <div class="llm-section-divider">プロバイダ・モデル</div>
           <div class="form-group">
             <label class="form-label" for="{{ form.llm_provider.id_for_label }}">既定LLMプロバイダ</label>
             {{ form.llm_provider }}
@@ -45,7 +50,7 @@
           <div class="form-group">
             <label class="form-label" for="llm_model">既定モデル</label>
             <select name="llm_model" id="llm_model" class="form-select">
-              <option value="">（環境変数の既定を使用）</option>
+              <option value="">（システムの既定モデルを使用）</option>
               {% for m in model_choices %}
                 <option value="{{ m }}"{% if m == engagement.llm_model %} selected{% endif %}>{{ m }}</option>
               {% endfor %}
@@ -53,43 +58,51 @@
                 <option value="{{ engagement.llm_model }}" selected>{{ engagement.llm_model }}（現在の設定）</option>
               {% endif %}
             </select>
-            <p class="section-note" style="margin-top:4px;">選択したプロバイダに対応するモデルを選んでください。空欄なら環境変数の既定モデルを使います。</p>
+            <p class="llm-field-hint">選択したプロバイダに対応するモデルだけが表示されます。空欄のままにするとシステムの既定モデルが使われます。</p>
           </div>
 
-          <div class="form-group">
-            <label class="form-label" for="llm_api_key">APIキー</label>
+          <div class="llm-section-divider">認証情報</div>
+
+          <div class="llm-field-block">
+            <div class="llm-field-heading">
+              <label class="form-label" for="llm_api_key" style="margin:0;">APIキー</label>
+              <span class="llm-status-badge {% if engagement.has_llm_api_key %}is-set{% else %}is-unset{% endif %}">
+                {% if engagement.has_llm_api_key %}設定済み{% else %}未設定{% endif %}
+              </span>
+            </div>
             <input type="password" name="llm_api_key" id="llm_api_key" class="form-input" placeholder="変更する場合のみ入力" autocomplete="off">
-            <p class="section-note" style="margin-top:4px;">
-              現在の状態: {% if engagement.has_llm_api_key %}設定済み{% else %}未設定{% endif %}
-              （安全のため既存の値は表示されません。空欄のまま保存すると変更されません）
-            </p>
-            <label style="display:flex; align-items:center; gap:6px; margin-top:4px;">
+            <p class="llm-field-hint">安全のため既存の値は表示されません。空欄のまま保存すると変更されません。</p>
+            <label class="llm-clear-row">
               <input type="checkbox" name="clear_llm_api_key">
-              <span class="section-note" style="margin:0;">APIキーを削除する</span>
+              <span>APIキーを削除する</span>
             </label>
           </div>
 
-          <div class="form-group llm-org-project-fields">
-            <label class="form-label" for="llm_org_id">Organization ID（OpenAIのみ・任意）</label>
+          <div class="llm-field-block llm-org-project-fields llm-openai-only">
+            <div class="llm-field-heading">
+              <label class="form-label" for="llm_org_id" style="margin:0;">Organization ID（OpenAIのみ・任意）</label>
+              <span class="llm-status-badge {% if engagement.has_llm_org_id %}is-set{% else %}is-unset{% endif %}">
+                {% if engagement.has_llm_org_id %}設定済み{% else %}未設定{% endif %}
+              </span>
+            </div>
             <input type="password" name="llm_org_id" id="llm_org_id" class="form-input" placeholder="変更する場合のみ入力" autocomplete="off">
-            <p class="section-note" style="margin-top:4px;">
-              現在の状態: {% if engagement.has_llm_org_id %}設定済み{% else %}未設定{% endif %}
-            </p>
-            <label style="display:flex; align-items:center; gap:6px; margin-top:4px;">
+            <label class="llm-clear-row">
               <input type="checkbox" name="clear_llm_org_id">
-              <span class="section-note" style="margin:0;">Organization IDを削除する</span>
+              <span>Organization IDを削除する</span>
             </label>
           </div>
 
-          <div class="form-group llm-org-project-fields">
-            <label class="form-label" for="llm_project_id">Project ID（OpenAIのみ・任意）</label>
+          <div class="llm-field-block llm-org-project-fields llm-openai-only">
+            <div class="llm-field-heading">
+              <label class="form-label" for="llm_project_id" style="margin:0;">Project ID（OpenAIのみ・任意）</label>
+              <span class="llm-status-badge {% if engagement.has_llm_project_id %}is-set{% else %}is-unset{% endif %}">
+                {% if engagement.has_llm_project_id %}設定済み{% else %}未設定{% endif %}
+              </span>
+            </div>
             <input type="password" name="llm_project_id" id="llm_project_id" class="form-input" placeholder="変更する場合のみ入力" autocomplete="off">
-            <p class="section-note" style="margin-top:4px;">
-              現在の状態: {% if engagement.has_llm_project_id %}設定済み{% else %}未設定{% endif %}
-            </p>
-            <label style="display:flex; align-items:center; gap:6px; margin-top:4px;">
+            <label class="llm-clear-row">
               <input type="checkbox" name="clear_llm_project_id">
-              <span class="section-note" style="margin:0;">Project IDを削除する</span>
+              <span>Project IDを削除する</span>
             </label>
           </div>
 
@@ -108,7 +121,7 @@
             modelSelect.innerHTML = "";
             var blankOption = document.createElement("option");
             blankOption.value = "";
-            blankOption.textContent = "（環境変数の既定を使用）";
+            blankOption.textContent = "（システムの既定モデルを使用）";
             modelSelect.appendChild(blankOption);
             models.forEach(function (m) {
               var option = document.createElement("option");
@@ -154,27 +167,36 @@
         </div>
         <div class="form-group">
           <label class="form-label">既定モデル</label>
-          <p style="font-weight:600;">{{ engagement.llm_model|default:"（環境変数の既定）" }}</p>
+          <p style="font-weight:600;">{{ engagement.llm_model|default:"（システムの既定）" }}</p>
         </div>
-        <div class="form-group">
-          <label class="form-label">APIキー</label>
-          <p style="font-weight:600;">{% if engagement.has_llm_api_key %}設定済み{% else %}未設定{% endif %}</p>
+        <div class="llm-field-heading form-group">
+          <label class="form-label" style="margin:0;">APIキー</label>
+          <span class="llm-status-badge {% if engagement.has_llm_api_key %}is-set{% else %}is-unset{% endif %}">
+            {% if engagement.has_llm_api_key %}設定済み{% else %}未設定{% endif %}
+          </span>
         </div>
         <p class="section-note">変更するには管理者に依頼してください。</p>
         {% endif %}
       </div>
 
-      <div class="card panel" style="max-width: 520px; margin-top: 18px;">
+      <div class="card panel llm-settings-card" style="max-width: 560px; margin-top: 18px;">
         <div class="panel-head"><h2>疎通確認</h2></div>
         <p class="section-note">
           保存済みの設定（{{ engagement.get_llm_provider_display }}{% if engagement.llm_model %} / {{ engagement.llm_model }}{% endif %}）で
-          実際にテスト呼び出しを行い、API鍵と接続を確認します。案件データは送信しません（固定のpingのみ）。
+          実際にテスト呼び出しを行い、APIキーと接続を確認します。案件データは送信しません（固定のpingのみ）。
         </p>
         <form method="post">
           {% csrf_token %}
           <input type="hidden" name="action" value="test">
           <button type="submit" class="btn btn-secondary">疎通確認を実行</button>
         </form>
+        {% for message in messages %}
+          {% if "llm_test" in message.tags %}
+            <div class="llm-test-result {% if 'error' in message.tags %}is-error{% else %}is-success{% endif %}">
+              {{ message }}
+            </div>
+          {% endif %}
+        {% endfor %}
       </div>
     </main>
   </div>

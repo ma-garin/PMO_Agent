@@ -153,9 +153,13 @@ def llm_settings(request):
             # 疎通確認はメンバーも可。案件データを含まない固定pingを送る。
             ok, message = test_connection(engagement, user=request.user)
             if ok:
-                messages.success(request, f"疎通確認に成功しました。{message}")
+                messages.success(
+                    request, f"疎通確認に成功しました。{message}", extra_tags="llm_test"
+                )
             else:
-                messages.error(request, f"疎通確認に失敗しました: {message}")
+                messages.error(
+                    request, f"疎通確認に失敗しました: {message}", extra_tags="llm_test"
+                )
             return redirect("engagements:llm_settings")
 
         # 以降は保存(管理者のみ)
