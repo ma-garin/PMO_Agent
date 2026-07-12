@@ -35,6 +35,7 @@ urlpatterns = [
     path("knowledge/", include("knowledge.urls")),
     path("tpi/", include("tpi.urls")),
     path("risks/", include("risks.urls")),
+    path("planning/", include("planning.urls")),
     path("testmgmt/", include("testmgmt.urls")),
     path("members/", include("members.urls")),
     path("autopilot/", include("autopilot.urls")),

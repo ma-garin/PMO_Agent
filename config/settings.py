@@ -66,6 +66,7 @@ INSTALLED_APPS = [
     "knowledge",
     "tpi",
     "risks",
+    "planning",
     "testmgmt",
     "members",
     "audit",
