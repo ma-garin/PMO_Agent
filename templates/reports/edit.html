@@ -44,6 +44,7 @@
         </div>
         <div class="card panel">
           <div class="panel-head"><h2>プレビュー</h2></div>
+          {# preview_html は reports.services.render_markdown_safe でnh3サニタイズ済み #}
           <div style="font-size: 13.5px; line-height: 1.7;">{{ preview_html|safe }}</div>
         </div>
       </div>

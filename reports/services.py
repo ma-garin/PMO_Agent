@@ -1,5 +1,28 @@
+import markdown as _markdown
+import nh3
+
 from analytics.services import convergence_series, odc_distribution, summarize_defects
 from llm.services import run_completion
+
+# Markdown変換後のHTMLで許可するタグ/属性。これ以外(script等)は除去する(CWE-79対策)。
+_ALLOWED_TAGS = {
+    "h1", "h2", "h3", "h4", "h5", "h6", "p", "br", "hr",
+    "strong", "em", "b", "i", "u", "s", "blockquote",
+    "ul", "ol", "li", "table", "thead", "tbody", "tr", "th", "td",
+    "code", "pre", "a", "span",
+}
+_ALLOWED_ATTRS = {"a": {"href", "title"}}
+
+
+def render_markdown_safe(text: str) -> str:
+    """Markdownを安全なHTMLに変換する。生HTML/スクリプトはnh3で無害化する。
+
+    報告書本文は案件メンバーが編集でき、保存型XSSの経路になり得るため、
+    テンプレート側で |safe 出力する前に必ずこの関数を通すこと。
+    """
+    raw_html = _markdown.markdown(text or "", extensions=["tables"])
+    return nh3.clean(raw_html, tags=_ALLOWED_TAGS, attributes=_ALLOWED_ATTRS)
+
 
 DRAFT_SYSTEM = (
     "あなたは第三者検証会社の品質報告書を作成するアシスタントです。"

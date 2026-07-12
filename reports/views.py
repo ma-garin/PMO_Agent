@@ -1,4 +1,3 @@
-import markdown
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
@@ -9,7 +8,7 @@ from engagements.models import Engagement
 from llm.providers.base import LlmError
 
 from .models import Report, ReportTemplate
-from .services import generate_draft
+from .services import generate_draft, render_markdown_safe
 
 
 def _current_engagement(request):
@@ -101,7 +100,7 @@ def report_edit(request, pk):
         "engagement": engagement,
         "nav_active": "reports",
         "report": report,
-        "preview_html": markdown.markdown(report.body, extensions=["tables"]),
+        "preview_html": render_markdown_safe(report.body),
     }
     return render(request, "reports/edit.html", context)
 
@@ -116,6 +115,6 @@ def report_print(request, pk):
     context = {
         "engagement": engagement,
         "report": report,
-        "body_html": markdown.markdown(report.body, extensions=["tables"]),
+        "body_html": render_markdown_safe(report.body),
     }
     return render(request, "reports/print.html", context)
