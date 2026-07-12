@@ -23,6 +23,7 @@
             {% endif %}
           </p>
         </div>
+        <a href="{% url 'planning:work_item_create' %}" class="btn btn-primary">＋ タスクを追加</a>
       </div>
 
       {% if messages %}
@@ -34,6 +35,7 @@
           <p class="empty-note">
             この案件のWBS（スケジュール）はまだ登録されていません。タスクを追加すると、ここにガントチャートが表示されます。
           </p>
+          <p style="margin-top:12px;"><a href="{% url 'planning:work_item_create' %}" class="btn btn-primary">＋ 最初のタスクを追加</a></p>
         </div>
       {% else %}
         <div class="card panel">
@@ -102,7 +104,7 @@
           <table class="wbs-table">
             <thead>
               <tr>
-                <th>WBS</th><th>作業名</th><th>状態</th><th>期間</th><th>進捗</th><th>担当</th>
+                <th>WBS</th><th>作業名</th><th>状態</th><th>期間</th><th>進捗</th><th>担当</th><th></th>
               </tr>
             </thead>
             <tbody>
@@ -125,9 +127,10 @@
                     {{ item.progress }}%
                   </td>
                   <td>{% if item.owner %}{% firstof item.owner.get_full_name item.owner.username %}{% else %}-{% endif %}</td>
+                  <td><a href="{% url 'planning:work_item_edit' item.pk %}" style="font-size:12.5px;">編集</a></td>
                 </tr>
               {% empty %}
-                <tr><td colspan="6"><p class="empty-note">WBS項目がありません。</p></td></tr>
+                <tr><td colspan="7"><p class="empty-note">WBS項目がありません。</p></td></tr>
               {% endfor %}
             </tbody>
           </table>
