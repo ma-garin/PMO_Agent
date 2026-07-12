@@ -83,6 +83,8 @@ button { font-family: inherit; }
 .btn-primary:hover { background: var(--primary-deep); }
 .btn-secondary { background: var(--surface); color: var(--ink); border-color: var(--border); }
 .btn-secondary:hover { background: var(--ground); }
+.btn-danger { background: var(--surface); color: var(--danger); border-color: var(--danger); }
+.btn-danger:hover { background: var(--danger-soft); }
 .btn-block { width: 100%; }
 
 /* ---------- フォーム ---------- */

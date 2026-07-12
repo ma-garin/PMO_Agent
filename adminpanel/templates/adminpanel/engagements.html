@@ -16,7 +16,7 @@
     <main class="app-main">
       <div class="breadcrumb">/ manage / engagements</div>
       <h1 class="page-title">案件管理</h1>
-      <p class="page-lead">全案件の編集、メンバー割当、アーカイブを行います。</p>
+      <p class="page-lead">全案件の作成・編集、メンバー割当、アーカイブ、削除を行います。新規作成は<a href="{% url 'engagements:create' %}">こちら</a>。</p>
 
       {% if messages %}
         {% for message in messages %}<div class="alert">{{ message }}</div>{% endfor %}
@@ -33,6 +33,7 @@
                 <th>オーナー</th>
                 <th>メンバー数</th>
                 <th>LLM</th>
+                <th></th>
                 <th></th>
                 <th></th>
               </tr>
@@ -54,9 +55,17 @@
                       <button type="submit" class="btn btn-secondary">アーカイブ</button>
                     </form>
                   </td>
+                  <td>
+                    <form method="post" onsubmit="return confirm('案件「{{ target.name|escapejs }}」と、その全関連データ（チケット・レポート・リスク・テスト等）を完全に削除します。元に戻せません。よろしいですか？');">
+                      {% csrf_token %}
+                      <input type="hidden" name="action" value="delete">
+                      <input type="hidden" name="engagement_id" value="{{ target.pk }}">
+                      <button type="submit" class="btn btn-danger">削除</button>
+                    </form>
+                  </td>
                 </tr>
               {% empty %}
-                <tr><td colspan="7"><p class="empty-note">案件はまだ登録されていません。</p></td></tr>
+                <tr><td colspan="8"><p class="empty-note">案件はまだ登録されていません。</p></td></tr>
               {% endfor %}
             </tbody>
           </table>

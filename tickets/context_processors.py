@@ -3,6 +3,22 @@ from itertools import chain
 from .models import Notification
 
 
+def current_engagement(request):
+    """ヘッダーで現在の案件名を表示するための context processor。"""
+    engagement_id = getattr(request, "session", {}).get("current_engagement_id")
+    if not engagement_id or not request.user.is_authenticated:
+        return {"current_engagement_name": ""}
+
+    from engagements.models import Engagement
+
+    name = (
+        Engagement.objects.filter(pk=engagement_id)
+        .values_list("name", flat=True)
+        .first()
+    )
+    return {"current_engagement_name": name or ""}
+
+
 def notifications(request):
     engagement_id = getattr(request, "session", {}).get("current_engagement_id")
     if not engagement_id or not request.user.is_authenticated:

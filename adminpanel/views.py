@@ -79,12 +79,27 @@ def users(request: HttpRequest) -> HttpResponse:
 
 @admin_required
 def engagements(request: HttpRequest) -> HttpResponse:
-    if request.method == "POST" and request.POST.get("action") == "archive":
+    if request.method == "POST":
+        action = request.POST.get("action")
         engagement = get_object_or_404(Engagement, pk=request.POST.get("engagement_id"))
-        engagement.status = Engagement.Status.COMPLETED
-        engagement.save(update_fields=["status"])
-        messages.success(request, "案件をアーカイブしました。")
-        return redirect("adminpanel:engagements")
+
+        if action == "archive":
+            engagement.status = Engagement.Status.COMPLETED
+            engagement.save(update_fields=["status"])
+            messages.success(request, "案件をアーカイブしました。")
+            return redirect("adminpanel:engagements")
+
+        if action == "delete":
+            name = engagement.name
+            # 削除前に監査ログへ記録(削除後はpkが無くなるため)
+            record(request.user, "engagement_delete", engagement, detail=name)
+            # 現在セッションで選択中の案件を消す場合はセッションもクリアして不整合を防ぐ
+            if request.session.get("current_engagement_id") == engagement.pk:
+                request.session.pop("current_engagement_id", None)
+                request.session.pop("current_engagement_name", None)
+            engagement.delete()  # 関連データ(チケット/レポート/リスク等)はCASCADEで削除
+            messages.success(request, f"案件「{name}」と関連データを削除しました。")
+            return redirect("adminpanel:engagements")
 
     context = {
         "nav_active": "manage",
