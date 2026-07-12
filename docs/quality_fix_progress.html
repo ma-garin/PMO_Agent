@@ -73,9 +73,9 @@ table.log{border-collapse:collapse;width:100%;font-size:12.5px;}
   <p>PMO Agent ／ 実機点検で検出した当たり前品質の欠落を全件修正する作業の進捗</p>
   <div class="overall">
     <div style="display:flex;justify-content:space-between;font-size:13px;">
-      <span>全体進捗</span><span><b>4 / 7 バッチ完了</b>（約57%）</span>
+      <span>全体進捗</span><span><b>5 / 7 バッチ完了</b>（約71%）</span>
     </div>
-    <div class="bar"><i style="width:57%"></i></div>
+    <div class="bar"><i style="width:71%"></i></div>
   </div>
 </header>
 
@@ -148,21 +148,22 @@ table.log{border-collapse:collapse;width:100%;font-size:12.5px;}
 </div>
 
 <!-- Batch E -->
-<div class="batch is-prog">
+<div class="batch is-done">
   <div class="batch-head">
     <h2>Batch E: チケット作成・詳細・編集</h2>
-    <span class="pill prog">進行中（次）</span>
+    <span class="pill done">完了</span>
   </div>
+  <div class="batch-head"><span></span><span class="meta">commit 9db8c70</span></div>
   <ul class="items">
-    <li class="t"><span class="id">T1/T2</span> アプリ内の詳細・新規作成・編集・状態変更（スキーマ変更＋DESIGN.md方針改訂を含む）</li>
+    <li class="d"><span class="id">T1/T2</span> アプリ内の詳細・新規作成・編集・削除・状態変更を実装。内部ソース(kind=internal・同期対象外)方式でスキーマ影響を最小化。外部チケットは読み取り専用、DESIGN.md方針改訂。実機で作成→詳細・読み取り専用表示を確認済み</li>
   </ul>
 </div>
 
 <!-- Batch F -->
-<div class="batch is-todo">
+<div class="batch is-prog">
   <div class="batch-head">
     <h2>Batch F: ガントのタスク編集機能</h2>
-    <span class="pill todo">未着手</span>
+    <span class="pill prog">進行中（次）</span>
   </div>
   <ul class="items">
     <li class="t"><span class="id">G6</span> タスクの追加・編集・削除・依存関係の設定</li>
@@ -187,6 +188,7 @@ table.log{border-collapse:collapse;width:100%;font-size:12.5px;}
   <tr><td><code>43209c8</code></td><td>fix: ガント表示品質を修正 (Batch B)</td></tr>
   <tr><td><code>585ffa7</code></td><td>feat: リスク登録簿にPMBOK標準項目を追加 (Batch C)</td></tr>
   <tr><td><code>2188114</code></td><td>feat: チケット一覧の絞り込み・ソートを拡充 (Batch D)</td></tr>
+  <tr><td><code>9db8c70</code></td><td>feat: システム内でのチケット作成・詳細・編集を実装 (Batch E)</td></tr>
 </table>
 
 <p class="note" style="margin-top:24px;">関連: 実機点検の不具合台帳
