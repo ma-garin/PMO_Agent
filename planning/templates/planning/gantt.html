@@ -41,12 +41,15 @@
         <div class="card panel">
           <div class="panel-head">
             <h2>ガントチャート（{{ items|length }}件）</h2>
+            <div style="display:flex; align-items:center; gap:10px;">
+            <button type="button" id="gantt-today-btn" class="btn btn-secondary" style="padding:5px 12px; font-size:12px;">今日へ</button>
             <div class="tab-switch">
               {% for z in zoom_choices %}
                 <a href="?zoom={{ z }}" class="tab-btn{% if zoom == z %} active{% endif %}">
                   {% if z == "day" %}日{% elif z == "week" %}週{% elif z == "month" %}月{% else %}全期間{% endif %}
                 </a>
               {% endfor %}
+            </div>
             </div>
           </div>
           <div class="gantt-layout">
@@ -59,7 +62,7 @@
                 </div>
               {% endfor %}
             </div>
-            <div class="gantt-timeline{% if zoom == 'all' %} gantt-timeline-fit{% endif %}">
+            <div class="gantt-timeline{% if zoom == 'all' %} gantt-timeline-fit{% endif %}" id="gantt-timeline" data-today-x="{{ chart.today_x|default:'' }}">
             <svg class="gantt-svg{% if zoom == 'all' %} gantt-svg-fit{% endif %}" width="{{ chart.width|add:30 }}" height="{{ chart.height|add:42 }}" viewBox="0 0 {{ chart.width|add:30 }} {{ chart.height|add:42 }}" preserveAspectRatio="{% if zoom == 'all' %}none{% else %}xMinYMin meet{% endif %}">
               <g transform="translate(0, 26)">
                 {% for bar in chart.bars %}
@@ -108,6 +111,19 @@
             <span><span class="line-swatch" style="background: var(--danger); border-top:2px dashed var(--danger); background:none;"></span>本日線</span>
             <span><span class="line-swatch" style="background: var(--warning);"></span>進捗ライン（稲妻線）</span>
           </div>
+          <script>
+          (function () {
+            var tl = document.getElementById("gantt-timeline");
+            if (!tl) return;
+            var tx = parseFloat(tl.getAttribute("data-today-x"));
+            function toToday() {
+              if (!isNaN(tx)) tl.scrollLeft = Math.max(0, tx - tl.clientWidth / 2);
+            }
+            toToday();
+            var btn = document.getElementById("gantt-today-btn");
+            if (btn) btn.addEventListener("click", toToday);
+          })();
+          </script>
         </div>
 
         <div class="card panel" style="margin-top: 18px;">

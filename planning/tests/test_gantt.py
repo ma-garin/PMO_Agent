@@ -7,7 +7,7 @@ from django.urls import reverse
 
 from engagements.models import Engagement
 from planning.models import Schedule, WorkItem
-from planning.services import gantt_chart_data
+from planning.services import DEFAULT_ZOOM, gantt_chart_data
 
 
 @pytest.fixture
@@ -134,7 +134,7 @@ class TestGanttChartData:
         chart = gantt_chart_data(schedule, zoom="day")
         assert chart["width"] > 900
 
-    def test_unknown_zoom_falls_back_to_all(self, engagement):
+    def test_unknown_zoom_falls_back_to_default(self, engagement):
         schedule = Schedule.objects.create(engagement=engagement, status_date=date.today())
         today = date.today()
         WorkItem.objects.create(
@@ -142,7 +142,7 @@ class TestGanttChartData:
             start_date=today, finish_date=today + timedelta(days=5), progress=0,
         )
         chart = gantt_chart_data(schedule, zoom="not-a-real-zoom")
-        assert chart["zoom"] == "all"
+        assert chart["zoom"] == DEFAULT_ZOOM
 
     def test_axis_ticks_present_for_nonempty_schedule(self, engagement):
         schedule = Schedule.objects.create(engagement=engagement, status_date=date.today())
