@@ -59,6 +59,26 @@ rsync -a /path/to/PMO_Agent/media/ "$HOME/pmo_agent_backups/media_$(date +%Y%m%d
 
 登録: `launchctl load ~/Library/LaunchAgents/com.pmoagent.backup.plist`
 
+## 本番公開前チェックリスト（F-3）
+
+本番環境（`DJANGO_DEBUG=false`）では以下を必ず設定する。設定不備は起動失敗または
+セキュリティ低下につながる。
+
+- [ ] `DJANGO_SECRET_KEY` を強力な値で設定（未設定だと起動失敗する）。
+      生成例: `python -c "import secrets; print(secrets.token_urlsafe(50))"`
+- [ ] `DJANGO_DEBUG=false` を設定（トレースバック露出防止）。
+- [ ] `DJANGO_ALLOWED_HOSTS` を実際のドメインに設定。
+- [ ] TLS終端はリバースプロキシ（nginx等）で行い、`X-Forwarded-Proto` を渡す構成にする
+      （`SECURE_PROXY_SSL_HEADER` がこれを前提にHTTPS判定する）。プロキシを使わず
+      アプリで直接TLSする構成なら、この行の要否を再確認すること。
+- [ ] `FIELD_ENCRYPTION_KEY`（トークン暗号鍵）を設定・別保管。
+- [ ] `python manage.py check --deploy` を実行し、警告を確認・解消する。
+- [ ] `seed_demo` は本番で実行しない（実行が必要なら `--force` と `SEED_ADMIN_PASSWORD` を使い、
+      投入後に必ずパスワードを変更）。
+
+`DEBUG=false` のとき、`config/settings.py` は自動で HTTPS 強制・セキュアCookie・HSTS・
+Content-Type-nosniff を有効化する。
+
 ## リストア手順
 
 ```bash
@@ -74,6 +94,15 @@ rsync -a "$HOME/pmo_agent_backups/media_20260101/" /path/to/PMO_Agent/media/
 
 **重要**: `FIELD_ENCRYPTION_KEY` が復元先の `.env` にリストア元と同じ値で設定されていないと、`TicketSource.api_token` が復号できず空文字になる（`config/crypto.py::decrypt` の仕様）。鍵は必ずDBバックアップとは別経路（パスワードマネージャ等）で保管し、リストア時に手動で設定すること。
 
-## 鍵のローテーション（将来的な運用）
+## 鍵のローテーション（F-14）
 
-`FIELD_ENCRYPTION_KEY` をローテーションする場合、全 `TicketSource` を旧鍵で復号→新鍵で再暗号化するワンショットスクリプトが必要（現時点では未実装。Phase 8時点のスコープ外）。
+`config/crypto.py` は `MultiFernet` に対応し、複数鍵での無停止ローテーションが可能。
+
+手順:
+1. 新しい鍵を生成: `python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"`
+2. `.env` に `FIELD_ENCRYPTION_KEYS="新鍵,旧鍵"` を設定（**新鍵を先頭**。旧 `FIELD_ENCRYPTION_KEY` は後方互換で読まれるが、ローテーション時は `KEYS` を使う）。
+   - この時点で、旧鍵で暗号化済みの値も復号でき、新規暗号化は新鍵で行われる。
+3. 既存データを再暗号化: `python manage.py rotate_encryption_keys`
+4. 動作確認後、`.env` を `FIELD_ENCRYPTION_KEYS="新鍵"` のみに更新し、旧鍵を安全に破棄。
+
+本番のシークレット配布は、`.env` 直置きではなくシークレットマネージャ（AWS Secrets Manager / Vault 等）を推奨。鍵は必ずDBバックアップとは別経路で保管すること。

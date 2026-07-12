@@ -1,5 +1,7 @@
+import os
 from datetime import timedelta
 
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
 from django.utils import timezone
@@ -12,23 +14,43 @@ from tickets.models import Notification, Ticket, TicketSource
 class Command(BaseCommand):
     help = "デモ用のユーザー・案件・チケットを冪等に投入する"
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--force",
+            action="store_true",
+            help="本番(DEBUG=False)でも実行する。既定は開発環境でのみ実行可。",
+        )
+
     def handle(self, *args, **options):
+        # F-10(CWE-798): 本番で誤実行すると admin/password の弱い管理者が生まれるため、
+        # DEBUG=False では明示の --force がない限り実行を拒否する。
+        if not settings.DEBUG and not options.get("force"):
+            self.stderr.write(
+                "本番環境(DEBUG=False)ではseed_demoを実行できません。"
+                "意図的に実行する場合は --force を付け、投入後に必ずパスワードを変更してください。"
+            )
+            return
+
         now = timezone.now()
         today = timezone.localdate()
 
-        admin, _ = User.objects.get_or_create(
+        admin_password = os.environ.get("SEED_ADMIN_PASSWORD", "password")
+        yuki_password = os.environ.get("SEED_YUKI_PASSWORD", "pmoagent-demo1")
+
+        admin, admin_created = User.objects.get_or_create(
             username="admin", defaults={"email": "admin@example.com", "is_staff": True, "is_superuser": True}
         )
-        if not admin.has_usable_password():
-            admin.set_password("password")
+        # 新規作成時は空パスワード(has_usable_passwordがTrueを返す罠)のため、createdで判定する
+        if admin_created or not admin.has_usable_password():
+            admin.set_password(admin_password)
             admin.save()
 
-        yuki, _ = User.objects.get_or_create(
+        yuki, yuki_created = User.objects.get_or_create(
             username="yuki",
             defaults={"email": "yuki.fujimagari@example.com", "first_name": "藤曲"},
         )
-        if not yuki.has_usable_password():
-            yuki.set_password("pmoagent-demo1")
+        if yuki_created or not yuki.has_usable_password():
+            yuki.set_password(yuki_password)
             yuki.save()
 
         e1, _ = Engagement.objects.get_or_create(

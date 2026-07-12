@@ -2,6 +2,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 
+from config.http_utils import parse_int
 from engagements.models import Engagement
 
 from . import services
@@ -79,8 +80,8 @@ def risk_create(request):
             engagement=engagement,
             title=request.POST.get("title", "").strip(),
             description=request.POST.get("description", ""),
-            probability=int(request.POST.get("probability", 3)),
-            impact=int(request.POST.get("impact", 3)),
+            probability=parse_int(request.POST.get("probability"), 3, minimum=1, maximum=5),
+            impact=parse_int(request.POST.get("impact"), 3, minimum=1, maximum=5),
             measurement=request.POST.get("measurement", ""),
             countermeasure=request.POST.get("countermeasure", ""),
         )
@@ -100,8 +101,8 @@ def risk_edit(request, pk):
     if request.method == "POST":
         risk.title = request.POST.get("title", "").strip()
         risk.description = request.POST.get("description", "")
-        risk.probability = int(request.POST.get("probability", 3))
-        risk.impact = int(request.POST.get("impact", 3))
+        risk.probability = parse_int(request.POST.get("probability"), 3, minimum=1, maximum=5)
+        risk.impact = parse_int(request.POST.get("impact"), 3, minimum=1, maximum=5)
         risk.measurement = request.POST.get("measurement", "")
         risk.countermeasure = request.POST.get("countermeasure", "")
         risk.save()

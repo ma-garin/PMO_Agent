@@ -26,10 +26,8 @@ load_dotenv(BASE_DIR / ".env")
 
 # SECURITY WARNING: keep the secret key used in production secret!
 # 開発用のデフォルト値。本番運用時は必ず環境変数 DJANGO_SECRET_KEY を設定すること。
-SECRET_KEY = os.environ.get(
-    "DJANGO_SECRET_KEY",
-    "django-insecure-@a1x39ix#sgt6%#ww*wnm)46%gg=af-j_jrvg4$7xlgf!*k_i4",
-)
+_INSECURE_SECRET_KEY = "django-insecure-@a1x39ix#sgt6%#ww*wnm)46%gg=af-j_jrvg4$7xlgf!*k_i4"
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", _INSECURE_SECRET_KEY)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DJANGO_DEBUG", "true").lower() == "true"
@@ -37,6 +35,12 @@ DEBUG = os.environ.get("DJANGO_DEBUG", "true").lower() == "true"
 ALLOWED_HOSTS = [
     h for h in os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if h
 ]
+
+# F-3(CWE-1188): 本番(DEBUG=False)では開発用の初期鍵を許さない(フェイルファスト)。
+if not DEBUG and SECRET_KEY == _INSECURE_SECRET_KEY:
+    raise RuntimeError(
+        "本番環境では DJANGO_SECRET_KEY を必ず設定してください(開発用の初期鍵は使用できません)。"
+    )
 
 
 # Application definition
@@ -175,6 +179,24 @@ LOGOUT_REDIRECT_URL = "accounts:login"
 
 SESSION_COOKIE_AGE = 8 * 60 * 60
 SESSION_SAVE_EVERY_REQUEST = True
+
+# クッキーはJS非公開・SameSite Lax(既定値だが明示)
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = "Lax"
+CSRF_COOKIE_SAMESITE = "Lax"
+
+# F-3(CWE-1188): 本番(DEBUG=False)のみHTTPS強制・セキュアCookie・HSTSを有効化。
+# 開発(DEBUG=True)ではローカルHTTPで動かすため無効。
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    # リバースプロキシ(nginx等)でTLS終端する構成を想定。構成に応じてOPERATIONS.md参照。
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 
 # メール送信(通知の外部連携。B8)

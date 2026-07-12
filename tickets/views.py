@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme
 
 from audit.services import record
 from config.csv_utils import csv_response
@@ -162,5 +163,10 @@ def mark_notifications_read(request):
         Notification.objects.filter(engagement=engagement, is_read=False).update(
             is_read=True
         )
-    next_url = request.POST.get("next") or "tickets:list"
+    # F-8(CWE-601): nextは自サイト内のパスのみ許可し、外部URLへのリダイレクトを防ぐ
+    next_url = request.POST.get("next", "")
+    if not url_has_allowed_host_and_scheme(
+        next_url, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+    ):
+        next_url = "tickets:list"
     return redirect(next_url)

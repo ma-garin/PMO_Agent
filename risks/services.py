@@ -1,5 +1,6 @@
 import json
 
+from llm.prompt_utils import EXTERNAL_DATA_GUARD
 from llm.services import LlmError, run_completion
 
 from .models import RiskItem
@@ -8,7 +9,7 @@ SUGGEST_SYSTEM = (
     "あなたは第三者検証会社の品質リスク分析の専門家です。"
     "与えられたデータのみを根拠に品質リスク候補を最大5件、"
     'JSON配列 [{"title":"...","description":"...","probability":1-5,"impact":1-5,"measurement":"..."}] '
-    "の形式のみで出力してください。数値の捏造禁止。"
+    "の形式のみで出力してください。数値の捏造禁止。" + EXTERNAL_DATA_GUARD
 )
 
 

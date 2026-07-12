@@ -9,6 +9,7 @@ from django.utils import timezone
 from accounts.decorators import admin_required
 from analytics.services import benchmark_rows
 from audit.services import record
+from config.net_guard import is_safe_external_url
 from engagements.forms import EngagementForm
 from engagements.models import Engagement
 from llm.models import LlmCallLog
@@ -157,7 +158,14 @@ def notification_channels(request: HttpRequest) -> HttpResponse:
             engagement = get_object_or_404(Engagement, pk=request.POST.get("engagement_id"))
             kind = request.POST.get("kind", "")
             target = request.POST.get("target", "").strip()
-            if kind in NotificationChannel.Kind.values and target:
+            # F-13(CWE-918): Slack Webhookは外部URLへPOSTするため、内部アドレスを拒否
+            if (
+                kind == NotificationChannel.Kind.SLACK_WEBHOOK
+                and target
+                and not is_safe_external_url(target)
+            ):
+                messages.error(request, "Webhook URLに内部アドレスは指定できません。")
+            elif kind in NotificationChannel.Kind.values and target:
                 NotificationChannel.objects.create(
                     engagement=engagement, kind=kind, target=target
                 )

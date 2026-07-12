@@ -13,6 +13,7 @@
   <p class="print-hint">PDFとして保存するには、ブラウザの印刷機能（Cmd+P / Ctrl+P）から「PDFに保存」を選択してください。</p>
   <h1>{{ report.title }}</h1>
   <p>{{ engagement.name }} / {{ report.period_start|date:"Y/n/j" }} 〜 {{ report.period_end|date:"Y/n/j" }}</p>
+  {# body_html は reports.services.render_markdown_safe でnh3サニタイズ済み #}
   <div>{{ body_html|safe }}</div>
 </div>
 {% endblock %}

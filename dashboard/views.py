@@ -5,6 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
+from config.http_utils import parse_int
 from engagements.models import Engagement
 from tickets.models import Ticket
 
@@ -145,8 +146,8 @@ def calendar_view(request):
     engagement = get_object_or_404(Engagement, pk=engagement_id)
 
     today = timezone.localdate()
-    year = int(request.GET.get("year", today.year))
-    month = int(request.GET.get("month", today.month))
+    year = parse_int(request.GET.get("year"), today.year, minimum=1970, maximum=2200)
+    month = parse_int(request.GET.get("month"), today.month)
 
     if month < 1:
         month = 12

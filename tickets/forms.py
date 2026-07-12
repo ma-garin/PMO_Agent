@@ -1,5 +1,7 @@
 from django import forms
 
+from config.net_guard import is_safe_external_url
+
 from .models import TicketSource
 
 
@@ -10,6 +12,15 @@ class TicketSourceForm(forms.ModelForm):
         widget=forms.PasswordInput(attrs={"class": "form-input"}),
         help_text="入力した場合のみ更新されます。空欄のままなら既存の値を維持します。",
     )
+
+    def clean_base_url(self):
+        # F-13(CWE-918): 内部/メタデータ等のアドレスへの接続設定を拒否する
+        base_url = self.cleaned_data.get("base_url", "")
+        if base_url and not is_safe_external_url(base_url):
+            raise forms.ValidationError(
+                "内部アドレスや解決できないホストは接続先に指定できません。"
+            )
+        return base_url
 
     class Meta:
         model = TicketSource

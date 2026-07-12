@@ -1,5 +1,6 @@
 import pytest
 from django.contrib.auth.models import User
+from django.test import Client
 
 from dashboard.services import month_grid
 from engagements.models import Engagement
@@ -9,7 +10,22 @@ from tickets.models import Ticket, TicketSource
 @pytest.fixture
 def engagement(db) -> Engagement:
     owner = User.objects.create_user(username="pmo", password="x")
-    return Engagement.objects.create(name="検証案件", owner=owner)
+    e = Engagement.objects.create(name="検証案件", owner=owner)
+    e.members.add(e.owner)
+    return e
+
+
+@pytest.mark.django_db
+class TestCalendarViewRobustness:
+    """F-4: 非数値のyear/monthでも500にならない。"""
+
+    def test_non_numeric_year_returns_200(self, client: Client, engagement):
+        client.force_login(engagement.owner)
+        session = client.session
+        session["current_engagement_id"] = engagement.pk
+        session.save()
+        response = client.get("/dashboard/calendar/?year=abc&month=xyz")
+        assert response.status_code == 200
 
 
 @pytest.mark.django_db
