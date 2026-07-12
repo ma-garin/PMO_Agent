@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="refresh" content="60">
+<title>品質修正 進捗ボード</title>
+<style>
+:root{
+  --primary:#1976D2; --primary-deep:#0D47A1; --primary-soft:#EEF5FD;
+  --ground:#F4F6F9; --surface:#FFFFFF; --border:#E3E8EE;
+  --ink:#1A212B; --ink-2:#56616F;
+  --ok:#2E7D32; --ok-soft:#E8F5E9;
+  --warn:#ED6C02; --warn-soft:#FFF3E0;
+  --bad:#D32F2F; --bad-soft:#FDECEC;
+  --shadow:0 1px 3px rgba(20,32,50,.08);
+}
+@media (prefers-color-scheme:dark){:root{
+  --primary:#4B9EF2; --primary-deep:#7FB6F5; --primary-soft:#163554;
+  --ground:#12161C; --surface:#1B2029; --border:#2B323D;
+  --ink:#EDF0F4; --ink-2:#9AA5B1;
+  --ok:#7BC67E; --ok-soft:#1E3320; --warn:#F5A356; --warn-soft:#3A2E1B;
+  --bad:#F28B82; --bad-soft:#3A2222; --shadow:0 1px 3px rgba(0,0,0,.4);
+}}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--ground);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic","Noto Sans JP",Meiryo,sans-serif;
+  line-height:1.7;font-size:15px;}
+.wrap{max-width:1000px;margin:0 auto;padding:36px 22px 90px;}
+header.doc{background:linear-gradient(135deg,var(--primary),var(--primary-deep));
+  color:#fff;border-radius:16px;padding:28px 30px;box-shadow:var(--shadow);}
+header.doc h1{margin:0 0 6px;font-size:23px;}
+header.doc p{margin:4px 0 0;opacity:.92;font-size:13.5px;}
+.overall{margin-top:18px;background:rgba(255,255,255,.16);border-radius:10px;padding:14px 16px;}
+.bar{height:12px;border-radius:999px;background:rgba(255,255,255,.25);overflow:hidden;margin-top:8px;}
+.bar > i{display:block;height:100%;background:#fff;border-radius:999px;}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;margin:14px 0 0;color:var(--ink-2);}
+.legend span{display:inline-flex;align-items:center;gap:6px;}
+.pill{display:inline-block;font-size:11.5px;font-weight:700;padding:2px 10px;border-radius:999px;white-space:nowrap;}
+.pill.done{background:var(--ok-soft);color:var(--ok);}
+.pill.prog{background:var(--warn-soft);color:var(--warn);}
+.pill.todo{background:var(--ground);color:var(--ink-2);border:1px solid var(--border);}
+.batch{background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  box-shadow:var(--shadow);padding:18px 22px;margin:14px 0;}
+.batch.is-done{border-left:4px solid var(--ok);}
+.batch.is-prog{border-left:4px solid var(--warn);}
+.batch.is-todo{border-left:4px solid var(--border);}
+.batch-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+.batch-head h2{margin:0;font-size:16.5px;}
+.batch-head .meta{font-size:12px;color:var(--ink-2);font-family:ui-monospace,Menlo,monospace;}
+ul.items{list-style:none;padding:0;margin:12px 0 0;}
+ul.items li{padding:6px 0 6px 26px;position:relative;font-size:13.5px;border-top:1px solid var(--border);}
+ul.items li:first-child{border-top:none;}
+ul.items li::before{position:absolute;left:0;top:6px;font-weight:800;}
+li.d::before{content:"✓";color:var(--ok);}
+li.p::before{content:"…";color:var(--warn);}
+li.t::before{content:"○";color:var(--ink-2);}
+li .id{font-family:ui-monospace,Menlo,monospace;color:var(--primary);font-weight:700;font-size:12px;margin-right:4px;}
+.note{font-size:12.5px;color:var(--ink-2);margin-top:8px;}
+h3.sec{font-size:14px;color:var(--ink-2);margin:30px 0 8px;letter-spacing:.03em;}
+table.log{border-collapse:collapse;width:100%;font-size:12.5px;}
+.log th,.log td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--border);}
+.log th{color:var(--ink-2);font-weight:700;}
+.log code{font-family:ui-monospace,Menlo,monospace;color:var(--primary);}
+.updated{font-size:12px;color:var(--ink-2);margin-top:6px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="doc">
+  <h1>品質修正 進捗ボード</h1>
+  <p>PMO Agent ／ 実機点検で検出した当たり前品質の欠落を全件修正する作業の進捗</p>
+  <div class="overall">
+    <div style="display:flex;justify-content:space-between;font-size:13px;">
+      <span>全体進捗</span><span><b>1 / 7 バッチ完了</b>（約14%）</span>
+    </div>
+    <div class="bar"><i style="width:14%"></i></div>
+  </div>
+</header>
+
+<div class="updated">最終更新: 2026-07-12 21:20（このページは60秒ごとに自動再読込／作業の都度更新）</div>
+
+<div class="legend">
+  <span><span class="pill done">完了</span> コミット済み・実機検証済み</span>
+  <span><span class="pill prog">進行中</span> 実装中</span>
+  <span><span class="pill todo">未着手</span> 未開始</span>
+</div>
+
+<!-- Batch A -->
+<div class="batch is-done">
+  <div class="batch-head">
+    <h2>Batch A: 描画・文言の当たり前修正</h2>
+    <span class="pill done">完了</span>
+  </div>
+  <div class="batch-head"><span></span><span class="meta">commit d5e5e42</span></div>
+  <ul class="items">
+    <li class="d"><span class="id">X4</span> favicon 404を解消（data-URI SVGを全ページに追加）</li>
+    <li class="d"><span class="id">H1</span> ホーム日付列の単語途中折返しを修正（nowrap）</li>
+    <li class="d"><span class="id">P1</span> テスト進捗見出しの空変数「の実績推移」を修正</li>
+    <li class="d"><span class="id">K1</span> ファイル選択の見切れを軽減（ボタン整形）</li>
+    <li class="d"><span class="id">T3</span> チケット状態の英語生値を日本語化（status_label）</li>
+    <li class="d"><span class="id">AP2</span> 自律運転の検知根拠を日本語ラベル化（実機検証済み）</li>
+    <li class="d"><span class="id">AP1</span> フォールバック本文の生Python辞書を整形（新規検知分）</li>
+    <li class="d"><span class="id">G5</span> 計画の空状態から開発者コマンドを除去</li>
+    <li class="d"><span class="id">A1</span> 分析グラフにY軸目盛・グリッド線を追加（実機検証済み）</li>
+  </ul>
+  <p class="note">補足: AP1は既存の生成済みデモ提案には旧本文が残る（次回巡回で更新）。H2（KPIのRAG色分け）は「期限超過→赤」を既存の妥当なシグナルとして維持し、生の件数への恣意的な色付けは意図的に見送り。</p>
+</div>
+
+<!-- Batch B -->
+<div class="batch is-prog">
+  <div class="batch-head">
+    <h2>Batch B: ガント表示品質の修正</h2>
+    <span class="pill prog">進行中（次）</span>
+  </div>
+  <ul class="items">
+    <li class="t"><span class="id">G1</span> 「全期間」ズームが無効（全体が収まらない）</li>
+    <li class="t"><span class="id">G2</span> 最終タスクが右端で見切れる</li>
+    <li class="t"><span class="id">G3</span> 横スクロールバーが初期表示で画面外＝発見不能</li>
+    <li class="t"><span class="id">G4</span> 右端の日付ラベルが途中で切れる</li>
+  </ul>
+</div>
+
+<!-- Batch C -->
+<div class="batch is-todo">
+  <div class="batch-head">
+    <h2>Batch C: リスク登録簿のPMBOK標準項目追加</h2>
+    <span class="pill todo">未着手</span>
+  </div>
+  <ul class="items">
+    <li class="t"><span class="id">R1</span> リスクオーナー・対応戦略(回避/転嫁/軽減/受容)・トリガー/予兆・カテゴリを追加（model+form+migration）</li>
+  </ul>
+</div>
+
+<!-- Batch D -->
+<div class="batch is-todo">
+  <div class="batch-head">
+    <h2>Batch D: チケット一覧の絞り込み拡充</h2>
+    <span class="pill todo">未着手</span>
+  </div>
+  <ul class="items">
+    <li class="t"><span class="id">T4</span> 担当/優先度/状態/期間の絞り込みと列ソートを追加</li>
+  </ul>
+</div>
+
+<!-- Batch E -->
+<div class="batch is-todo">
+  <div class="batch-head">
+    <h2>Batch E: チケット作成・詳細・編集</h2>
+    <span class="pill todo">未着手</span>
+  </div>
+  <ul class="items">
+    <li class="t"><span class="id">T1/T2</span> アプリ内の詳細・新規作成・編集・状態変更（スキーマ変更＋DESIGN.md方針改訂を含む）</li>
+  </ul>
+</div>
+
+<!-- Batch F -->
+<div class="batch is-todo">
+  <div class="batch-head">
+    <h2>Batch F: ガントのタスク編集機能</h2>
+    <span class="pill todo">未着手</span>
+  </div>
+  <ul class="items">
+    <li class="t"><span class="id">G6</span> タスクの追加・編集・削除・依存関係の設定</li>
+  </ul>
+</div>
+
+<!-- Batch G -->
+<div class="batch is-todo">
+  <div class="batch-head">
+    <h2>Batch G: LLM(Ollama)不通の原因調査・修正</h2>
+    <span class="pill todo">未着手</span>
+  </div>
+  <ul class="items">
+    <li class="t"><span class="id">X1/AP3</span> 失敗率75.8〜100%の根本原因を調査し、疎通が実際に通る状態にする</li>
+  </ul>
+</div>
+
+<h3 class="sec">コミット履歴</h3>
+<table class="log">
+  <tr><th>コミット</th><th>内容</th></tr>
+  <tr><td><code>d5e5e42</code></td><td>fix: 描画・文言の当たり前品質を修正 (Batch A)</td></tr>
+</table>
+
+<p class="note" style="margin-top:24px;">関連: 実機点検の不具合台帳
+  <a href="quality_walkthrough_findings.html">quality_walkthrough_findings.html</a> ／
+  机上ベースライン <a href="quality_baseline_audit.html">quality_baseline_audit.html</a></p>
+
+</div>
+</body>
+</html>
