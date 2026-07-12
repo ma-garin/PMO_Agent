@@ -105,6 +105,15 @@ button { font-family: inherit; }
 .form-input.has-error, .form-select.has-error { border-color: var(--danger); }
 .form-error-text { color: var(--danger); font-size: 12.5px; margin-top: 6px; }
 
+/* ファイル選択: ネイティブ表示の見切れを避け、ボタンを整える */
+input[type="file"].form-input { padding: 7px 12px; line-height: 1.5; }
+input[type="file"].form-input::file-selector-button {
+  margin-right: 12px; padding: 6px 12px; border-radius: 6px;
+  border: 1px solid var(--border); background: var(--ground);
+  color: var(--ink); font-size: 13px; font-weight: 600; cursor: pointer;
+}
+input[type="file"].form-input::file-selector-button:hover { background: var(--primary-soft); border-color: var(--primary); }
+
 .alert {
   border-radius: 8px;
   padding: 12px 14px;

@@ -16,6 +16,9 @@ class AgentSettings(models.Model):
         "欠陥急増の閾値(24h件数)", default=5
     )
     overdue_threshold = models.PositiveSmallIntegerField("期限超過の閾値(累計件数)", default=3)
+    schedule_slip_threshold = models.PositiveSmallIntegerField(
+        "WBS遅延の閾値(件数)", default=1
+    )
     max_llm_calls_per_day = models.PositiveSmallIntegerField("LLM呼び出し上限(日)", default=20)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -96,5 +99,18 @@ class AgentProposal(models.Model):
             )
         ]
 
+    EVIDENCE_LABELS = {
+        "observed": "検知値",
+        "threshold": "しきい値",
+        "window": "対象期間",
+        "increment": "増加数",
+        "open_count": "未クローズ数",
+    }
+
     def __str__(self) -> str:
         return self.title
+
+    @property
+    def labeled_evidence(self) -> list[tuple[str, object]]:
+        """検知根拠を日本語ラベル付きの (ラベル, 値) 一覧で返す。"""
+        return [(self.EVIDENCE_LABELS.get(key, key), value) for key, value in self.evidence.items()]

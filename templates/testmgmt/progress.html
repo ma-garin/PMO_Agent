@@ -45,7 +45,7 @@
 
       <div class="dash-columns" style="grid-template-columns: 2fr 1fr;">
         <div class="card panel">
-          <div class="panel-head"><h2>{{ selected_level }} の実績推移</h2></div>
+          <div class="panel-head"><h2>{% if selected_level %}{{ selected_level }} の実績推移{% else %}実績推移{% endif %}</h2></div>
           <table class="ticket-table">
             <thead><tr><th>日付</th><th>計画累計</th><th>実行累計</th><th>合格累計</th></tr></thead>
             <tbody>

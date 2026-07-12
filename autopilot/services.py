@@ -55,10 +55,18 @@ def _llm_calls_today(engagement) -> int:
     ).count()
 
 
+def _format_evidence(evidence: dict) -> str:
+    """検知根拠の辞書を日本語ラベル付きの読みやすい文字列に整形する。"""
+    if not evidence:
+        return "（なし）"
+    labels = AgentProposal.EVIDENCE_LABELS
+    return " / ".join(f"{labels.get(key, key)}: {value}" for key, value in evidence.items())
+
+
 def _fallback_body(finding: Finding) -> str:
     return (
         f"【{finding.title}】\n"
-        f"検知根拠: {finding.evidence}\n"
+        f"検知根拠: {_format_evidence(finding.evidence)}\n"
         "詳細分析にはLLMを利用できなかったため、ルール検知結果のみを表示しています。"
         "内容を確認のうえ判断してください。"
     )

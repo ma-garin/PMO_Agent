@@ -71,11 +71,11 @@
                 <td>{{ ticket.due_date|date:"n/j"|default:"-" }}</td>
                 <td>
                   {% if ticket.is_done %}
-                    <span class="status-pill done">{{ ticket.status|default:"完了" }}</span>
+                    <span class="status-pill done">{{ ticket.status_label|default:"完了" }}</span>
                   {% elif ticket.due_date and ticket.due_date < today %}
-                    <span class="status-pill overdue">{{ ticket.status|default:"期限超過" }}</span>
+                    <span class="status-pill overdue">{{ ticket.status_label|default:"期限超過" }}</span>
                   {% else %}
-                    <span class="status-pill open">{{ ticket.status|default:"進行中" }}</span>
+                    <span class="status-pill open">{{ ticket.status_label|default:"進行中" }}</span>
                   {% endif %}
                 </td>
               </tr>

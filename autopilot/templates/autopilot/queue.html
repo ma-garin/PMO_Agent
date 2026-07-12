@@ -47,8 +47,8 @@
 
           <table class="autopilot-evidence-table">
             <tbody>
-              {% for key, value in proposal.evidence.items %}
-                <tr><th>{{ key }}</th><td>{{ value }}</td></tr>
+              {% for label, value in proposal.labeled_evidence %}
+                <tr><th>{{ label }}</th><td>{{ value }}</td></tr>
               {% endfor %}
             </tbody>
           </table>

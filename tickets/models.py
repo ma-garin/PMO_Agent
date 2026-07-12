@@ -82,6 +82,30 @@ class Ticket(models.Model):
     def engagement(self) -> Engagement:
         return self.source.engagement
 
+    STATUS_LABELS = {
+        "to do": "未着手",
+        "todo": "未着手",
+        "open": "未着手",
+        "new": "新規",
+        "in progress": "進行中",
+        "in review": "レビュー中",
+        "in-review": "レビュー中",
+        "review": "レビュー中",
+        "blocked": "ブロック中",
+        "on hold": "保留",
+        "resolved": "解決済み",
+        "done": "完了",
+        "closed": "クローズ",
+        "reopened": "再オープン",
+    }
+
+    @property
+    def status_label(self) -> str:
+        """元システムの状態を日本語表示に正規化する（未知の値はそのまま表示）。"""
+        if not self.status:
+            return ""
+        return self.STATUS_LABELS.get(self.status.strip().lower(), self.status)
+
 
 class TicketStatusTransition(models.Model):
     """チケットのステータス遷移履歴(読み取り専用取込)。再オープン率算出に使う。"""

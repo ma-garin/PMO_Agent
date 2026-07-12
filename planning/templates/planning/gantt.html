@@ -17,7 +17,7 @@
           <h1 class="page-title">WBS・ガントチャート</h1>
           <p class="page-lead">
             {% if schedule %}
-              基準日: {{ schedule.status_date|date:"Y/n/j" }}（本日は赤い破線）／進捗ライン(オレンジ)は各タスクの実績進捗位置を結んだもの。左に飛び出していれば遅れ、右なら前倒しの目安。
+              基準日: {{ schedule.status_date|date:"Y/n/j" }}（本日は赤い破線）。灰色の細帯は当初計画(ベースライン)、進捗ライン(オレンジ)は各タスクの実績進捗位置を結んだもの。右上のタブでズーム(日/週/月/全期間)を切替可能。
             {% else %}
               この案件にはまだWBSが登録されていません。
             {% endif %}
@@ -32,38 +32,66 @@
       {% if not schedule %}
         <div class="card panel">
           <p class="empty-note">
-            WBSが未登録です。<code>python manage.py init_roadmap_schedule</code> などでスケジュールを投入してください。
+            この案件のWBS（スケジュール）はまだ登録されていません。タスクを追加すると、ここにガントチャートが表示されます。
           </p>
         </div>
       {% else %}
         <div class="card panel">
-          <div class="panel-head"><h2>ガントチャート（{{ items|length }}件）</h2></div>
+          <div class="panel-head">
+            <h2>ガントチャート（{{ items|length }}件）</h2>
+            <div class="tab-switch">
+              {% for z in zoom_choices %}
+                <a href="?zoom={{ z }}" class="tab-btn{% if zoom == z %} active{% endif %}">
+                  {% if z == "day" %}日{% elif z == "week" %}週{% elif z == "month" %}月{% else %}全期間{% endif %}
+                </a>
+              {% endfor %}
+            </div>
+          </div>
           <div class="gantt-wrap">
-            <svg class="gantt-svg" width="{{ chart.width }}" height="{{ chart.height|add:16 }}" viewBox="0 0 {{ chart.width }} {{ chart.height|add:16 }}">
-              {% for bar in chart.bars %}
-                <rect class="gantt-row-bg" x="0" y="{{ bar.y }}" width="{{ chart.width }}" height="34"></rect>
-              {% endfor %}
-              {% if chart.today_x %}
-                <line class="gantt-today-line" x1="{{ chart.today_x }}" y1="0" x2="{{ chart.today_x }}" y2="{{ chart.height }}"></line>
-                <text class="gantt-today-label" x="{{ chart.today_x }}" y="-4" text-anchor="middle">本日</text>
-              {% endif %}
-              {% for bar in chart.bars %}
-                <rect class="gantt-bar-track" x="{{ bar.x }}" y="{{ bar.y|add:6 }}" width="{{ bar.width }}" height="{{ bar.height }}"></rect>
-                <rect class="gantt-bar-fill {% if bar.item.status == 'done' %}done{% elif bar.item.status == 'cancelled' %}cancelled{% endif %}" x="{{ bar.x }}" y="{{ bar.y|add:6 }}" width="{{ bar.progress_width }}" height="{{ bar.height }}">
-                  <title>{{ bar.item.wbs_code }} {{ bar.item.title }}: {{ bar.item.progress }}%（{{ bar.item.start_date|date:"n/j" }}〜{{ bar.item.finish_date|date:"n/j" }}）</title>
-                </rect>
-              {% endfor %}
-              {% if chart.progress_line %}
-                <polyline class="gantt-progress-line" points="{{ chart.progress_line }}"></polyline>
+            <svg class="gantt-svg" width="{{ chart.width }}" height="{{ chart.height|add:42 }}" viewBox="0 0 {{ chart.width }} {{ chart.height|add:42 }}">
+              <g transform="translate(0, 26)">
                 {% for bar in chart.bars %}
-                  <circle class="gantt-progress-point" cx="{{ bar.x|add:bar.progress_width }}" cy="{{ bar.y|add:16 }}" r="3.5"></circle>
+                  <rect class="gantt-row-bg" x="0" y="{{ bar.y }}" width="{{ chart.width }}" height="34"></rect>
                 {% endfor %}
-              {% endif %}
+                {% for tick in chart.axis_ticks %}
+                  <line class="gantt-axis-gridline" x1="{{ tick.x }}" y1="0" x2="{{ tick.x }}" y2="{{ chart.height }}"></line>
+                {% endfor %}
+                {% for dep in chart.dependency_lines %}
+                  <polyline class="gantt-dependency-line" points="{{ dep.points }}"></polyline>
+                  <polygon class="gantt-dependency-arrow" points="{{ dep.arrow_points }}"></polygon>
+                {% endfor %}
+                {% if chart.today_x %}
+                  <line class="gantt-today-line" x1="{{ chart.today_x }}" y1="0" x2="{{ chart.today_x }}" y2="{{ chart.height }}"></line>
+                  <text class="gantt-today-label" x="{{ chart.today_x }}" y="-6" text-anchor="middle">本日</text>
+                {% endif %}
+                {% for bar in chart.bars %}
+                  {% if bar.baseline %}
+                    <rect class="gantt-baseline-bar{% if bar.baseline.slipped %} slipped{% elif bar.baseline.ahead %} ahead{% endif %}" x="{{ bar.baseline.x }}" y="{{ bar.baseline.y }}" width="{{ bar.baseline.width }}" height="{{ bar.baseline.height }}">
+                      <title>当初計画: {{ bar.item.baseline_start_date|date:"n/j" }}〜{{ bar.item.baseline_finish_date|date:"n/j" }}</title>
+                    </rect>
+                  {% endif %}
+                  <rect class="gantt-bar-track" x="{{ bar.x }}" y="{{ bar.y|add:6 }}" width="{{ bar.width }}" height="{{ bar.height }}"></rect>
+                  <rect class="gantt-bar-fill {% if bar.item.status == 'done' %}done{% elif bar.item.status == 'cancelled' %}cancelled{% endif %}" x="{{ bar.x }}" y="{{ bar.y|add:6 }}" width="{{ bar.progress_width }}" height="{{ bar.height }}">
+                    <title>{{ bar.item.wbs_code }} {{ bar.item.title }}: {{ bar.item.progress }}%（{{ bar.item.start_date|date:"n/j" }}〜{{ bar.item.finish_date|date:"n/j" }}）</title>
+                  </rect>
+                {% endfor %}
+                {% if chart.progress_line %}
+                  <polyline class="gantt-progress-line" points="{{ chart.progress_line }}"></polyline>
+                  {% for bar in chart.bars %}
+                    <circle class="gantt-progress-point" cx="{{ bar.x|add:bar.progress_width }}" cy="{{ bar.y|add:16 }}" r="3.5"></circle>
+                  {% endfor %}
+                {% endif %}
+              </g>
+              {% for tick in chart.axis_ticks %}
+                <text class="gantt-axis-label" x="{{ tick.x }}" y="16" text-anchor="middle">{{ tick.label }}</text>
+              {% endfor %}
             </svg>
           </div>
           <div class="gantt-legend">
             <span><span class="swatch" style="background: var(--primary);"></span>進行中の実績幅</span>
             <span><span class="swatch" style="background: var(--success);"></span>完了</span>
+            <span><span class="swatch" style="background: var(--ink-2); opacity:.5;"></span>当初計画(ベースライン)</span>
+            <span><span class="swatch" style="background: var(--danger); opacity:.6;"></span>当初計画より遅延</span>
             <span><span class="line-swatch" style="background: var(--danger); border-top:2px dashed var(--danger); background:none;"></span>本日線</span>
             <span><span class="line-swatch" style="background: var(--warning);"></span>進捗ライン（稲妻線）</span>
           </div>

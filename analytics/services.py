@@ -108,7 +108,7 @@ def convergence_series(engagement: Engagement) -> list[dict]:
 def convergence_svg_points(series: list[dict], width: int = 600, height: int = 160) -> dict:
     """収束曲線をSVG polyline用の座標文字列に変換する。"""
     if not series:
-        return {"opened": "", "closed": "", "max": 0}
+        return {"opened": "", "closed": "", "max": 0, "half": 0}
     max_value = max(point["opened"] for point in series) or 1
     n = len(series)
     step = width / max(n - 1, 1)
@@ -121,7 +121,12 @@ def convergence_svg_points(series: list[dict], width: int = 600, height: int = 1
             coords.append(f"{x},{y}")
         return " ".join(coords)
 
-    return {"opened": points_for("opened"), "closed": points_for("closed"), "max": max_value}
+    return {
+        "opened": points_for("opened"),
+        "closed": points_for("closed"),
+        "max": max_value,
+        "half": round(max_value / 2),
+    }
 
 
 def odc_distribution(engagement: Engagement) -> dict:
