@@ -21,6 +21,7 @@
     <a href="{% url 'knowledge:list' %}" class="nav-item{% if nav_active == 'knowledge' %} active{% endif %}" title="ナレッジ">&#128218; <span class="nav-label">ナレッジ</span></a>
     <a href="{% url 'tpi:list' %}" class="nav-item{% if nav_active == 'tpi' %} active{% endif %}" title="TPI評価">&#128209; <span class="nav-label">TPI評価</span></a>
     <a href="{% url 'risks:list' %}" class="nav-item{% if nav_active == 'risks' %} active{% endif %}" title="リスク・改善">&#9888; <span class="nav-label">リスク・改善</span></a>
+    <a href="{% url 'planning:gantt' %}" class="nav-item{% if nav_active == 'planning' %} active{% endif %}" title="WBS・ガント">&#128467; <span class="nav-label">計画</span></a>
     <a href="{% url 'testmgmt:plans' %}" class="nav-item{% if nav_active == 'testmgmt' %} active{% endif %}" title="テスト計画">&#128221; <span class="nav-label">テスト計画</span></a>
     <a href="{% url 'dashboard:calendar' %}" class="nav-item{% if nav_active == 'calendar' %} active{% endif %}" title="カレンダー">&#128197; <span class="nav-label">カレンダー</span></a>
     <a href="{% url 'members:list' %}" class="nav-item{% if nav_active == 'members' %} active{% endif %}" title="メンバー">&#128101; <span class="nav-label">メンバー</span></a>
