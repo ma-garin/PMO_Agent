@@ -33,7 +33,7 @@
             <tbody>
               {% for doc in documents %}
                 <tr>
-                  <td>{{ doc.title }}</td>
+                  <td><a href="{% url 'knowledge:detail' doc.pk %}">{{ doc.title }}</a></td>
                   <td>{% if doc.engagement %}この案件{% else %}全社共通{% endif %}</td>
                   <td>
                     {% if doc.status == 'indexed' %}<span class="status-pill done">検索可能</span>

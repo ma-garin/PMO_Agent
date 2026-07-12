@@ -77,13 +77,90 @@ class TestGanttChartData:
         chart = gantt_chart_data(schedule)
         assert chart["today_x"] is None
 
+    def test_baseline_is_set_automatically_on_creation(self, engagement):
+        schedule = Schedule.objects.create(engagement=engagement, status_date=date.today())
+        today = date.today()
+        item = WorkItem.objects.create(
+            schedule=schedule, wbs_code="1", title="A",
+            start_date=today, finish_date=today + timedelta(days=5), progress=0,
+        )
+        assert item.baseline_start_date == today
+        assert item.baseline_finish_date == today + timedelta(days=5)
+
+    def test_baseline_survives_later_date_changes(self, engagement):
+        schedule = Schedule.objects.create(engagement=engagement, status_date=date.today())
+        today = date.today()
+        item = WorkItem.objects.create(
+            schedule=schedule, wbs_code="1", title="A",
+            start_date=today, finish_date=today + timedelta(days=5), progress=0,
+        )
+        original_baseline_finish = item.baseline_finish_date
+        item.finish_date = today + timedelta(days=10)
+        item.save()
+        item.refresh_from_db()
+        assert item.baseline_finish_date == original_baseline_finish
+        assert item.finish_date == today + timedelta(days=10)
+
+    def test_slipped_flag_true_when_actual_finish_later_than_baseline(self, engagement):
+        schedule = Schedule.objects.create(engagement=engagement, status_date=date.today())
+        today = date.today()
+        item = WorkItem.objects.create(
+            schedule=schedule, wbs_code="1", title="A", status="in_progress",
+            start_date=today, finish_date=today + timedelta(days=5), progress=30,
+        )
+        item.finish_date = today + timedelta(days=9)
+        item.save()
+
+        chart = gantt_chart_data(schedule)
+        assert chart["bars"][0]["baseline"]["slipped"] is True
+
+    def test_zoom_all_fits_within_chart_width(self, engagement):
+        schedule = Schedule.objects.create(engagement=engagement, status_date=date.today())
+        today = date.today()
+        WorkItem.objects.create(
+            schedule=schedule, wbs_code="1", title="A",
+            start_date=today, finish_date=today + timedelta(days=60), progress=0,
+        )
+        chart = gantt_chart_data(schedule, zoom="all")
+        assert chart["width"] == 900
+
+    def test_zoom_day_widens_chart_for_long_range(self, engagement):
+        schedule = Schedule.objects.create(engagement=engagement, status_date=date.today())
+        today = date.today()
+        WorkItem.objects.create(
+            schedule=schedule, wbs_code="1", title="A",
+            start_date=today, finish_date=today + timedelta(days=60), progress=0,
+        )
+        chart = gantt_chart_data(schedule, zoom="day")
+        assert chart["width"] > 900
+
+    def test_unknown_zoom_falls_back_to_all(self, engagement):
+        schedule = Schedule.objects.create(engagement=engagement, status_date=date.today())
+        today = date.today()
+        WorkItem.objects.create(
+            schedule=schedule, wbs_code="1", title="A",
+            start_date=today, finish_date=today + timedelta(days=5), progress=0,
+        )
+        chart = gantt_chart_data(schedule, zoom="not-a-real-zoom")
+        assert chart["zoom"] == "all"
+
+    def test_axis_ticks_present_for_nonempty_schedule(self, engagement):
+        schedule = Schedule.objects.create(engagement=engagement, status_date=date.today())
+        today = date.today()
+        WorkItem.objects.create(
+            schedule=schedule, wbs_code="1", title="A",
+            start_date=today, finish_date=today + timedelta(days=10), progress=0,
+        )
+        chart = gantt_chart_data(schedule, zoom="day")
+        assert len(chart["axis_ticks"]) >= 10
+
 
 @pytest.mark.django_db
 class TestGanttView:
     def test_no_schedule_shows_empty_state(self, logged_in_client):
         response = logged_in_client.get(reverse("planning:gantt"))
         assert response.status_code == 200
-        assert "WBSが未登録です".encode() in response.content
+        assert "まだ登録されていません".encode() in response.content
 
     def test_schedule_with_items_renders_wbs_table(self, logged_in_client, engagement):
         schedule = Schedule.objects.create(engagement=engagement, status_date=date.today())
@@ -102,6 +179,16 @@ class TestGanttView:
         assert response.status_code == 302
         assert response.url == reverse("engagements:select")
 
+    def test_zoom_query_param_is_reflected_in_active_tab(self, logged_in_client, engagement):
+        schedule = Schedule.objects.create(engagement=engagement, status_date=date.today())
+        WorkItem.objects.create(
+            schedule=schedule, wbs_code="1", title="A",
+            start_date=date.today(), finish_date=date.today() + timedelta(days=3), progress=0,
+        )
+        response = logged_in_client.get(reverse("planning:gantt"), {"zoom": "week"})
+        assert response.status_code == 200
+        assert response.context["zoom"] == "week"
+
     def test_other_engagement_schedule_is_not_visible(self, logged_in_client, user):
         other_owner = User.objects.create_user(username="other", password="x")
         other_engagement = Engagement.objects.create(name="他案件", owner=other_owner)
@@ -109,4 +196,4 @@ class TestGanttView:
 
         response = logged_in_client.get(reverse("planning:gantt"))
         assert response.status_code == 200
-        assert "WBSが未登録です".encode() in response.content
+        assert "まだ登録されていません".encode() in response.content

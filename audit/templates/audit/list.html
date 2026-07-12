@@ -63,7 +63,7 @@
                 <tr>
                   <td>{{ log.created_at|date:"Y-m-d H:i" }}</td>
                   <td>{{ log.actor.get_full_name|default:log.actor.username|default:"システム" }}</td>
-                  <td>{{ log.action }}</td>
+                  <td>{{ log.action_label }}</td>
                   <td>{{ log.target_type }}{% if log.target_id %}:{{ log.target_id }}{% endif %}</td>
                   <td>{{ log.detail }}</td>
                 </tr>

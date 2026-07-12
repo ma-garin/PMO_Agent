@@ -41,6 +41,27 @@ def document_list(request):
 
 
 @login_required
+def document_detail(request, pk):
+    engagement = _current_engagement(request)
+    if engagement is None:
+        return redirect("engagements:select")
+
+    document = get_object_or_404(
+        Document.objects.filter(Q(engagement__isnull=True) | Q(engagement=engagement)),
+        pk=pk,
+    )
+    chunks = document.chunks.all()
+    context = {
+        "engagement": engagement,
+        "nav_active": "knowledge",
+        "document": document,
+        "chunks": chunks,
+        "chunk_count": chunks.count(),
+    }
+    return render(request, "knowledge/detail.html", context)
+
+
+@login_required
 def upload(request):
     engagement = _current_engagement(request)
     if engagement is None:

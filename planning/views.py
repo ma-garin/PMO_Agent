@@ -8,7 +8,7 @@ from django.utils.dateparse import parse_date
 from config.http_utils import parse_int
 from engagements.models import Engagement
 
-from .models import Schedule, WorkItem
+from .models import Dependency, Schedule, WorkItem
 from .services import DEFAULT_ZOOM, ZOOM_PIXELS_PER_DAY, gantt_chart_data
 
 
@@ -49,6 +49,9 @@ def _work_item_form_context(engagement, schedule, item=None):
     parents = list(schedule.items.all()) if schedule else []
     if item and item.pk:
         parents = [p for p in parents if p.pk != item.pk]
+    predecessor_ids = set()
+    if item and item.pk:
+        predecessor_ids = set(item.predecessor_links.values_list("predecessor_id", flat=True))
     return {
         "engagement": engagement,
         "nav_active": "planning",
@@ -56,8 +59,25 @@ def _work_item_form_context(engagement, schedule, item=None):
         "kind_choices": WorkItem.Kind.choices,
         "status_choices": WorkItem.Status.choices,
         "parents": parents,
+        "predecessor_ids": predecessor_ids,
         "members": engagement.members.all(),
     }
+
+
+def _sync_dependencies(request, item):
+    """POSTで選択された先行タスク(predecessors)をDependencyへ反映する。"""
+    selected = {int(raw) for raw in request.POST.getlist("predecessors") if raw.isdigit()}
+    selected.discard(item.pk)
+    valid = set(item.schedule.items.exclude(pk=item.pk).values_list("pk", flat=True))
+    selected &= valid
+    item.predecessor_links.exclude(predecessor_id__in=selected).delete()
+    existing = set(item.predecessor_links.values_list("predecessor_id", flat=True))
+    for pred_id in selected - existing:
+        try:
+            Dependency(predecessor_id=pred_id, successor=item).save()
+        except ValidationError:
+            # 循環・別案件などは無視してスキップする
+            pass
 
 
 def _apply_work_item_fields(request, engagement, item):
@@ -104,6 +124,7 @@ def work_item_create(request):
             )
         item = _apply_work_item_fields(request, engagement, WorkItem(schedule=schedule))
         if _save_work_item(request, engagement, schedule, item, "タスクを追加しました。"):
+            _sync_dependencies(request, item)
             return redirect("planning:gantt")
         return render(request, "planning/work_item_form.html",
                       _work_item_form_context(engagement, schedule, item))
@@ -123,6 +144,7 @@ def work_item_edit(request, pk):
     if request.method == "POST":
         _apply_work_item_fields(request, engagement, item)
         if _save_work_item(request, engagement, schedule, item, "タスクを更新しました。"):
+            _sync_dependencies(request, item)
             return redirect("planning:gantt")
 
     return render(request, "planning/work_item_form.html",
