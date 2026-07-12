@@ -79,6 +79,7 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 MIDDLEWARE = [
+    "config.observability.RequestIDMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -216,3 +217,27 @@ DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "pmo-agent@example.com
 # 接続はDjangoのDATABASES["default"]を再利用する(Procrastinateの既定値のため明示指定は不要)。
 # ジョブ実体はDjangoマイグレーション経由でスキーマ管理される(python manage.py migrate)。
 PROCRASTINATE_DATABASE_ALIAS = "default"
+
+
+# R-06: 既存のlogging APIを保ったまま、機械解析可能なJSONログへ相関IDを付加する。
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "filters": {
+        "request_context": {"()": "config.observability.RequestContextFilter"},
+    },
+    "formatters": {
+        "structured": {"()": "config.observability.JsonFormatter"},
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "filters": ["request_context"],
+            "formatter": "structured",
+        },
+    },
+    "root": {"handlers": ["console"], "level": "INFO"},
+    "loggers": {
+        "django": {"handlers": ["console"], "level": "INFO", "propagate": False},
+    },
+}
