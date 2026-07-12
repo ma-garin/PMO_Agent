@@ -40,7 +40,7 @@
         <div class="card stat-card">
           <div class="stat-head">&#129302; LLMログ</div>
           <div class="stat-value">{{ llm_log_count }}</div>
-          <div class="stat-sub">Phase 3実装後に集計</div>
+          <div class="stat-sub">全呼び出し件数</div>
         </div>
       </div>
 
@@ -61,8 +61,8 @@
           <a href="{% url 'adminpanel:tokens' %}" class="btn btn-primary">開く</a>
         </div>
         <div class="card panel">
-          <div class="panel-head"><h2>LLMログ</h2></div>
-          <p class="empty-note">Phase 3実装後に利用可能になります。</p>
+          <div class="panel-head"><h2>LLM利用状況</h2></div>
+          <p class="empty-note">案件×プロバイダ×用途別の呼び出し実績と失敗率を確認します。</p>
           <a href="{% url 'adminpanel:llm_logs' %}" class="btn btn-primary">開く</a>
         </div>
         <div class="card panel">

@@ -11,6 +11,7 @@ from analytics.services import benchmark_rows
 from audit.services import record
 from engagements.forms import EngagementForm
 from engagements.models import Engagement
+from llm.models import LlmCallLog
 from llm.services import usage_summary
 from tickets.models import NotificationChannel, TicketSource
 
@@ -24,7 +25,7 @@ def home(request: HttpRequest) -> HttpResponse:
         "user_count": User.objects.count(),
         "engagement_count": Engagement.objects.count(),
         "source_count": TicketSource.objects.count(),
-        "llm_log_count": 0,
+        "llm_log_count": LlmCallLog.objects.count(),
     }
     return render(request, "adminpanel/home.html", context)
 
