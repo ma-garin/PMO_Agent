@@ -11,12 +11,14 @@ API_URL = "https://api.openai.com/v1/chat/completions"
 class OpenAiProvider(LlmProvider):
     name = "openai"
 
-    def complete(self, prompt: str, *, system: str = "", max_tokens: int = 1024) -> str:
+    def complete(
+        self, prompt: str, *, system: str = "", max_tokens: int = 1024, model: str = ""
+    ) -> str:
         api_key = os.environ.get("OPENAI_API_KEY", "")
         if not api_key:
             raise LlmError("OPENAI_API_KEYが未設定です。")
 
-        model = os.environ.get("LLM_OPENAI_MODEL", "gpt-4o-mini")
+        model = model or os.environ.get("LLM_OPENAI_MODEL", "gpt-4o-mini")
         headers = {"Authorization": f"Bearer {api_key}"}
         messages = []
         if system:

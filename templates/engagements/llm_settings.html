@@ -26,19 +26,37 @@
         {% endfor %}
       {% endif %}
 
-      <div class="card panel" style="max-width: 480px;">
-        <div class="panel-head"><h2>{{ engagement.name }} のLLMプロバイダ</h2></div>
+      <div class="card panel" style="max-width: 520px;">
+        <div class="panel-head"><h2>{{ engagement.name }} のLLM API設定</h2></div>
         <p class="section-note">
-          顧客との契約・機密区分に応じて、この案件で使用するLLMを選択してください。
+          顧客との契約・機密区分に応じて、この案件で使用するLLMプロバイダとモデルを選択してください。
           機密性が高い案件はローカルLLM(Ollama)を推奨します。
           クラウドLLMへの切替は機密情報の社外送信につながるため、変更は管理者のみ可能です。
         </p>
         {% if can_edit %}
         <form method="post" novalidate>
           {% csrf_token %}
+          <input type="hidden" name="action" value="save">
           <div class="form-group">
             <label class="form-label" for="{{ form.llm_provider.id_for_label }}">既定LLMプロバイダ</label>
             {{ form.llm_provider }}
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="llm_model">既定モデル</label>
+            <select name="llm_model" id="llm_model" class="form-select">
+              <option value="">（環境変数の既定を使用）</option>
+              {% for provider_value, models in all_model_choices.items %}
+                <optgroup label="{{ provider_value }}">
+                  {% for m in models %}
+                    <option value="{{ m }}"{% if m == engagement.llm_model %} selected{% endif %}>{{ m }}</option>
+                  {% endfor %}
+                </optgroup>
+              {% endfor %}
+              {% if engagement.llm_model and engagement.llm_model not in model_choices %}
+                <option value="{{ engagement.llm_model }}" selected>{{ engagement.llm_model }}（現在の設定）</option>
+              {% endif %}
+            </select>
+            <p class="section-note" style="margin-top:4px;">選択したプロバイダに対応するモデルを選んでください。空欄なら環境変数の既定モデルを使います。</p>
           </div>
           <button type="submit" class="btn btn-primary">保存する</button>
         </form>
@@ -47,8 +65,25 @@
           <label class="form-label">既定LLMプロバイダ</label>
           <p style="font-weight:600;">{{ engagement.get_llm_provider_display }}</p>
         </div>
+        <div class="form-group">
+          <label class="form-label">既定モデル</label>
+          <p style="font-weight:600;">{{ engagement.llm_model|default:"（環境変数の既定）" }}</p>
+        </div>
         <p class="section-note">変更するには管理者に依頼してください。</p>
         {% endif %}
+      </div>
+
+      <div class="card panel" style="max-width: 520px; margin-top: 18px;">
+        <div class="panel-head"><h2>疎通確認</h2></div>
+        <p class="section-note">
+          保存済みの設定（{{ engagement.get_llm_provider_display }}{% if engagement.llm_model %} / {{ engagement.llm_model }}{% endif %}）で
+          実際にテスト呼び出しを行い、API鍵と接続を確認します。案件データは送信しません（固定のpingのみ）。
+        </p>
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="test">
+          <button type="submit" class="btn btn-secondary">疎通確認を実行</button>
+        </form>
       </div>
     </main>
   </div>

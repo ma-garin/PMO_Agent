@@ -5,7 +5,11 @@ from django.db.models import Count, F, Q, Sum
 from .models import LlmCallLog
 from .providers import LlmError, get_provider
 
-__all__ = ["LlmError", "run_completion", "usage_summary"]
+__all__ = ["LlmError", "run_completion", "usage_summary", "test_connection"]
+
+# 疎通確認で送る固定プロンプト。案件データを一切含めず、機密情報の送信を避ける。
+_CONNECTIVITY_PROMPT = "ping"
+_CONNECTIVITY_SYSTEM = "接続確認です。'pong'とだけ短く返答してください。"
 
 
 def run_completion(
@@ -18,11 +22,12 @@ def run_completion(
     user=None,
 ) -> str:
     provider_name = engagement.llm_provider
+    model = getattr(engagement, "llm_model", "") or ""
     provider = get_provider(provider_name)
     started = time.monotonic()
 
     try:
-        text = provider.complete(prompt, system=system, max_tokens=max_tokens)
+        text = provider.complete(prompt, system=system, max_tokens=max_tokens, model=model)
     except LlmError as exc:
         duration_ms = int((time.monotonic() - started) * 1000)
         LlmCallLog.objects.create(
@@ -50,6 +55,27 @@ def run_completion(
         created_by=user,
     )
     return text
+
+
+def test_connection(engagement, user=None) -> tuple[bool, str]:
+    """保存済みのプロバイダ/モデルへ固定pingを送り、疎通可否を返す。
+
+    案件データは送らない(固定プロンプト)。呼び出しはLlmCallLogに記録される。
+    戻り値: (成功か, ユーザー向けメッセージ)。
+    """
+    try:
+        response = run_completion(
+            engagement,
+            "connectivity_test",
+            _CONNECTIVITY_PROMPT,
+            system=_CONNECTIVITY_SYSTEM,
+            max_tokens=16,
+            user=user,
+        )
+    except LlmError as exc:
+        return False, str(exc)
+    snippet = (response or "").strip()[:60]
+    return True, f"応答を受信しました: 「{snippet}」"
 
 
 def usage_summary(year: int, month: int) -> list[dict]:

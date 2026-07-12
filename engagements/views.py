@@ -8,6 +8,8 @@ from django.utils import timezone
 from django.views.generic import CreateView, ListView
 
 from audit.services import record
+from llm.providers import MODEL_CHOICES
+from llm.services import test_connection
 
 from .forms import EngagementForm, EngagementLlmSettingsForm
 from .models import Engagement
@@ -140,22 +142,43 @@ def llm_settings(request):
     if engagement is None:
         return redirect("engagements:select")
 
-    # F-12(CWE-200): LLMプロバイダの変更は機密データのクラウド送信可否を左右するため、
-    # 変更操作は管理者に限定する。閲覧は案件メンバーに許可する(表示のみ)。
+    # F-12(CWE-200): LLMプロバイダ/モデルの変更は機密データのクラウド送信可否を左右するため、
+    # 変更操作は管理者に限定する。閲覧・疎通確認は案件メンバーに許可する。
     can_edit = request.user.is_staff
 
     if request.method == "POST":
+        action = request.POST.get("action", "save")
+
+        if action == "test":
+            # 疎通確認はメンバーも可。案件データを含まない固定pingを送る。
+            ok, message = test_connection(engagement, user=request.user)
+            if ok:
+                messages.success(request, f"疎通確認に成功しました。{message}")
+            else:
+                messages.error(request, f"疎通確認に失敗しました: {message}")
+            return redirect("engagements:llm_settings")
+
+        # 以降は保存(管理者のみ)
         if not can_edit:
-            messages.error(request, "LLMプロバイダの変更には管理者権限が必要です。")
+            messages.error(request, "LLM設定の変更には管理者権限が必要です。")
             return redirect("engagements:llm_settings")
         form = EngagementLlmSettingsForm(request.POST, instance=engagement)
         if form.is_valid():
-            form.save()
+            engagement = form.save(commit=False)
+            # モデルは選択肢内、またはOllamaの任意ローカル名のみ許可(空欄=env既定)
+            model = request.POST.get("llm_model", "").strip()
+            allowed = set(MODEL_CHOICES.get(engagement.llm_provider, []))
+            if model and model not in allowed and engagement.llm_provider != "ollama":
+                messages.error(request, "選択したプロバイダで利用できないモデルです。")
+                return redirect("engagements:llm_settings")
+            engagement.llm_model = model
+            engagement.save()
             messages.success(request, "LLM設定を更新しました。")
             return redirect("engagements:llm_settings")
     else:
         form = EngagementLlmSettingsForm(instance=engagement)
 
+    model_choices = MODEL_CHOICES.get(engagement.llm_provider, [])
     return render(
         request,
         "engagements/llm_settings.html",
@@ -164,5 +187,7 @@ def llm_settings(request):
             "engagement": engagement,
             "nav_active": "settings",
             "can_edit": can_edit,
+            "model_choices": model_choices,
+            "all_model_choices": MODEL_CHOICES,
         },
     )
