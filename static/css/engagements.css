@@ -67,6 +67,17 @@
 .llm-settings-card .panel-head { margin-bottom: 4px; }
 .llm-settings-card .section-note { margin-bottom: 20px; }
 
+.llm-btn-label { display: inline-flex; align-items: center; gap: 8px; }
+.btn.is-loading .llm-btn-label::before {
+  content: "";
+  width: 14px; height: 14px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: llm-spin .7s linear infinite;
+}
+@keyframes llm-spin { to { transform: rotate(360deg); } }
+
 .llm-field-block {
   padding: 16px 18px;
   border: 1px solid var(--border);

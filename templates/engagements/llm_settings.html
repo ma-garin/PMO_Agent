@@ -113,7 +113,7 @@
             </label>
           </div>
 
-          <button type="submit" class="btn btn-primary">保存する</button>
+          <button type="submit" id="llm_save_button" class="btn btn-primary">保存する</button>
         </form>
         <script>
         (function () {
@@ -221,12 +221,32 @@
           保存済みの設定（{{ engagement.get_llm_provider_display }}{% if engagement.llm_model %} / {{ engagement.llm_model }}{% endif %}）で
           実際にテスト呼び出しを行い、APIキーと接続を確認します。案件データは送信しません（固定のpingのみ）。
         </p>
-        <form method="post">
+        <form method="post" id="llm_test_form">
           {% csrf_token %}
           <input type="hidden" name="action" value="test">
-          <button type="submit" class="btn btn-secondary btn-block">疎通確認を実行</button>
+          <button type="submit" id="llm_test_button" class="btn btn-secondary btn-block">
+            <span class="llm-btn-label">疎通確認を実行</span>
+          </button>
         </form>
-        <p class="llm-field-hint">結果は画面中央にポップアップで表示されます。</p>
+        <p class="llm-field-hint">結果は画面中央にポップアップで表示されます（LLMの応答待ちのため数秒〜数十秒かかる場合があります）。</p>
+        <script>
+        (function () {
+          var saveButton = document.getElementById("llm_save_button");
+          if (saveButton) {
+            saveButton.form.addEventListener("submit", function () {
+              saveButton.disabled = true;
+              saveButton.textContent = "保存中...";
+            });
+          }
+          var testForm = document.getElementById("llm_test_form");
+          var testButton = document.getElementById("llm_test_button");
+          testForm.addEventListener("submit", function () {
+            testButton.disabled = true;
+            testButton.classList.add("is-loading");
+            testButton.querySelector(".llm-btn-label").textContent = "確認中...（応答をお待ちください）";
+          });
+        })();
+        </script>
       </div>
       </div>
 
