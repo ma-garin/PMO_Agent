@@ -10,9 +10,11 @@ REQUEST_TIMEOUT_SECONDS = 60
 class OllamaProvider(LlmProvider):
     name = "ollama"
 
-    def complete(self, prompt: str, *, system: str = "", max_tokens: int = 1024) -> str:
+    def complete(
+        self, prompt: str, *, system: str = "", max_tokens: int = 1024, model: str = ""
+    ) -> str:
         base_url = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
-        model = os.environ.get("LLM_OLLAMA_MODEL", "qwen2.5:7b")
+        model = model or os.environ.get("LLM_OLLAMA_MODEL", "qwen2.5:7b")
         messages = []
         if system:
             messages.append({"role": "system", "content": system})

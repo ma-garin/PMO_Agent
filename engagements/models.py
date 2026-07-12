@@ -33,6 +33,8 @@ class Engagement(models.Model):
         choices=LlmProvider.choices,
         default=LlmProvider.OLLAMA,
     )
+    # 空欄なら各プロバイダの環境変数の既定モデルを使う
+    llm_model = models.CharField("既定モデル", max_length=100, blank=True)
     # 種別マッピング: 元システムのticket_typeのうち欠陥として扱う値(大文字小文字は無視)
     defect_ticket_types = models.JSONField(
         "欠陥として扱う種別", default=list, blank=True

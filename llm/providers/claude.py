@@ -11,12 +11,14 @@ API_URL = "https://api.anthropic.com/v1/messages"
 class ClaudeProvider(LlmProvider):
     name = "claude"
 
-    def complete(self, prompt: str, *, system: str = "", max_tokens: int = 1024) -> str:
+    def complete(
+        self, prompt: str, *, system: str = "", max_tokens: int = 1024, model: str = ""
+    ) -> str:
         api_key = os.environ.get("ANTHROPIC_API_KEY", "")
         if not api_key:
             raise LlmError("ANTHROPIC_API_KEYが未設定です。")
 
-        model = os.environ.get("LLM_CLAUDE_MODEL", "claude-haiku-4-5-20251001")
+        model = model or os.environ.get("LLM_CLAUDE_MODEL", "claude-haiku-4-5-20251001")
         headers = {
             "x-api-key": api_key,
             "anthropic-version": "2023-06-01",
