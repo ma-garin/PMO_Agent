@@ -68,14 +68,25 @@ def upload(request):
     return redirect("knowledge:list")
 
 
+def _visible_documents(engagement):
+    """一覧表示と同じ可視スコープ(共通資料＋現在案件の資料)。IDOR防止に使う。"""
+    return Document.objects.filter(
+        Q(engagement__isnull=True) | Q(engagement=engagement)
+    )
+
+
 @login_required
 def delete(request, pk):
     engagement = _current_engagement(request)
     if engagement is None:
         return redirect("engagements:select")
 
-    document = get_object_or_404(Document, pk=pk)
+    document = get_object_or_404(_visible_documents(engagement), pk=pk)
     if request.method == "POST":
+        # 共通資料(全案件共有)は影響が広いため管理者のみ削除可
+        if document.engagement_id is None and not request.user.is_staff:
+            messages.error(request, "共通資料の削除には管理者権限が必要です。")
+            return redirect("knowledge:list")
         document.file.delete(save=False)
         document.delete()
         messages.success(request, "文書を削除しました。")
@@ -88,7 +99,7 @@ def reindex(request, pk):
     if engagement is None:
         return redirect("engagements:select")
 
-    document = get_object_or_404(Document, pk=pk)
+    document = get_object_or_404(_visible_documents(engagement), pk=pk)
     if request.method == "POST":
         process_document.defer(document_id=document.pk)
         messages.success(request, f"{document.title} を再取込キューに追加しました。")
