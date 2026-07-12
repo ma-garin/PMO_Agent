@@ -49,11 +49,21 @@
               {% endfor %}
             </div>
           </div>
-          <div class="gantt-wrap{% if zoom == 'all' %} gantt-wrap-fit{% endif %}">
-            <svg class="gantt-svg{% if zoom == 'all' %} gantt-svg-fit{% endif %}" width="{{ chart.width }}" height="{{ chart.height|add:42 }}" viewBox="0 0 {{ chart.width }} {{ chart.height|add:42 }}" preserveAspectRatio="xMinYMin meet">
+          <div class="gantt-layout">
+            <div class="gantt-tasknames">
+              <div class="gantt-tn-header">作業（WBS）</div>
+              {% for item in items %}
+                <div class="gantt-tn-row" title="{{ item.wbs_code }} {{ item.title }}">
+                  <span class="gantt-tn-code">{{ item.wbs_code }}</span>
+                  <span class="gantt-tn-title">{{ item.title }}</span>
+                </div>
+              {% endfor %}
+            </div>
+            <div class="gantt-timeline{% if zoom == 'all' %} gantt-timeline-fit{% endif %}">
+            <svg class="gantt-svg{% if zoom == 'all' %} gantt-svg-fit{% endif %}" width="{{ chart.width|add:30 }}" height="{{ chart.height|add:42 }}" viewBox="0 0 {{ chart.width|add:30 }} {{ chart.height|add:42 }}" preserveAspectRatio="{% if zoom == 'all' %}none{% else %}xMinYMin meet{% endif %}">
               <g transform="translate(0, 26)">
                 {% for bar in chart.bars %}
-                  <rect class="gantt-row-bg" x="0" y="{{ bar.y }}" width="{{ chart.width }}" height="34"></rect>
+                  <rect class="gantt-row-bg" x="0" y="{{ bar.y }}" width="{{ chart.width|add:30 }}" height="34"></rect>
                 {% endfor %}
                 {% for tick in chart.axis_ticks %}
                   <line class="gantt-axis-gridline" x1="{{ tick.x }}" y1="0" x2="{{ tick.x }}" y2="{{ chart.height }}"></line>
@@ -88,6 +98,7 @@
                 <text class="gantt-axis-label" x="{{ tick.x }}" y="16" text-anchor="{% if forloop.first %}start{% elif forloop.last %}end{% else %}middle{% endif %}">{{ tick.label }}</text>
               {% endfor %}
             </svg>
+            </div>
           </div>
           <div class="gantt-legend">
             <span><span class="swatch" style="background: var(--primary);"></span>進行中の実績幅</span>

@@ -1,8 +1,17 @@
-.gantt-wrap { overflow-x: auto; padding: 8px 0; }
-/* 全期間ズーム: スクロールせず全体をコンテナ幅にフィットさせる */
-.gantt-wrap-fit { overflow-x: hidden; }
+/* ガント: 左にタスク名の固定列、右にタイムライン(標準的な2ペイン構成) */
+.gantt-layout { display: flex; align-items: flex-start; padding: 8px 0; }
+.gantt-tasknames { flex: 0 0 200px; }
+.gantt-tn-header { height: 26px; display: flex; align-items: flex-end; padding: 0 8px 3px; font-size: 11px; font-weight: 700; color: var(--ink-2); }
+.gantt-tn-row { height: 34px; display: flex; align-items: center; gap: 6px; padding: 0 8px; font-size: 12px; color: var(--ink); }
+.gantt-tn-row:nth-child(even) { background: var(--surface); }
+.gantt-tn-row:nth-child(odd) { background: var(--ground); }
+.gantt-tn-code { flex: 0 0 auto; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--ink-2); font-size: 11px; }
+.gantt-tn-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.gantt-timeline { flex: 1; min-width: 0; overflow-x: auto; }
+/* 全期間ズーム: スクロールせずコンテナ幅にフィット(横方向のみ伸縮) */
+.gantt-timeline-fit { overflow-x: hidden; }
 .gantt-svg { display: block; }
-.gantt-svg-fit { width: 100%; height: auto; }
+.gantt-svg-fit { width: 100%; }
 .gantt-row-bg { fill: var(--ground); }
 .gantt-row-bg:nth-child(odd) { fill: var(--surface); }
 .gantt-bar-track { fill: var(--ground); stroke: var(--border); stroke-width: 1; rx: 4; }
