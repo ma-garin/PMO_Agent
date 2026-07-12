@@ -34,7 +34,7 @@ MODEL_CHOICES: dict[str, list[str]] = {
         ["claude-opus-4-8", "claude-sonnet-5", "claude-haiku-4-5-20251001"],
     ),
     "ollama": _env_model_list(
-        "LLM_OLLAMA_MODEL_CHOICES", ["qwen2.5:7b", "llama3.1:8b"]
+        "LLM_OLLAMA_MODEL_CHOICES", ["qwen2.5:3b", "qwen2.5:7b", "llama3.1:8b"]
     ),
 }
 

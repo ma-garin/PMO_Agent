@@ -23,7 +23,7 @@ class OllamaProvider(LlmProvider):
     ) -> str:
         # ローカルLLMのため api_key/organization/project は使用しない(シグネチャ互換のみ)。
         base_url = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
-        model = model or os.environ.get("LLM_OLLAMA_MODEL", "qwen2.5:7b")
+        model = model or os.environ.get("LLM_OLLAMA_MODEL", "qwen2.5:3b")
         messages = []
         if system:
             messages.append({"role": "system", "content": system})
@@ -41,6 +41,15 @@ class OllamaProvider(LlmProvider):
             raise LlmError(
                 "Ollamaに接続できません。ollama serveが起動しているか確認してください"
             ) from exc
+        except requests.HTTPError as exc:
+            status = exc.response.status_code if exc.response is not None else None
+            if status == 404:
+                raise LlmError(
+                    f"モデル '{model}' がOllamaに見つかりません。"
+                    f"ターミナルで `ollama pull {model}` を実行して取得するか、"
+                    "LLM設定で取得済みのモデルを選択してください"
+                ) from exc
+            raise LlmError(f"Ollama呼び出しでエラーが発生しました (HTTP {status})") from exc
         except requests.RequestException as exc:
             raise LlmError(str(exc)) from exc
 
