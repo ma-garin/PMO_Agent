@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from datetime import timedelta
 
+from django.db import transaction
 from django.utils import timezone
 
 from analytics.services import odc_distribution, summarize_defects
@@ -264,41 +265,53 @@ _APPLIERS = {
 }
 
 
-def apply_proposal(proposal: AgentProposal, user, note: str = "") -> None:
-    if proposal.status != AgentProposal.Status.PENDING:
+def _lock_pending_proposal(proposal: AgentProposal) -> AgentProposal:
+    locked_proposal = AgentProposal.objects.select_for_update().get(pk=proposal.pk)
+    if locked_proposal.status != AgentProposal.Status.PENDING:
         raise ValueError("既に判断済みの提案です。")
+    return locked_proposal
 
-    applier = _APPLIERS.get(proposal.kind)
+
+@transaction.atomic
+def apply_proposal(proposal: AgentProposal, user, note: str = "") -> None:
+    locked_proposal = _lock_pending_proposal(proposal)
+
+    applier = _APPLIERS.get(locked_proposal.kind)
     if applier is not None:
-        applier(proposal, user)
+        applier(locked_proposal, user)
 
-    proposal.status = AgentProposal.Status.APPROVED
-    proposal.decided_by = user
-    proposal.decided_at = timezone.now()
-    proposal.decision_note = note
-    proposal.save(update_fields=["status", "decided_by", "decided_at", "decision_note"])
+    locked_proposal.status = AgentProposal.Status.APPROVED
+    locked_proposal.decided_by = user
+    locked_proposal.decided_at = timezone.now()
+    locked_proposal.decision_note = note
+    locked_proposal.save(update_fields=["status", "decided_by", "decided_at", "decision_note"])
 
     try:
         from audit.services import record
 
-        record(user, "agent_proposal_approve", proposal, detail=proposal.title)
+        record(
+            user,
+            "agent_proposal_approve",
+            locked_proposal,
+            detail=locked_proposal.title,
+        )
     except ImportError:
         pass
 
 
+@transaction.atomic
 def reject_proposal(proposal: AgentProposal, user, note: str = "") -> None:
-    if proposal.status != AgentProposal.Status.PENDING:
-        raise ValueError("既に判断済みの提案です。")
+    locked_proposal = _lock_pending_proposal(proposal)
 
-    proposal.status = AgentProposal.Status.REJECTED
-    proposal.decided_by = user
-    proposal.decided_at = timezone.now()
-    proposal.decision_note = note
-    proposal.save(update_fields=["status", "decided_by", "decided_at", "decision_note"])
+    locked_proposal.status = AgentProposal.Status.REJECTED
+    locked_proposal.decided_by = user
+    locked_proposal.decided_at = timezone.now()
+    locked_proposal.decision_note = note
+    locked_proposal.save(update_fields=["status", "decided_by", "decided_at", "decision_note"])
 
     try:
         from audit.services import record
 
-        record(user, "agent_proposal_reject", proposal, detail=note)
+        record(user, "agent_proposal_reject", locked_proposal, detail=note)
     except ImportError:
         pass

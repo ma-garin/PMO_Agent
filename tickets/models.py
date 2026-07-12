@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 
 from config.crypto import decrypt, encrypt
 from engagements.models import Engagement
@@ -145,6 +146,30 @@ class SyncRun(models.Model):
 
     def __str__(self) -> str:
         return f"{self.source} @ {self.started_at:%Y-%m-%d %H:%M}"
+
+    def _finish(self, *, status: str, tickets_synced: int = 0, error_message: str = "") -> None:
+        """RUNNINGから終端状態へ一度だけ遷移する。"""
+        finished_at = timezone.now()
+        updated = type(self).objects.filter(
+            pk=self.pk, status=self.Status.RUNNING, finished_at__isnull=True
+        ).update(
+            status=status,
+            tickets_synced=tickets_synced,
+            error_message=error_message,
+            finished_at=finished_at,
+        )
+        if updated != 1:
+            raise ValueError(f"SyncRunは既に終了しています: id={self.pk} status={self.status}")
+        self.status = status
+        self.tickets_synced = tickets_synced
+        self.error_message = error_message
+        self.finished_at = finished_at
+
+    def succeed(self, tickets_synced: int) -> None:
+        self._finish(status=self.Status.SUCCESS, tickets_synced=tickets_synced)
+
+    def fail(self, error_message: str) -> None:
+        self._finish(status=self.Status.FAILED, error_message=error_message)
 
 
 class StagnationRule(models.Model):

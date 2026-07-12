@@ -1,7 +1,11 @@
+from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
+from threading import Barrier
 from unittest.mock import patch
 
 import pytest
+from django.contrib.auth import get_user_model
+from django.db import close_old_connections
 from django.utils import timezone
 
 from autopilot.models import AgentProposal, AgentRun, AgentSettings
@@ -175,6 +179,41 @@ class TestApplyProposal:
         with pytest.raises(ValueError):
             apply_proposal(proposal, owner)
 
+    def test_replayed_approval_with_stale_proposal_does_not_duplicate_result(
+        self, engagement, owner
+    ):
+        proposal = self._make_proposal(
+            engagement,
+            AgentProposal.Kind.CREATE_ACTION,
+            {"title": "一度だけ作るアクション"},
+        )
+        stale_proposal = AgentProposal.objects.get(pk=proposal.pk)
+
+        apply_proposal(proposal, owner)
+        with pytest.raises(ValueError, match="既に判断済み"):
+            apply_proposal(stale_proposal, owner)
+
+        assert ImprovementAction.objects.filter(
+            engagement=engagement, title="一度だけ作るアクション"
+        ).count() == 1
+
+    def test_approval_failure_rolls_back_result_and_decision(self, engagement, owner):
+        proposal = self._make_proposal(
+            engagement,
+            AgentProposal.Kind.CREATE_ACTION,
+            {"title": "ロールバック対象"},
+        )
+
+        with patch("audit.services.record", side_effect=RuntimeError("audit unavailable")):
+            with pytest.raises(RuntimeError, match="audit unavailable"):
+                apply_proposal(proposal, owner)
+
+        proposal.refresh_from_db()
+        assert proposal.status == AgentProposal.Status.PENDING
+        assert not ImprovementAction.objects.filter(
+            engagement=engagement, title="ロールバック対象"
+        ).exists()
+
     def test_reject_records_decision_without_registering(self, engagement, owner):
         proposal = self._make_proposal(
             engagement, AgentProposal.Kind.REGISTER_RISK, {"title": "リスクC"}
@@ -186,8 +225,56 @@ class TestApplyProposal:
         assert proposal.decision_note == "不要"
         assert not RiskItem.objects.filter(engagement=engagement).exists()
 
+    def test_rejection_audit_failure_rolls_back_decision(self, engagement, owner):
+        proposal = self._make_proposal(engagement, AgentProposal.Kind.SUMMARY_ONLY, {})
+
+        with patch("audit.services.record", side_effect=RuntimeError("audit unavailable")):
+            with pytest.raises(RuntimeError, match="audit unavailable"):
+                reject_proposal(proposal, owner)
+
+        proposal.refresh_from_db()
+        assert proposal.status == AgentProposal.Status.PENDING
+
     def test_double_reject_raises(self, engagement, owner):
         proposal = self._make_proposal(engagement, AgentProposal.Kind.SUMMARY_ONLY, {})
         reject_proposal(proposal, owner)
         with pytest.raises(ValueError):
             reject_proposal(proposal, owner)
+
+
+@pytest.mark.django_db(transaction=True)
+def test_concurrent_approvals_create_exactly_one_result(engagement, owner):
+    run = AgentRun.objects.create(engagement=engagement, trigger="manual")
+    proposal = AgentProposal.objects.create(
+        engagement=engagement,
+        run=run,
+        kind=AgentProposal.Kind.CREATE_ACTION,
+        dedup_key="concurrent-approval",
+        title="並行承認テスト",
+        evidence={},
+        body="分析文",
+        payload={"title": "一度だけ作る並行アクション"},
+    )
+    start = Barrier(2)
+
+    def approve_once():
+        close_old_connections()
+        thread_proposal = AgentProposal.objects.get(pk=proposal.pk)
+        thread_user = get_user_model().objects.get(pk=owner.pk)
+        start.wait()
+        try:
+            apply_proposal(thread_proposal, thread_user)
+            return "approved"
+        except ValueError as exc:
+            assert str(exc) == "既に判断済みの提案です。"
+            return "already-decided"
+        finally:
+            close_old_connections()
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        results = list(executor.map(lambda _index: approve_once(), range(2)))
+
+    assert sorted(results) == ["already-decided", "approved"]
+    assert ImprovementAction.objects.filter(
+        engagement=engagement, title="一度だけ作る並行アクション"
+    ).count() == 1

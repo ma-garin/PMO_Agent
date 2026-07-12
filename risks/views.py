@@ -213,6 +213,18 @@ def action_change_status(request, pk):
     if request.method == "POST":
         status = request.POST.get("status")
         if status in ImprovementAction.Status.values:
+            previous_status = action.status
             action.status = status
             action.save(update_fields=["status"])
+            from audit.services import record
+            from .services import sync_roadmap_progress
+
+            sync_roadmap_progress(engagement)
+            if previous_status != status:
+                record(
+                    request.user,
+                    "improvement_action_status_change",
+                    action,
+                    detail=f"{previous_status} -> {status}",
+                )
     return redirect("risks:actions")

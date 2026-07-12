@@ -34,62 +34,64 @@ def _import_status_history(adapter, source: TicketSource, ticket: Ticket) -> Non
 
 def sync_ticket_source(source: TicketSource, fetch_history: bool = True) -> SyncRun:
     run = SyncRun.objects.create(source=source)
-    adapter = get_adapter(source.kind)
     previous_synced_at = source.last_synced_at
 
     try:
+        adapter = get_adapter(source.kind)
         normalized_tickets = adapter.fetch_tickets(source)
     except TicketSourceConnectionError as exc:
-        run.status = SyncRun.Status.FAILED
-        run.error_message = str(exc)
-        run.finished_at = timezone.now()
-        run.save(update_fields=["status", "error_message", "finished_at"])
+        run.fail(str(exc))
         return run
+    except Exception as exc:
+        if run.status == SyncRun.Status.RUNNING:
+            run.fail(str(exc))
+        raise
 
-    synced_count = 0
-    tickets_needing_history: list[Ticket] = []
-    for normalized in normalized_tickets:
-        ticket, _created = Ticket.objects.update_or_create(
-            source=source,
-            external_id=normalized.external_id,
-            defaults={
-                "external_url": normalized.external_url,
-                "summary": normalized.summary,
-                "description": normalized.description,
-                "status": normalized.status,
-                "is_done": normalized.is_done,
-                "priority": normalized.priority,
-                "ticket_type": normalized.ticket_type,
-                "assignee_name": normalized.assignee_name,
-                "reporter_name": normalized.reporter_name,
-                "due_date": normalized.due_date,
-                "source_created_at": normalized.source_created_at,
-                "source_updated_at": normalized.source_updated_at,
-                "closed_at": normalized.closed_at,
-                "raw_payload": normalized.raw_payload,
-            },
-        )
-        synced_count += 1
+    try:
+        synced_count = 0
+        tickets_needing_history: list[Ticket] = []
+        for normalized in normalized_tickets:
+            ticket, _created = Ticket.objects.update_or_create(
+                source=source,
+                external_id=normalized.external_id,
+                defaults={
+                    "external_url": normalized.external_url,
+                    "summary": normalized.summary,
+                    "description": normalized.description,
+                    "status": normalized.status,
+                    "is_done": normalized.is_done,
+                    "priority": normalized.priority,
+                    "ticket_type": normalized.ticket_type,
+                    "assignee_name": normalized.assignee_name,
+                    "reporter_name": normalized.reporter_name,
+                    "due_date": normalized.due_date,
+                    "source_created_at": normalized.source_created_at,
+                    "source_updated_at": normalized.source_updated_at,
+                    "closed_at": normalized.closed_at,
+                    "raw_payload": normalized.raw_payload,
+                },
+            )
+            synced_count += 1
 
-        # API負荷対策: 履歴取得は前回同期以降に更新されたチケットのみ対象とする
-        if fetch_history and (
-            previous_synced_at is None
-            or normalized.source_updated_at is None
-            or normalized.source_updated_at >= previous_synced_at
-        ):
-            tickets_needing_history.append(ticket)
+            # API負荷対策: 履歴取得は前回同期以降に更新されたチケットのみ対象とする
+            if fetch_history and (
+                previous_synced_at is None
+                or normalized.source_updated_at is None
+                or normalized.source_updated_at >= previous_synced_at
+            ):
+                tickets_needing_history.append(ticket)
 
-    for ticket in tickets_needing_history:
-        _import_status_history(adapter, source, ticket)
+        for ticket in tickets_needing_history:
+            _import_status_history(adapter, source, ticket)
 
-    run.status = SyncRun.Status.SUCCESS
-    run.tickets_synced = synced_count
-    run.finished_at = timezone.now()
-    run.save(update_fields=["status", "tickets_synced", "finished_at"])
-
-    source.last_synced_at = run.finished_at
-    source.save(update_fields=["last_synced_at"])
-    return run
+        run.succeed(synced_count)
+        source.last_synced_at = run.finished_at
+        source.save(update_fields=["last_synced_at"])
+        return run
+    except Exception as exc:
+        if run.status == SyncRun.Status.RUNNING:
+            run.fail(str(exc))
+        raise
 
 
 def sync_engagement(engagement) -> list[SyncRun]:
