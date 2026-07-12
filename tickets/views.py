@@ -1,4 +1,5 @@
 from urllib.parse import urlencode
+from uuid import uuid4
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -13,7 +14,7 @@ from config.csv_utils import csv_response
 from engagements.models import Engagement
 
 from .forms import TicketSourceForm
-from .models import Notification, Ticket
+from .models import Notification, Ticket, TicketSource
 from .services import detect_stagnant_tickets, sync_ticket_source
 
 
@@ -149,6 +150,117 @@ def ticket_list(request):
         "page_query": page_query,
     }
     return render(request, "tickets/list.html", context)
+
+
+MANUAL_PRIORITY_CHOICES = ["高", "中", "低"]
+MANUAL_STATUS_CHOICES = ["未着手", "進行中", "レビュー中", "完了"]
+
+
+def _ticket_form_context(engagement, ticket=None):
+    return {
+        "engagement": engagement,
+        "nav_active": "tickets",
+        "ticket": ticket,
+        "priority_choices": MANUAL_PRIORITY_CHOICES,
+        "status_choices": MANUAL_STATUS_CHOICES,
+        "members": engagement.members.all(),
+    }
+
+
+def _apply_manual_ticket_fields(request, ticket):
+    ticket.summary = request.POST.get("summary", "").strip()
+    ticket.description = request.POST.get("description", "")
+    ticket.priority = request.POST.get("priority", "").strip()
+    ticket.assignee_name = request.POST.get("assignee_name", "").strip()
+    status = request.POST.get("status", "未着手").strip() or "未着手"
+    ticket.status = status
+    ticket.is_done = status == "完了"
+    due = request.POST.get("due_date", "").strip()
+    ticket.due_date = parse_date(due) if due else None
+    return ticket
+
+
+@login_required
+def ticket_detail(request, pk):
+    engagement = _current_engagement(request)
+    if engagement is None:
+        return redirect("engagements:select")
+
+    ticket = get_object_or_404(
+        Ticket.objects.select_related("source"), pk=pk, source__engagement=engagement
+    )
+    context = {
+        "engagement": engagement,
+        "nav_active": "tickets",
+        "ticket": ticket,
+        "today": timezone.localdate(),
+        "transitions": ticket.status_transitions.order_by("-occurred_at")[:20],
+    }
+    return render(request, "tickets/detail.html", context)
+
+
+@login_required
+def ticket_create(request):
+    engagement = _current_engagement(request)
+    if engagement is None:
+        return redirect("engagements:select")
+
+    if request.method == "POST":
+        if not request.POST.get("summary", "").strip():
+            messages.error(request, "概要を入力してください。")
+            return render(request, "tickets/form.html", _ticket_form_context(engagement))
+        ticket = _apply_manual_ticket_fields(
+            request,
+            Ticket(
+                source=TicketSource.get_internal(engagement),
+                external_id=f"M-{uuid4().hex[:8].upper()}",
+            ),
+        )
+        ticket.save()
+        messages.success(request, "チケットを作成しました。")
+        return redirect("tickets:detail", pk=ticket.pk)
+
+    return render(request, "tickets/form.html", _ticket_form_context(engagement))
+
+
+@login_required
+def ticket_edit(request, pk):
+    engagement = _current_engagement(request)
+    if engagement is None:
+        return redirect("engagements:select")
+
+    ticket = get_object_or_404(
+        Ticket.objects.select_related("source"), pk=pk, source__engagement=engagement
+    )
+    if not ticket.is_manual:
+        messages.error(request, "外部連携のチケットはこのシステム上では編集できません。")
+        return redirect("tickets:detail", pk=pk)
+
+    if request.method == "POST":
+        if not request.POST.get("summary", "").strip():
+            messages.error(request, "概要を入力してください。")
+            return render(request, "tickets/form.html", _ticket_form_context(engagement, ticket))
+        _apply_manual_ticket_fields(request, ticket).save()
+        messages.success(request, "チケットを更新しました。")
+        return redirect("tickets:detail", pk=pk)
+
+    return render(request, "tickets/form.html", _ticket_form_context(engagement, ticket))
+
+
+@login_required
+def ticket_delete(request, pk):
+    engagement = _current_engagement(request)
+    if engagement is None:
+        return redirect("engagements:select")
+
+    ticket = get_object_or_404(
+        Ticket.objects.select_related("source"), pk=pk, source__engagement=engagement
+    )
+    if request.method == "POST" and ticket.is_manual:
+        ticket.delete()
+        messages.success(request, "チケットを削除しました。")
+        return redirect("tickets:list")
+    return redirect("tickets:detail", pk=pk)
 
 
 @login_required

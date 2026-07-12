@@ -23,6 +23,7 @@
           </p>
         </div>
         <div style="display:flex; gap:10px;">
+          <a href="{% url 'tickets:create' %}" class="btn btn-primary">＋ 新規チケット</a>
           <a href="{% url 'tickets:export_csv' %}?{{ sort_query }}" class="btn btn-secondary">CSVエクスポート</a>
           <a href="{% url 'tickets:source_settings' %}" class="btn btn-secondary">接続設定</a>
         </div>
@@ -75,7 +76,7 @@
             {% for ticket in page_obj %}
               <tr>
                 <td>
-                  <a class="ticket-link" href="{{ ticket.external_url }}" target="_blank" rel="noopener">
+                  <a class="ticket-link" href="{% url 'tickets:detail' ticket.pk %}">
                     <span class="ticket-summary">{{ ticket.summary }}</span>
                     <span class="ticket-id">{{ ticket.source.name }} / {{ ticket.external_id }}</span>
                   </a>
@@ -95,7 +96,7 @@
                 </td>
               </tr>
             {% empty %}
-              <tr><td colspan="6"><p class="empty-note">該当するチケットはありません。接続設定からJIRA/Redmineを連携してください。</p></td></tr>
+              <tr><td colspan="6"><p class="empty-note">該当するチケットはありません。「＋ 新規チケット」で作成するか、接続設定からJIRA/Redmineを連携してください。</p></td></tr>
             {% endfor %}
           </tbody>
         </table>

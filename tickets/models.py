@@ -9,6 +9,7 @@ class TicketSource(models.Model):
     class Kind(models.TextChoices):
         JIRA = "jira", "JIRA"
         REDMINE = "redmine", "Redmine"
+        INTERNAL = "internal", "このシステム"
 
     engagement = models.ForeignKey(
         Engagement, related_name="ticket_sources", on_delete=models.CASCADE
@@ -44,6 +45,24 @@ class TicketSource(models.Model):
     def has_api_token(self) -> bool:
         """トークンを復号せずに設定有無だけを返す(F-6: 画面にトークン材料を出さない)。"""
         return bool(self._api_token_encrypted)
+
+    @classmethod
+    def get_internal(cls, engagement) -> "TicketSource":
+        """案件内の手動チケット用の内部ソースを取得(なければ作成)する。
+
+        外部同期の対象外にするため is_active=False とする。
+        """
+        source, _ = cls.objects.get_or_create(
+            engagement=engagement,
+            kind=cls.Kind.INTERNAL,
+            defaults={
+                "name": "このシステムで作成",
+                "base_url": "",
+                "project_key": "MANUAL",
+                "is_active": False,
+            },
+        )
+        return source
 
 
 class Ticket(models.Model):
@@ -105,6 +124,11 @@ class Ticket(models.Model):
         if not self.status:
             return ""
         return self.STATUS_LABELS.get(self.status.strip().lower(), self.status)
+
+    @property
+    def is_manual(self) -> bool:
+        """このシステム上で作成された手動チケット(外部連携ではない)か。"""
+        return self.source.kind == TicketSource.Kind.INTERNAL
 
 
 class TicketStatusTransition(models.Model):
