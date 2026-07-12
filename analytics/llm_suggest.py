@@ -1,12 +1,13 @@
 import json
 
+from llm.prompt_utils import EXTERNAL_DATA_GUARD, wrap_external
 from llm.services import LlmError, run_completion
 
 from .models import OdcClassification
 
 SUGGEST_SYSTEM = (
     "あなたはソフトウェア品質保証の専門家です。欠陥チケットをODC分類します。"
-    "必ずJSONのみで回答してください。"
+    "必ずJSONのみで回答してください。" + EXTERNAL_DATA_GUARD
 )
 
 _AXIS_CHOICES = {
@@ -22,12 +23,16 @@ def build_prompt(ticket) -> str:
         f"{axis}: " + ", ".join(f"{value}({label})" for value, label in choices)
         for axis, choices in _AXIS_CHOICES.items()
     )
-    return (
-        f"以下の欠陥チケットをODC分類してください。\n\n"
+    # チケット由来のテキスト(外部起票者が書ける)は外部データとして区切る
+    ticket_data = wrap_external(
         f"タイトル: {ticket.summary}\n"
         f"本文: {ticket.description[:1000]}\n"
         f"状態: {ticket.status}\n"
-        f"優先度: {ticket.priority}\n\n"
+        f"優先度: {ticket.priority}"
+    )
+    return (
+        f"以下の欠陥チケットをODC分類してください。\n\n"
+        f"{ticket_data}\n\n"
         f"選択肢(value(label)の形式):\n{choices_text}\n\n"
         '出力は {"defect_type": "...", "trigger": "...", "activity": "...", "impact": "..."} '
         "の形式のJSONのみとし、各値は上記選択肢のvalueから選んでください。"

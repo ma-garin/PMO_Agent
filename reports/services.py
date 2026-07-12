@@ -2,6 +2,7 @@ import markdown as _markdown
 import nh3
 
 from analytics.services import convergence_series, odc_distribution, summarize_defects
+from llm.prompt_utils import EXTERNAL_DATA_GUARD
 from llm.services import run_completion
 
 # Markdown変換後のHTMLで許可するタグ/属性。これ以外(script等)は除去する(CWE-79対策)。
@@ -35,6 +36,7 @@ DRAFT_SYSTEM = (
     "## ODC分析所見\n"
     "## リスク状況\n"
     "## リスクと提言\n"
+    + EXTERNAL_DATA_GUARD
 )
 
 

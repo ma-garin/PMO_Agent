@@ -6,6 +6,8 @@ from engagements.models import Engagement
 from llm.providers.base import LlmError
 from llm.services import run_completion
 
+from llm.prompt_utils import wrap_external
+
 from .context_builder import build_rag_context, build_system_prompt
 from .models import ChatMessage, ChatThread
 
@@ -92,8 +94,9 @@ def send(request, pk):
     )
     rag_context = build_rag_context(engagement, question)
     if rag_context:
+        # 参考資料(取込文書)は外部由来のため区切りで囲む(F-11)
         prompt = (
-            f"## 参考資料\n{rag_context}\n\n## 会話\n{history_text}\n\n"
+            f"## 参考資料\n{wrap_external(rag_context)}\n\n## 会話\n{history_text}\n\n"
             "上記の会話を踏まえて、直近の質問に回答してください。"
             "参考資料を使った場合は文末に[出典n]を明記してください。"
         )

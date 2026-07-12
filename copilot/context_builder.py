@@ -76,4 +76,7 @@ def build_system_prompt(engagement) -> str:
     lines.append(
         "データに基づいて簡潔に回答してください。わからないことは推測せず、その旨を伝えてください。"
     )
+    from llm.prompt_utils import EXTERNAL_DATA_GUARD
+
+    lines.append(EXTERNAL_DATA_GUARD)
     return "\n".join(lines)

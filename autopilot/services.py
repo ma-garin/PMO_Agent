@@ -8,6 +8,7 @@ from datetime import timedelta
 from django.utils import timezone
 
 from analytics.services import odc_distribution, summarize_defects
+from llm.prompt_utils import EXTERNAL_DATA_GUARD
 from llm.providers.base import LlmError
 from llm.services import run_completion
 
@@ -18,6 +19,7 @@ AUTOPILOT_SYSTEM = (
     "あなたは検証会社のPMOエージェントです。検知された異常について、"
     "与えられたデータのみを根拠に①何が起きているか②考えられる原因③推奨アクションを"
     "日本語で簡潔に分析し、指定のJSON形式で出力してください。数値の捏造は禁止します。"
+    + EXTERNAL_DATA_GUARD
 )
 
 _PAYLOAD_SCHEMA_HINTS = {
