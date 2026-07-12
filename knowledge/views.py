@@ -1,3 +1,5 @@
+import os
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
@@ -9,6 +11,8 @@ from .models import Document
 from .tasks import process_document
 
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024
+# ingest.extract_text が対応する形式に一致させる(入口検証。F-5)
+ALLOWED_EXTENSIONS = {".txt", ".md", ".pdf", ".docx"}
 
 
 def _current_engagement(request):
@@ -52,6 +56,11 @@ def upload(request):
 
     if uploaded_file.size > MAX_UPLOAD_BYTES:
         messages.error(request, "ファイルサイズは10MBまでです。")
+        return redirect("knowledge:list")
+
+    ext = os.path.splitext(uploaded_file.name)[1].lower()
+    if ext not in ALLOWED_EXTENSIONS:
+        messages.error(request, "対応形式は txt / md / pdf / docx です。")
         return redirect("knowledge:list")
 
     scope = request.POST.get("scope", "engagement")

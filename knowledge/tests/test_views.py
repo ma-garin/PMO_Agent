@@ -50,6 +50,20 @@ class TestUpload:
         mock_task.defer.assert_not_called()
         assert not Document.objects.exists()
 
+    def test_upload_disallowed_extension_is_rejected(self, logged_in_client):
+        bad_file = SimpleUploadedFile("evil.exe", b"MZ", content_type="application/octet-stream")
+        with patch("knowledge.views.process_document") as mock_task:
+            logged_in_client.post("/knowledge/upload/", {"file": bad_file, "scope": "engagement"})
+        mock_task.defer.assert_not_called()
+        assert not Document.objects.exists()
+
+    def test_upload_allowed_pdf_extension_is_accepted(self, logged_in_client):
+        pdf_file = SimpleUploadedFile("spec.pdf", b"%PDF-1.4", content_type="application/pdf")
+        with patch("knowledge.views.process_document") as mock_task:
+            logged_in_client.post("/knowledge/upload/", {"title": "仕様書", "file": pdf_file, "scope": "engagement"})
+        mock_task.defer.assert_called_once()
+        assert Document.objects.filter(title="仕様書").exists()
+
 
 def _make_document(engagement, title="資料"):
     return Document.objects.create(
