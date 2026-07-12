@@ -5,11 +5,6 @@
     <button type="button" class="sidebar-toggle" id="sidebar-toggle" aria-label="サイドバーを折りたたむ">&#9664;</button>
   </div>
 
-  <div class="sidebar-project">
-    <span class="name">{{ engagement.name }}</span>
-    <a href="{% url 'engagements:select' %}">案件を切替</a>
-  </div>
-
   <nav class="sidebar-nav">
     <a href="{% url 'dashboard:home' %}" class="nav-item{% if nav_active == 'home' %} active{% endif %}" title="ホーム">
       &#127968; <span class="nav-label">ホーム</span>

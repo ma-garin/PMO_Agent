@@ -1,7 +1,14 @@
 <header class="app-header">
+  {% if current_engagement_name %}
+  <div class="app-header-project">
+    <span class="proj-label">案件</span>
+    <span class="proj-name" title="{{ current_engagement_name }}">{{ current_engagement_name }}</span>
+    <a href="{% url 'engagements:select' %}" class="proj-switch">切替</a>
+  </div>
+  {% endif %}
   <form class="app-search" action="/search/" method="get">
     <span>&#128269;</span>
-    <input type="text" name="q" id="global-search-input" placeholder="チケット・案件を検索" autocomplete="off" style="border:none; background:transparent; outline:none; flex:1; color:var(--ink); font-size:13.5px;">
+    <input type="text" name="q" id="global-search-input" placeholder="案件・レポート・チケットを横断検索" autocomplete="off" style="border:none; background:transparent; outline:none; flex:1; color:var(--ink); font-size:13.5px;">
     <kbd>&#8984;K</kbd>
   </form>
   <div class="app-header-actions">
