@@ -184,6 +184,31 @@ table.log{border-collapse:collapse;width:100%;font-size:12.5px;}
   </ul>
 </div>
 
+<!-- Batch H -->
+<div class="batch is-done">
+  <div class="batch-head">
+    <h2>Batch H: 再クロールで発見した課題（追加）</h2>
+    <span class="pill done">完了</span>
+  </div>
+  <div class="batch-head"><span></span><span class="meta">commit 569d282</span></div>
+  <ul class="items">
+    <li class="d">レポート生成が生のPython値（<code>[]</code>・<code>None</code>・dict）を本文へ出力していたのを人間可読な日本語に整形（実機で消失を確認）</li>
+    <li class="d">新規ユーザー作成・チケット接続フォームにブラウザのパスワードオートフィルが発火しadmin資格情報が挿入される問題を修正（autocomplete対策）</li>
+    <li class="d">ホームの挨拶が常に「おはようございます」だったのを時刻対応（こんばんは/おはよう/こんにちは）に</li>
+  </ul>
+</div>
+
+<h3 class="sec">残課題（正直な未対応・別対応）</h3>
+<div class="batch is-todo">
+  <ul class="items">
+    <li class="t"><span class="id">K2</span> ナレッジの文書詳細閲覧画面が未実装（機能追加が必要）</li>
+    <li class="t"><span class="id">MODEL</span> 3bローカルモデルの出力品質（レポートの用語崩れ・中国語混入）はモデル選択側の課題。より大きなモデルで改善</li>
+    <li class="t"><span class="id">G6+</span> ガントの依存関係(先行/後続)のUI編集は未実装</li>
+    <li class="t"><span class="id">AP1'</span> 自律運転の既存デモ提案は旧本文が残る（新規検知分はコード修正済）</li>
+    <li class="t"><span class="id">MINOR</span> 監査ログの操作コードが英語snake_case（管理者向け・許容範囲）／本番はDEBUG=Falseで404詳細を非表示に</li>
+  </ul>
+</div>
+
 <h3 class="sec">コミット履歴</h3>
 <table class="log">
   <tr><th>コミット</th><th>内容</th></tr>
@@ -194,6 +219,7 @@ table.log{border-collapse:collapse;width:100%;font-size:12.5px;}
   <tr><td><code>9db8c70</code></td><td>feat: システム内でのチケット作成・詳細・編集を実装 (Batch E)</td></tr>
   <tr><td><code>6c3d115</code></td><td>feat: ガントのタスク追加・編集・削除を実装 (Batch F)</td></tr>
   <tr><td><code>7cf9ceb</code></td><td>fix: Ollama不通の根本原因を修正 (Batch G)</td></tr>
+  <tr><td><code>569d282</code></td><td>fix: 再クロールで発見した課題を修正 (Batch H)</td></tr>
 </table>
 
 <p class="note" style="margin-top:24px;">関連: 実機点検の不具合台帳
