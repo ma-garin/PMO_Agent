@@ -59,6 +59,26 @@ rsync -a /path/to/PMO_Agent/media/ "$HOME/pmo_agent_backups/media_$(date +%Y%m%d
 
 登録: `launchctl load ~/Library/LaunchAgents/com.pmoagent.backup.plist`
 
+## 本番公開前チェックリスト（F-3）
+
+本番環境（`DJANGO_DEBUG=false`）では以下を必ず設定する。設定不備は起動失敗または
+セキュリティ低下につながる。
+
+- [ ] `DJANGO_SECRET_KEY` を強力な値で設定（未設定だと起動失敗する）。
+      生成例: `python -c "import secrets; print(secrets.token_urlsafe(50))"`
+- [ ] `DJANGO_DEBUG=false` を設定（トレースバック露出防止）。
+- [ ] `DJANGO_ALLOWED_HOSTS` を実際のドメインに設定。
+- [ ] TLS終端はリバースプロキシ（nginx等）で行い、`X-Forwarded-Proto` を渡す構成にする
+      （`SECURE_PROXY_SSL_HEADER` がこれを前提にHTTPS判定する）。プロキシを使わず
+      アプリで直接TLSする構成なら、この行の要否を再確認すること。
+- [ ] `FIELD_ENCRYPTION_KEY`（トークン暗号鍵）を設定・別保管。
+- [ ] `python manage.py check --deploy` を実行し、警告を確認・解消する。
+- [ ] `seed_demo` は本番で実行しない（実行が必要なら `--force` と `SEED_ADMIN_PASSWORD` を使い、
+      投入後に必ずパスワードを変更）。
+
+`DEBUG=false` のとき、`config/settings.py` は自動で HTTPS 強制・セキュアCookie・HSTS・
+Content-Type-nosniff を有効化する。
+
 ## リストア手順
 
 ```bash
