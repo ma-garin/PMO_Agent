@@ -94,6 +94,15 @@ rsync -a "$HOME/pmo_agent_backups/media_20260101/" /path/to/PMO_Agent/media/
 
 **重要**: `FIELD_ENCRYPTION_KEY` が復元先の `.env` にリストア元と同じ値で設定されていないと、`TicketSource.api_token` が復号できず空文字になる（`config/crypto.py::decrypt` の仕様）。鍵は必ずDBバックアップとは別経路（パスワードマネージャ等）で保管し、リストア時に手動で設定すること。
 
-## 鍵のローテーション（将来的な運用）
+## 鍵のローテーション（F-14）
 
-`FIELD_ENCRYPTION_KEY` をローテーションする場合、全 `TicketSource` を旧鍵で復号→新鍵で再暗号化するワンショットスクリプトが必要（現時点では未実装。Phase 8時点のスコープ外）。
+`config/crypto.py` は `MultiFernet` に対応し、複数鍵での無停止ローテーションが可能。
+
+手順:
+1. 新しい鍵を生成: `python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"`
+2. `.env` に `FIELD_ENCRYPTION_KEYS="新鍵,旧鍵"` を設定（**新鍵を先頭**。旧 `FIELD_ENCRYPTION_KEY` は後方互換で読まれるが、ローテーション時は `KEYS` を使う）。
+   - この時点で、旧鍵で暗号化済みの値も復号でき、新規暗号化は新鍵で行われる。
+3. 既存データを再暗号化: `python manage.py rotate_encryption_keys`
+4. 動作確認後、`.env` を `FIELD_ENCRYPTION_KEYS="新鍵"` のみに更新し、旧鍵を安全に破棄。
+
+本番のシークレット配布は、`.env` 直置きではなくシークレットマネージャ（AWS Secrets Manager / Vault 等）を推奨。鍵は必ずDBバックアップとは別経路で保管すること。
