@@ -39,6 +39,11 @@ class TicketSource(models.Model):
     def api_token(self, value: str) -> None:
         self._api_token_encrypted = encrypt(value)
 
+    @property
+    def has_api_token(self) -> bool:
+        """トークンを復号せずに設定有無だけを返す(F-6: 画面にトークン材料を出さない)。"""
+        return bool(self._api_token_encrypted)
+
 
 class Ticket(models.Model):
     source = models.ForeignKey(

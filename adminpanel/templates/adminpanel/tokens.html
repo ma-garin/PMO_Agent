@@ -47,7 +47,7 @@
                   <td>{{ source.get_kind_display }}</td>
                   <td><strong>{{ source.name }}</strong></td>
                   <td>{{ source.base_url }} / {{ source.project_key }}</td>
-                  <td>****{{ source.api_token|slice:"-4:" }}</td>
+                  <td>{% if source.has_api_token %}<span class="badge badge-active">設定済み</span>{% else %}<span class="badge badge-completed">未設定</span>{% endif %}</td>
                   <td>{{ source.last_synced_at|default:"未実行" }}</td>
                   <td>{% if source.is_active %}<span class="badge badge-active">有効</span>{% else %}<span class="badge badge-completed">無効</span>{% endif %}</td>
                   <td>

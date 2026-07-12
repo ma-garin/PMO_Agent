@@ -305,7 +305,7 @@ def source(other_engagement: Engagement) -> TicketSource:
 
 
 @pytest.mark.django_db
-def test_tokens_get_lists_sources_with_masked_token(
+def test_tokens_get_lists_sources_without_token_material(
     client, admin_user, source: TicketSource
 ) -> None:
     client.force_login(admin_user)
@@ -314,8 +314,10 @@ def test_tokens_get_lists_sources_with_masked_token(
     content = response.content.decode()
 
     assert response.status_code == 200
-    assert "****wxyz" in content
+    # F-6: トークン材料(末尾含む)を一切表示せず、設定有無のみ示す
+    assert "設定済み" in content
     assert "abcd1234wxyz" not in content
+    assert "wxyz" not in content
 
 
 @pytest.mark.django_db
