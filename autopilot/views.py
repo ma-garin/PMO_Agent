@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, redirect, render
 
+from config.http_utils import parse_int
 from engagements.models import Engagement
 
 from .models import AgentProposal, AgentRun, AgentSettings
@@ -108,15 +109,17 @@ def settings_view(request):
 
     if request.method == "POST":
         agent_settings.enabled = request.POST.get("enabled") == "on"
-        agent_settings.stagnant_spike_threshold = int(
-            request.POST.get("stagnant_spike_threshold") or 5
+        agent_settings.stagnant_spike_threshold = parse_int(
+            request.POST.get("stagnant_spike_threshold"), 5, minimum=1
         )
-        agent_settings.defect_spike_threshold = int(
-            request.POST.get("defect_spike_threshold") or 5
+        agent_settings.defect_spike_threshold = parse_int(
+            request.POST.get("defect_spike_threshold"), 5, minimum=1
         )
-        agent_settings.overdue_threshold = int(request.POST.get("overdue_threshold") or 3)
-        agent_settings.max_llm_calls_per_day = int(
-            request.POST.get("max_llm_calls_per_day") or 20
+        agent_settings.overdue_threshold = parse_int(
+            request.POST.get("overdue_threshold"), 3, minimum=1
+        )
+        agent_settings.max_llm_calls_per_day = parse_int(
+            request.POST.get("max_llm_calls_per_day"), 20, minimum=0
         )
         agent_settings.save()
         messages.success(request, "自律運転設定を更新しました。")

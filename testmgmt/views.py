@@ -5,6 +5,7 @@ from django.utils import timezone
 
 from audit.services import record
 from config.csv_utils import csv_response
+from config.http_utils import parse_int, parse_optional_number
 from engagements.models import Engagement
 from llm.providers.base import LlmError
 
@@ -146,9 +147,9 @@ def progress_entry_create(request):
             test_level=request.POST.get("test_level", "").strip(),
             date=request.POST.get("date"),
             defaults={
-                "planned_cases": int(request.POST.get("planned_cases") or 0),
-                "executed_cases": int(request.POST.get("executed_cases") or 0),
-                "passed_cases": int(request.POST.get("passed_cases") or 0),
+                "planned_cases": parse_int(request.POST.get("planned_cases"), 0, minimum=0),
+                "executed_cases": parse_int(request.POST.get("executed_cases"), 0, minimum=0),
+                "passed_cases": parse_int(request.POST.get("passed_cases"), 0, minimum=0),
                 "note": request.POST.get("note", ""),
             },
         )
@@ -195,9 +196,9 @@ def gate_create(request):
     if request.method == "POST":
         criteria = {}
         for key in ("min_execution_rate", "min_pass_rate", "max_open_defects", "max_high_risks"):
-            value = request.POST.get(key, "").strip()
-            if value:
-                criteria[key] = float(value) if "rate" in key else int(value)
+            parsed = parse_optional_number(request.POST.get(key), as_float="rate" in key)
+            if parsed is not None:
+                criteria[key] = parsed
         QualityGate.objects.create(
             engagement=engagement, name=request.POST.get("name", "品質ゲート"), criteria=criteria
         )
