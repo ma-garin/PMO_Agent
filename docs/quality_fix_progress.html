@@ -73,9 +73,9 @@ table.log{border-collapse:collapse;width:100%;font-size:12.5px;}
   <p>PMO Agent ／ 実機点検で検出した当たり前品質の欠落を全件修正する作業の進捗</p>
   <div class="overall">
     <div style="display:flex;justify-content:space-between;font-size:13px;">
-      <span>全体進捗</span><span><b>5 / 7 バッチ完了</b>（約71%）</span>
+      <span>全体進捗</span><span><b>6 / 7 バッチ完了</b>（約86%）</span>
     </div>
-    <div class="bar"><i style="width:71%"></i></div>
+    <div class="bar"><i style="width:86%"></i></div>
   </div>
 </header>
 
@@ -160,21 +160,23 @@ table.log{border-collapse:collapse;width:100%;font-size:12.5px;}
 </div>
 
 <!-- Batch F -->
-<div class="batch is-prog">
+<div class="batch is-done">
   <div class="batch-head">
     <h2>Batch F: ガントのタスク編集機能</h2>
-    <span class="pill prog">進行中（次）</span>
+    <span class="pill done">完了</span>
   </div>
+  <div class="batch-head"><span></span><span class="meta">commit 6c3d115</span></div>
   <ul class="items">
-    <li class="t"><span class="id">G6</span> タスクの追加・編集・削除・依存関係の設定</li>
+    <li class="d"><span class="id">G6</span> タスクの追加・編集・削除を実装（種別/状態/期間/進捗/担当/親WBS、スケジュール自動生成、検証エラーの日本語表示）。実機で追加→ガント/表への即時反映を確認</li>
+    <li class="t"><span class="id">G6+</span> 依存関係(先行/後続)のUI編集は次段の課題として保留</li>
   </ul>
 </div>
 
 <!-- Batch G -->
-<div class="batch is-todo">
+<div class="batch is-prog">
   <div class="batch-head">
     <h2>Batch G: LLM(Ollama)不通の原因調査・修正</h2>
-    <span class="pill todo">未着手</span>
+    <span class="pill prog">進行中（最後）</span>
   </div>
   <ul class="items">
     <li class="t"><span class="id">X1/AP3</span> 失敗率75.8〜100%の根本原因を調査し、疎通が実際に通る状態にする</li>
@@ -189,6 +191,7 @@ table.log{border-collapse:collapse;width:100%;font-size:12.5px;}
   <tr><td><code>585ffa7</code></td><td>feat: リスク登録簿にPMBOK標準項目を追加 (Batch C)</td></tr>
   <tr><td><code>2188114</code></td><td>feat: チケット一覧の絞り込み・ソートを拡充 (Batch D)</td></tr>
   <tr><td><code>9db8c70</code></td><td>feat: システム内でのチケット作成・詳細・編集を実装 (Batch E)</td></tr>
+  <tr><td><code>6c3d115</code></td><td>feat: ガントのタスク追加・編集・削除を実装 (Batch F)</td></tr>
 </table>
 
 <p class="note" style="margin-top:24px;">関連: 実機点検の不具合台帳
