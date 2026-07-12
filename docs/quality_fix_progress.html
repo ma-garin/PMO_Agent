@@ -73,9 +73,9 @@ table.log{border-collapse:collapse;width:100%;font-size:12.5px;}
   <p>PMO Agent ／ 実機点検で検出した当たり前品質の欠落を全件修正する作業の進捗</p>
   <div class="overall">
     <div style="display:flex;justify-content:space-between;font-size:13px;">
-      <span>全体進捗</span><span><b>3 / 7 バッチ完了</b>（約43%）</span>
+      <span>全体進捗</span><span><b>4 / 7 バッチ完了</b>（約57%）</span>
     </div>
-    <div class="bar"><i style="width:43%"></i></div>
+    <div class="bar"><i style="width:57%"></i></div>
   </div>
 </header>
 
@@ -136,21 +136,22 @@ table.log{border-collapse:collapse;width:100%;font-size:12.5px;}
 </div>
 
 <!-- Batch D -->
-<div class="batch is-todo">
+<div class="batch is-done">
   <div class="batch-head">
     <h2>Batch D: チケット一覧の絞り込み拡充</h2>
-    <span class="pill todo">未着手（次回）</span>
+    <span class="pill done">完了</span>
   </div>
+  <div class="batch-head"><span></span><span class="meta">commit 2188114</span></div>
   <ul class="items">
-    <li class="t"><span class="id">T4</span> 担当/優先度/状態/期間の絞り込みと列ソートを追加</li>
+    <li class="d"><span class="id">T4</span> 担当/優先度の絞り込み、期限範囲、列クリックソート(昇降・矢印)を追加。ページ送り/CSVにも引き継ぎ（実機検証済み）</li>
   </ul>
 </div>
 
 <!-- Batch E -->
-<div class="batch is-todo">
+<div class="batch is-prog">
   <div class="batch-head">
     <h2>Batch E: チケット作成・詳細・編集</h2>
-    <span class="pill todo">未着手</span>
+    <span class="pill prog">進行中（次）</span>
   </div>
   <ul class="items">
     <li class="t"><span class="id">T1/T2</span> アプリ内の詳細・新規作成・編集・状態変更（スキーマ変更＋DESIGN.md方針改訂を含む）</li>
@@ -185,6 +186,7 @@ table.log{border-collapse:collapse;width:100%;font-size:12.5px;}
   <tr><td><code>d5e5e42</code></td><td>fix: 描画・文言の当たり前品質を修正 (Batch A)</td></tr>
   <tr><td><code>43209c8</code></td><td>fix: ガント表示品質を修正 (Batch B)</td></tr>
   <tr><td><code>585ffa7</code></td><td>feat: リスク登録簿にPMBOK標準項目を追加 (Batch C)</td></tr>
+  <tr><td><code>2188114</code></td><td>feat: チケット一覧の絞り込み・ソートを拡充 (Batch D)</td></tr>
 </table>
 
 <p class="note" style="margin-top:24px;">関連: 実機点検の不具合台帳
