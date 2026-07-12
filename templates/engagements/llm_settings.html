@@ -39,7 +39,7 @@
         </p>
         {{ all_model_choices|json_script:"model-choices-data" }}
         {% if can_edit %}
-        <form method="post" novalidate>
+        <form method="post" novalidate autocomplete="off">
           {% csrf_token %}
           <input type="hidden" name="action" value="save">
 
@@ -49,25 +49,26 @@
             {{ form.llm_provider }}
           </div>
           <div class="form-group">
-            <label class="form-label" for="llm_model">既定モデル</label>
+            <label class="form-label" for="llm_model_select">既定モデル</label>
+            <select name="llm_model" id="llm_model_select" class="form-select">
+              <option value="">（システムの既定モデルを使用）</option>
+              {% for m in model_choices %}
+                <option value="{{ m }}"{% if m == engagement.llm_model %} selected{% endif %}>{{ m }}</option>
+              {% endfor %}
+              {% if engagement.llm_model and engagement.llm_model not in model_choices %}
+                <option value="{{ engagement.llm_model }}" selected>{{ engagement.llm_model }}（現在の設定）</option>
+              {% endif %}
+              <option value="__custom__">＋ 新しいモデル名を追加...</option>
+            </select>
             <input
               type="text"
-              name="llm_model"
-              id="llm_model"
+              id="llm_model_custom"
               class="form-input"
-              list="llm-model-datalist"
-              value="{{ engagement.llm_model }}"
-              placeholder="（システムの既定モデルを使用）"
-              autocomplete="off">
-            <datalist id="llm-model-datalist">
-              {% for m in model_choices %}
-                <option value="{{ m }}">
-              {% endfor %}
-            </datalist>
-            <p class="llm-field-hint">
-              候補から選ぶか、直接入力できます。ローカルLLM(Ollama)は候補にないモデル名も入力可能です。
-              空欄のままにするとシステムの既定モデルが使われます。
-            </p>
+              placeholder="モデル名を入力（例: qwen2.5:3b）"
+              autocomplete="off"
+              style="display:none; margin-top:8px;">
+            <button type="button" id="llm_model_back_to_list" class="btn btn-secondary" style="display:none; margin-top:8px;">← 候補から選び直す</button>
+            <p class="llm-field-hint">選択したプロバイダに対応するモデルだけが候補に表示されます。候補にないモデル名は「＋ 新しいモデル名を追加」から入力できます。空欄のままにするとシステムの既定モデルが使われます。</p>
           </div>
 
           <div class="llm-section-divider">認証情報</div>
@@ -121,20 +122,54 @@
         (function () {
           var modelChoices = JSON.parse(document.getElementById("model-choices-data").textContent);
           var providerSelect = document.getElementById("{{ form.llm_provider.id_for_label }}");
-          var modelInput = document.getElementById("llm_model");
-          var modelDatalist = document.getElementById("llm-model-datalist");
+          var modelSelect = document.getElementById("llm_model_select");
+          var modelCustomInput = document.getElementById("llm_model_custom");
+          var backButton = document.getElementById("llm_model_back_to_list");
           var orgProjectFields = document.querySelectorAll(".llm-org-project-fields");
           var currentModel = "{{ engagement.llm_model|escapejs }}";
 
-          function rebuildModelSuggestions(provider, value) {
+          function enterCustomMode(prefillValue) {
+            modelSelect.style.display = "none";
+            modelSelect.disabled = true;
+            modelCustomInput.style.display = "";
+            modelCustomInput.name = "llm_model";
+            modelCustomInput.value = prefillValue || "";
+            backButton.style.display = "";
+          }
+
+          function enterSelectMode(selected) {
+            modelCustomInput.style.display = "none";
+            modelCustomInput.removeAttribute("name");
+            modelCustomInput.value = "";
+            backButton.style.display = "none";
+            modelSelect.style.display = "";
+            modelSelect.disabled = false;
+            modelSelect.value = selected || "";
+          }
+
+          function rebuildModelSelectOptions(provider, selected) {
             var models = modelChoices[provider] || [];
-            modelDatalist.innerHTML = "";
+            modelSelect.innerHTML = "";
+            var blankOption = document.createElement("option");
+            blankOption.value = "";
+            blankOption.textContent = "（システムの既定モデルを使用）";
+            modelSelect.appendChild(blankOption);
             models.forEach(function (m) {
               var option = document.createElement("option");
               option.value = m;
-              modelDatalist.appendChild(option);
+              option.textContent = m;
+              modelSelect.appendChild(option);
             });
-            modelInput.value = value;
+            var addOption = document.createElement("option");
+            addOption.value = "__custom__";
+            addOption.textContent = "＋ 新しいモデル名を追加...";
+            modelSelect.appendChild(addOption);
+
+            if (selected && models.indexOf(selected) === -1) {
+              enterCustomMode(selected);
+            } else {
+              enterSelectMode(selected);
+            }
           }
 
           function toggleOrgProjectFields(provider) {
@@ -146,13 +181,21 @@
 
           function onProviderChange(preserveSelection) {
             var provider = providerSelect.value;
-            rebuildModelSuggestions(provider, preserveSelection ? currentModel : "");
+            rebuildModelSelectOptions(provider, preserveSelection ? currentModel : "");
             toggleOrgProjectFields(provider);
           }
 
           onProviderChange(true);
           providerSelect.addEventListener("change", function () {
             onProviderChange(false);
+          });
+          modelSelect.addEventListener("change", function () {
+            if (modelSelect.value === "__custom__") {
+              enterCustomMode("");
+            }
+          });
+          backButton.addEventListener("click", function () {
+            enterSelectMode("");
           });
         })();
         </script>
