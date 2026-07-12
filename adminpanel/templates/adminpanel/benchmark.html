@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static humanize %}
 {% block title %}案件間比較 | PMO Agent{% endblock %}
 {% block extra_css %}
   <link rel="stylesheet" href="{% static 'css/app_shell.css' %}">
@@ -34,7 +34,7 @@
               {% for row in rows %}
                 <tr>
                   <td>{{ row.label }}</td>
-                  <td>{{ row.defect_total }}</td>
+                  <td>{{ row.defect_total|intcomma }}</td>
                   <td>{{ row.avg_open_age_days|default_if_none:"-" }}</td>
                   <td>{{ row.reopen_rate }}%</td>
                 </tr>

@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.humanize",
     # 自前アプリより前に置き、Procrastinateの初期化を早める(公式Django統合の推奨順)
     "procrastinate.contrib.django",
     "accounts",

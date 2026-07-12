@@ -166,3 +166,14 @@ input[type="file"].form-input::file-selector-button:hover { background: var(--pr
 }
 .pagination .page-links a:hover { background: var(--ground); }
 .pagination .page-links .current { background: var(--primary); color: #fff; font-weight: 600; }
+
+/* 狭幅端末: データテーブルが横に溢れてレイアウトを壊さないよう、
+   テーブル自体を横スクロール可能にする(デスクトップ表示は不変)。 */
+@media (max-width: 720px) {
+  .app-main table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+}

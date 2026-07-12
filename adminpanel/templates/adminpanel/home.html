@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static humanize %}
 {% block title %}管理 | PMO Agent{% endblock %}
 {% block extra_css %}
   <link rel="stylesheet" href="{% static 'css/app_shell.css' %}">
@@ -39,7 +39,7 @@
         </div>
         <div class="card stat-card">
           <div class="stat-head">&#129302; LLMログ</div>
-          <div class="stat-value">{{ llm_log_count }}</div>
+          <div class="stat-value">{{ llm_log_count|intcomma }}</div>
           <div class="stat-sub">全呼び出し件数</div>
         </div>
       </div>
