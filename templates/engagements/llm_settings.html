@@ -50,16 +50,24 @@
           </div>
           <div class="form-group">
             <label class="form-label" for="llm_model">既定モデル</label>
-            <select name="llm_model" id="llm_model" class="form-select">
-              <option value="">（システムの既定モデルを使用）</option>
+            <input
+              type="text"
+              name="llm_model"
+              id="llm_model"
+              class="form-input"
+              list="llm-model-datalist"
+              value="{{ engagement.llm_model }}"
+              placeholder="（システムの既定モデルを使用）"
+              autocomplete="off">
+            <datalist id="llm-model-datalist">
               {% for m in model_choices %}
-                <option value="{{ m }}"{% if m == engagement.llm_model %} selected{% endif %}>{{ m }}</option>
+                <option value="{{ m }}">
               {% endfor %}
-              {% if engagement.llm_model and engagement.llm_model not in model_choices %}
-                <option value="{{ engagement.llm_model }}" selected>{{ engagement.llm_model }}（現在の設定）</option>
-              {% endif %}
-            </select>
-            <p class="llm-field-hint">選択したプロバイダに対応するモデルだけが表示されます。空欄のままにするとシステムの既定モデルが使われます。</p>
+            </datalist>
+            <p class="llm-field-hint">
+              候補から選ぶか、直接入力できます。ローカルLLM(Ollama)は候補にないモデル名も入力可能です。
+              空欄のままにするとシステムの既定モデルが使われます。
+            </p>
           </div>
 
           <div class="llm-section-divider">認証情報</div>
@@ -113,33 +121,20 @@
         (function () {
           var modelChoices = JSON.parse(document.getElementById("model-choices-data").textContent);
           var providerSelect = document.getElementById("{{ form.llm_provider.id_for_label }}");
-          var modelSelect = document.getElementById("llm_model");
+          var modelInput = document.getElementById("llm_model");
+          var modelDatalist = document.getElementById("llm-model-datalist");
           var orgProjectFields = document.querySelectorAll(".llm-org-project-fields");
           var currentModel = "{{ engagement.llm_model|escapejs }}";
 
-          function rebuildModelOptions(provider, selected) {
+          function rebuildModelSuggestions(provider, value) {
             var models = modelChoices[provider] || [];
-            modelSelect.innerHTML = "";
-            var blankOption = document.createElement("option");
-            blankOption.value = "";
-            blankOption.textContent = "（システムの既定モデルを使用）";
-            modelSelect.appendChild(blankOption);
+            modelDatalist.innerHTML = "";
             models.forEach(function (m) {
               var option = document.createElement("option");
               option.value = m;
-              option.textContent = m;
-              if (m === selected) {
-                option.selected = true;
-              }
-              modelSelect.appendChild(option);
+              modelDatalist.appendChild(option);
             });
-            if (selected && models.indexOf(selected) === -1) {
-              var customOption = document.createElement("option");
-              customOption.value = selected;
-              customOption.textContent = selected + "（現在の設定）";
-              customOption.selected = true;
-              modelSelect.appendChild(customOption);
-            }
+            modelInput.value = value;
           }
 
           function toggleOrgProjectFields(provider) {
@@ -151,7 +146,7 @@
 
           function onProviderChange(preserveSelection) {
             var provider = providerSelect.value;
-            rebuildModelOptions(provider, preserveSelection ? currentModel : "");
+            rebuildModelSuggestions(provider, preserveSelection ? currentModel : "");
             toggleOrgProjectFields(provider);
           }
 
