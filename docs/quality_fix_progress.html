@@ -73,13 +73,13 @@ table.log{border-collapse:collapse;width:100%;font-size:12.5px;}
   <p>PMO Agent ／ 実機点検で検出した当たり前品質の欠落を全件修正する作業の進捗</p>
   <div class="overall">
     <div style="display:flex;justify-content:space-between;font-size:13px;">
-      <span>全体進捗</span><span><b>6 / 7 バッチ完了</b>（約86%）</span>
+      <span>全体進捗</span><span><b>7 / 7 バッチ完了</b> ✓ 全完了</span>
     </div>
-    <div class="bar"><i style="width:86%"></i></div>
+    <div class="bar"><i style="width:100%"></i></div>
   </div>
 </header>
 
-<div class="updated">最終更新: 2026-07-12 21:33（このページは60秒ごとに自動再読込／作業の都度更新）</div>
+<div class="updated">最終更新: 2026-07-12 22:18 ／ 全7バッチ完了（このページは60秒ごとに自動再読込）</div>
 
 <div class="legend">
   <span><span class="pill done">完了</span> コミット済み・実機検証済み</span>
@@ -173,13 +173,14 @@ table.log{border-collapse:collapse;width:100%;font-size:12.5px;}
 </div>
 
 <!-- Batch G -->
-<div class="batch is-prog">
+<div class="batch is-done">
   <div class="batch-head">
     <h2>Batch G: LLM(Ollama)不通の原因調査・修正</h2>
-    <span class="pill prog">進行中（最後）</span>
+    <span class="pill done">完了</span>
   </div>
+  <div class="batch-head"><span></span><span class="meta">commit 7cf9ceb</span></div>
   <ul class="items">
-    <li class="t"><span class="id">X1/AP3</span> 失敗率75.8〜100%の根本原因を調査し、疎通が実際に通る状態にする</li>
+    <li class="d"><span class="id">X1/AP3</span> 根本原因を特定: 既定モデル qwen2.5:7b が未インストール(ローカルは 3b のみ)で全失敗。既定を 3b に変更し、モデル未取得時は「ollama pull すべきモデル名」を示す実行可能なエラーに。実機Ollamaで既定=pong・7b=明快エラーを確認</li>
   </ul>
 </div>
 
@@ -192,6 +193,7 @@ table.log{border-collapse:collapse;width:100%;font-size:12.5px;}
   <tr><td><code>2188114</code></td><td>feat: チケット一覧の絞り込み・ソートを拡充 (Batch D)</td></tr>
   <tr><td><code>9db8c70</code></td><td>feat: システム内でのチケット作成・詳細・編集を実装 (Batch E)</td></tr>
   <tr><td><code>6c3d115</code></td><td>feat: ガントのタスク追加・編集・削除を実装 (Batch F)</td></tr>
+  <tr><td><code>7cf9ceb</code></td><td>fix: Ollama不通の根本原因を修正 (Batch G)</td></tr>
 </table>
 
 <p class="note" style="margin-top:24px;">関連: 実機点検の不具合台帳
