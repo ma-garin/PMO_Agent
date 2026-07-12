@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils.dateparse import parse_date
 
 from config.http_utils import parse_int
 from engagements.models import Engagement
@@ -69,6 +70,37 @@ def _cell_severity(probability: int, impact: int) -> str:
     return "low"
 
 
+def _form_context(engagement, risk=None):
+    return {
+        "engagement": engagement,
+        "nav_active": "risks",
+        "risk": risk,
+        "members": engagement.members.all(),
+        "category_choices": RiskItem.Category.choices,
+        "response_choices": RiskItem.Response.choices,
+    }
+
+
+def _apply_risk_fields(request, engagement, risk):
+    """POSTの値をRiskItemインスタンスへ反映する(create/edit共通)。"""
+    risk.title = request.POST.get("title", "").strip()
+    risk.description = request.POST.get("description", "")
+    risk.probability = parse_int(request.POST.get("probability"), 3, minimum=1, maximum=5)
+    risk.impact = parse_int(request.POST.get("impact"), 3, minimum=1, maximum=5)
+    risk.measurement = request.POST.get("measurement", "")
+    risk.countermeasure = request.POST.get("countermeasure", "")
+    category = request.POST.get("category", "")
+    risk.category = category if category in RiskItem.Category.values else ""
+    strategy = request.POST.get("response_strategy", "")
+    risk.response_strategy = strategy if strategy in RiskItem.Response.values else ""
+    risk.trigger = request.POST.get("trigger", "").strip()
+    owner_id = request.POST.get("owner") or ""
+    risk.owner = engagement.members.filter(pk=owner_id).first() if owner_id else None
+    due = request.POST.get("due_date") or ""
+    risk.due_date = parse_date(due) if due else None
+    return risk
+
+
 @login_required
 def risk_create(request):
     engagement = _current_engagement(request)
@@ -76,19 +108,12 @@ def risk_create(request):
         return redirect("engagements:select")
 
     if request.method == "POST":
-        RiskItem.objects.create(
-            engagement=engagement,
-            title=request.POST.get("title", "").strip(),
-            description=request.POST.get("description", ""),
-            probability=parse_int(request.POST.get("probability"), 3, minimum=1, maximum=5),
-            impact=parse_int(request.POST.get("impact"), 3, minimum=1, maximum=5),
-            measurement=request.POST.get("measurement", ""),
-            countermeasure=request.POST.get("countermeasure", ""),
-        )
+        risk = _apply_risk_fields(request, engagement, RiskItem(engagement=engagement))
+        risk.save()
         messages.success(request, "リスクを登録しました。")
         return redirect("risks:list")
 
-    return render(request, "risks/form.html", {"engagement": engagement, "nav_active": "risks"})
+    return render(request, "risks/form.html", _form_context(engagement))
 
 
 @login_required
@@ -99,19 +124,11 @@ def risk_edit(request, pk):
 
     risk = get_object_or_404(RiskItem, pk=pk, engagement=engagement)
     if request.method == "POST":
-        risk.title = request.POST.get("title", "").strip()
-        risk.description = request.POST.get("description", "")
-        risk.probability = parse_int(request.POST.get("probability"), 3, minimum=1, maximum=5)
-        risk.impact = parse_int(request.POST.get("impact"), 3, minimum=1, maximum=5)
-        risk.measurement = request.POST.get("measurement", "")
-        risk.countermeasure = request.POST.get("countermeasure", "")
-        risk.save()
+        _apply_risk_fields(request, engagement, risk).save()
         messages.success(request, "リスクを更新しました。")
         return redirect("risks:list")
 
-    return render(
-        request, "risks/form.html", {"engagement": engagement, "nav_active": "risks", "risk": risk}
-    )
+    return render(request, "risks/form.html", _form_context(engagement, risk=risk))
 
 
 @login_required

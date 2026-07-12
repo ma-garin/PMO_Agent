@@ -12,6 +12,20 @@ class RiskItem(models.Model):
         MATERIALIZED = "materialized", "顕在化"
         CLOSED = "closed", "クローズ"
 
+    class Category(models.TextChoices):
+        TECHNICAL = "technical", "技術"
+        SCHEDULE = "schedule", "スケジュール"
+        COST = "cost", "コスト"
+        RESOURCE = "resource", "リソース"
+        EXTERNAL = "external", "外部"
+        COMPLIANCE = "compliance", "コンプライアンス・規制"
+
+    class Response(models.TextChoices):
+        AVOID = "avoid", "回避"
+        TRANSFER = "transfer", "転嫁"
+        MITIGATE = "mitigate", "軽減"
+        ACCEPT = "accept", "受容"
+
     engagement = models.ForeignKey(
         "engagements.Engagement", on_delete=models.CASCADE, related_name="risks"
     )
@@ -21,6 +35,9 @@ class RiskItem(models.Model):
     impact = models.PositiveSmallIntegerField("影響度(1-5)", default=3)
     measurement = models.CharField("測定方法", max_length=300, blank=True)
     countermeasure = models.TextField("顕在化時の対策", blank=True)
+    category = models.CharField("カテゴリ", max_length=20, choices=Category.choices, blank=True)
+    response_strategy = models.CharField("対応戦略", max_length=20, choices=Response.choices, blank=True)
+    trigger = models.CharField("トリガー・予兆", max_length=300, blank=True)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.IDENTIFIED)
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
