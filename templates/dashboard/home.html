@@ -15,7 +15,7 @@
     <main class="app-main app-main-compact">
       <div class="app-main-header">
         <div>
-          <h1 class="page-title">おはようございます、{{ user.first_name|default:user.username }}さん</h1>
+          <h1 class="page-title">{{ greeting }}、{{ user.first_name|default:user.username }}さん</h1>
           <p class="page-lead">
             今日は{{ today|date:"Y年n月j日 (D)" }}です。
             {% if today_tasks_count %}期限が近いチケットが{{ today_tasks_count }}件あります。{% else %}本日期限のチケットはありません。{% endif %}
@@ -51,6 +51,26 @@
       <div class="card panel panel-compact" style="margin-bottom: 20px;">
         <div class="panel-head"><h2>今週のハイライト</h2><span class="empty-note">{{ latest_digest.week_start|date:"n/j" }} 週</span></div>
         <p style="font-size:13.5px; line-height:1.7; white-space: pre-line;">{{ latest_digest.body }}</p>
+      </div>
+      {% endif %}
+
+      {% if schedule %}
+      <div class="card panel panel-compact" style="margin-bottom: 20px;">
+        <div class="panel-head">
+          <h2>計画（WBS・ガント）</h2>
+          <a href="{% url 'planning:gantt' %}">ガントチャートを見る</a>
+        </div>
+        {% if overdue_work_items_count %}
+          <p style="font-size:12.5px; color:var(--danger); margin:0 0 8px;">&#9888; 期限超過のタスクが{{ overdue_work_items_count }}件あります</p>
+        {% endif %}
+        {% for item in upcoming_work_items %}
+          <div class="task-row">
+            <span class="task-title">{{ item.wbs_code }} {{ item.title }}</span>
+            <span class="task-time">{{ item.finish_date|date:"n/j" }}まで・{{ item.progress }}%</span>
+          </div>
+        {% empty %}
+          <p class="empty-note">直近のタスクはありません。</p>
+        {% endfor %}
       </div>
       {% endif %}
 

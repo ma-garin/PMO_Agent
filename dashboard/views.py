@@ -16,6 +16,11 @@ try:
 except ImportError:
     WeeklyDigest = None
 
+try:
+    from planning.models import Schedule
+except ImportError:
+    Schedule = None
+
 SEARCH_LIMIT = 10
 
 
@@ -49,10 +54,29 @@ def home(request):
     if WeeklyDigest is not None:
         latest_digest = WeeklyDigest.objects.filter(engagement=engagement).first()
 
+    schedule = None
+    upcoming_work_items = []
+    overdue_work_items_count = 0
+    if Schedule is not None:
+        schedule = Schedule.objects.filter(engagement=engagement).first()
+        if schedule is not None:
+            open_items = schedule.items.exclude(status__in=["done", "cancelled"])
+            upcoming_work_items = list(open_items.order_by("start_date")[:4])
+            overdue_work_items_count = open_items.filter(finish_date__lt=today).count()
+
+    hour = timezone.localtime().hour
+    if hour < 5 or hour >= 18:
+        greeting = "こんばんは"
+    elif hour < 11:
+        greeting = "おはようございます"
+    else:
+        greeting = "こんにちは"
+
     context = {
         "latest_digest": latest_digest,
         "engagement": engagement,
         "today": today,
+        "greeting": greeting,
         "nav_active": "home",
         "total_tickets": total_tickets,
         "today_tasks": today_tickets.order_by("due_date")[:5],
@@ -67,6 +91,9 @@ def home(request):
         "done_tasks": done_tickets,
         "total_tasks": total_tickets,
         "activities": engagement.activities.select_related("actor")[:5],
+        "schedule": schedule,
+        "upcoming_work_items": upcoming_work_items,
+        "overdue_work_items_count": overdue_work_items_count,
     }
     return render(request, "dashboard/home.html", context)
 

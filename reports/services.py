@@ -70,10 +70,17 @@ def generate_draft(engagement, period_start, period_end, user=None, template=Non
                 "verdict": latest_gate.get_verdict_display(),
                 **evaluate_gate(latest_gate),
             }
+        gate_text = (
+            "なし"
+            if gate_summary is None
+            else f"{gate_summary['name']}（{gate_summary['verdict']}）"
+        )
+        progress_text = "データなし" if not progress_rows else str(progress_rows)
         risk_section = (
-            f"\nリスク件数(高/中/低): {risk_counts}\n"
-            f"テスト進捗サマリー: {progress_rows}\n"
-            f"直近の品質ゲート判定: {gate_summary}\n"
+            f"\nリスク件数: 高{risk_counts['high']}件 / 中{risk_counts['medium']}件 / "
+            f"低{risk_counts['low']}件\n"
+            f"テスト進捗サマリー: {progress_text}\n"
+            f"直近の品質ゲート判定: {gate_text}\n"
         )
     except ImportError:
         pass
@@ -88,12 +95,42 @@ def generate_draft(engagement, period_start, period_end, user=None, template=Non
     except ImportError:
         pass
 
+    series_text = (
+        "; ".join(
+            f"{p.get('label', '')} 検出{p.get('opened', 0)}/クローズ{p.get('closed', 0)}"
+            for p in series
+        )
+        if series
+        else "データなし"
+    )
+    density_text = "-" if summary.get("density") is None else summary["density"]
+    avg_age_text = (
+        "データなし"
+        if summary.get("avg_open_age_days") is None
+        else f"{summary['avg_open_age_days']}日"
+    )
+    summary_text = (
+        f"総数{summary['total']}件 / 未クローズ{summary['open']}件 / "
+        f"クローズ{summary['closed']}件 / 期限超過{summary['overdue']}件 / "
+        f"欠陥密度{density_text} / 平均滞留{avg_age_text}"
+    )
+
+    def _axis_text(axis):
+        return "、".join(f"{a['label']}{a['count']}件" for a in axis) if axis else "なし"
+
+    odc_text = (
+        f"確定{odc['confirmed_count']}件 / 未分類{odc['unclassified_count']}件 / "
+        f"欠陥種別[{_axis_text(odc['defect_type'])}] / "
+        f"トリガー[{_axis_text(odc['trigger'])}] / "
+        f"検出アクティビティ[{_axis_text(odc['activity'])}] / "
+        f"影響度[{_axis_text(odc['impact'])}]"
+    )
     prompt = (
         f"案件名: {engagement.name}\n"
         f"対象期間: {period_start} 〜 {period_end}\n\n"
-        f"欠陥サマリー: {summary}\n\n"
-        f"週次収束データ(直近8点): {series}\n\n"
-        f"ODC分布(確定済み): {odc}\n"
+        f"欠陥サマリー: {summary_text}\n\n"
+        f"週次収束データ(直近8点): {series_text}\n\n"
+        f"ODC分布(確定済み): {odc_text}\n"
         f"{risk_section}"
         f"{rag_section}"
     )

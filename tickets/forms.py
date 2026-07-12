@@ -9,7 +9,8 @@ class TicketSourceForm(forms.ModelForm):
     api_token = forms.CharField(
         label="APIトークン",
         required=False,
-        widget=forms.PasswordInput(attrs={"class": "form-input"}),
+        # autocomplete=new-password: ブラウザがログイン情報を自動挿入するのを防ぐ。
+        widget=forms.PasswordInput(attrs={"class": "form-input", "autocomplete": "new-password"}),
         help_text="入力した場合のみ更新されます。空欄のままなら既存の値を維持します。",
     )
 
@@ -47,7 +48,11 @@ class TicketSourceForm(forms.ModelForm):
                 attrs={"class": "form-input", "placeholder": "例: PROJ"}
             ),
             "username": forms.TextInput(
-                attrs={"class": "form-input", "placeholder": "APIユーザー名またはメール"}
+                attrs={
+                    "class": "form-input",
+                    "placeholder": "APIユーザー名またはメール",
+                    "autocomplete": "off",
+                }
             ),
         }
 
