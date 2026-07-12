@@ -44,6 +44,11 @@ class _FailingAdapter:
         return []
 
 
+class _UnexpectedFailingAdapter:
+    def fetch_tickets(self, source: TicketSource) -> list[NormalizedTicket]:
+        raise RuntimeError("予期しない同期エラー")
+
+
 @pytest.mark.django_db
 def test_sync_ticket_source_creates_new_tickets(ticket_source: TicketSource) -> None:
     normalized = [
@@ -136,6 +141,36 @@ def test_sync_ticket_source_marks_failed_on_connection_error(
 
     ticket_source.refresh_from_db()
     assert ticket_source.last_synced_at is None
+
+
+@pytest.mark.django_db
+def test_sync_ticket_source_marks_failed_and_reraises_unexpected_error(
+    ticket_source: TicketSource,
+) -> None:
+    with patch(
+        "tickets.services.get_adapter",
+        return_value=_UnexpectedFailingAdapter(),
+    ):
+        with pytest.raises(RuntimeError, match="予期しない同期エラー"):
+            sync_ticket_source(ticket_source)
+
+    run = SyncRun.objects.get(source=ticket_source)
+    assert run.status == SyncRun.Status.FAILED
+    assert run.error_message == "予期しない同期エラー"
+    assert run.finished_at is not None
+
+
+@pytest.mark.django_db
+def test_sync_run_cannot_transition_after_terminal_state(ticket_source: TicketSource) -> None:
+    run = SyncRun.objects.create(source=ticket_source)
+    run.succeed(1)
+
+    with pytest.raises(ValueError, match="既に終了"):
+        run.fail("late failure")
+
+    run.refresh_from_db()
+    assert run.status == SyncRun.Status.SUCCESS
+    assert run.tickets_synced == 1
 
 
 @pytest.mark.django_db
