@@ -1,9 +1,14 @@
 import json
 
+from django.db.models import Count, Q
+
+from engagements.models import Engagement
 from llm.prompt_utils import EXTERNAL_DATA_GUARD
 from llm.services import LlmError, run_completion
 
-from .models import RiskItem
+from .models import ImprovementAction, RiskItem
+
+ROADMAP_ORIGIN_PREFIX = "ROADMAP:"
 
 SUGGEST_SYSTEM = (
     "あなたは第三者検証会社の品質リスク分析の専門家です。"
@@ -81,3 +86,20 @@ def risk_matrix(engagement) -> dict:
     for risk in risks:
         grid[(risk.probability, risk.impact)].append(risk)
     return grid
+
+
+def sync_roadmap_progress(engagement: Engagement) -> int:
+    """ROADMAPアクションの完了率を案件進捗へ反映する。"""
+    counts = ImprovementAction.objects.filter(
+        engagement=engagement,
+        origin_note__startswith=ROADMAP_ORIGIN_PREFIX,
+    ).aggregate(
+        total=Count("id"),
+        done=Count("id", filter=Q(status=ImprovementAction.Status.DONE)),
+    )
+    total = counts["total"] or 0
+    progress = round((counts["done"] or 0) * 100 / total) if total else 0
+    if engagement.progress != progress:
+        Engagement.objects.filter(pk=engagement.pk).update(progress=progress)
+        engagement.progress = progress
+    return progress
