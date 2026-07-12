@@ -12,14 +12,28 @@ class OpenAiProvider(LlmProvider):
     name = "openai"
 
     def complete(
-        self, prompt: str, *, system: str = "", max_tokens: int = 1024, model: str = ""
+        self,
+        prompt: str,
+        *,
+        system: str = "",
+        max_tokens: int = 1024,
+        model: str = "",
+        api_key: str = "",
+        organization: str = "",
+        project: str = "",
     ) -> str:
-        api_key = os.environ.get("OPENAI_API_KEY", "")
+        api_key = api_key or os.environ.get("OPENAI_API_KEY", "")
         if not api_key:
             raise LlmError("OPENAI_API_KEYが未設定です。")
 
-        model = model or os.environ.get("LLM_OPENAI_MODEL", "gpt-4o-mini")
+        model = model or os.environ.get("LLM_OPENAI_MODEL", "gpt-5-mini")
         headers = {"Authorization": f"Bearer {api_key}"}
+        organization = organization or os.environ.get("OPENAI_ORG_ID", "")
+        project = project or os.environ.get("OPENAI_PROJECT_ID", "")
+        if organization:
+            headers["OpenAI-Organization"] = organization
+        if project:
+            headers["OpenAI-Project"] = project
         messages = []
         if system:
             messages.append({"role": "system", "content": system})

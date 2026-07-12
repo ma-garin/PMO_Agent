@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.db import models
 
+from config.crypto import decrypt, encrypt
+
 
 class Engagement(models.Model):
     class Status(models.TextChoices):
@@ -35,6 +37,15 @@ class Engagement(models.Model):
     )
     # 空欄なら各プロバイダの環境変数の既定モデルを使う
     llm_model = models.CharField("既定モデル", max_length=100, blank=True)
+    _llm_api_key_encrypted = models.TextField(
+        "LLM APIキー(暗号化)", blank=True, db_column="llm_api_key_encrypted"
+    )
+    _llm_org_id_encrypted = models.TextField(
+        "Organization ID(暗号化)", blank=True, db_column="llm_org_id_encrypted"
+    )
+    _llm_project_id_encrypted = models.TextField(
+        "Project ID(暗号化)", blank=True, db_column="llm_project_id_encrypted"
+    )
     # 種別マッピング: 元システムのticket_typeのうち欠陥として扱う値(大文字小文字は無視)
     defect_ticket_types = models.JSONField(
         "欠陥として扱う種別", default=list, blank=True
@@ -58,6 +69,43 @@ class Engagement(models.Model):
     @property
     def member_count(self) -> int:
         return self.members.count()
+
+    @property
+    def llm_api_key(self) -> str:
+        return decrypt(self._llm_api_key_encrypted)
+
+    @llm_api_key.setter
+    def llm_api_key(self, value: str) -> None:
+        self._llm_api_key_encrypted = encrypt(value)
+
+    @property
+    def has_llm_api_key(self) -> bool:
+        """APIキーを復号せずに設定有無だけを返す(F-6: 画面にキー材料を出さない)。"""
+        return bool(self._llm_api_key_encrypted)
+
+    @property
+    def llm_org_id(self) -> str:
+        return decrypt(self._llm_org_id_encrypted)
+
+    @llm_org_id.setter
+    def llm_org_id(self, value: str) -> None:
+        self._llm_org_id_encrypted = encrypt(value)
+
+    @property
+    def has_llm_org_id(self) -> bool:
+        return bool(self._llm_org_id_encrypted)
+
+    @property
+    def llm_project_id(self) -> str:
+        return decrypt(self._llm_project_id_encrypted)
+
+    @llm_project_id.setter
+    def llm_project_id(self, value: str) -> None:
+        self._llm_project_id_encrypted = encrypt(value)
+
+    @property
+    def has_llm_project_id(self) -> bool:
+        return bool(self._llm_project_id_encrypted)
 
 
 class ActivityLog(models.Model):

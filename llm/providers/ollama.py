@@ -11,8 +11,17 @@ class OllamaProvider(LlmProvider):
     name = "ollama"
 
     def complete(
-        self, prompt: str, *, system: str = "", max_tokens: int = 1024, model: str = ""
+        self,
+        prompt: str,
+        *,
+        system: str = "",
+        max_tokens: int = 1024,
+        model: str = "",
+        api_key: str = "",
+        organization: str = "",
+        project: str = "",
     ) -> str:
+        # ローカルLLMのため api_key/organization/project は使用しない(シグネチャ互換のみ)。
         base_url = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
         model = model or os.environ.get("LLM_OLLAMA_MODEL", "qwen2.5:7b")
         messages = []

@@ -128,3 +128,128 @@ class TestConnectivityCheck:
             # 送信プロンプトは固定の "ping"(案件データを含まない)
             call = mock_get.return_value.complete.call_args
             assert call.args[0] == "ping"
+
+
+@pytest.mark.django_db
+class TestLlmCredentialSettings:
+    def test_admin_can_set_api_key(self, client, admin_user):
+        engagement = _engagement_for(admin_user, provider="openai")
+        _login(client, admin_user, engagement)
+
+        client.post(
+            "/engagements/settings/llm/",
+            {"action": "save", "llm_provider": "openai", "llm_model": "", "llm_api_key": "sk-new-key"},
+        )
+        engagement.refresh_from_db()
+        assert engagement.llm_api_key == "sk-new-key"
+
+    def test_admin_can_set_org_and_project_id(self, client, admin_user):
+        engagement = _engagement_for(admin_user, provider="openai")
+        _login(client, admin_user, engagement)
+
+        client.post(
+            "/engagements/settings/llm/",
+            {
+                "action": "save",
+                "llm_provider": "openai",
+                "llm_model": "",
+                "llm_org_id": "org-123",
+                "llm_project_id": "proj-123",
+            },
+        )
+        engagement.refresh_from_db()
+        assert engagement.llm_org_id == "org-123"
+        assert engagement.llm_project_id == "proj-123"
+
+    def test_blank_api_key_field_keeps_existing_value(self, client, admin_user):
+        engagement = _engagement_for(admin_user, provider="openai")
+        engagement.llm_api_key = "sk-existing"
+        engagement.save()
+        _login(client, admin_user, engagement)
+
+        client.post(
+            "/engagements/settings/llm/",
+            {"action": "save", "llm_provider": "openai", "llm_model": "", "llm_api_key": ""},
+        )
+        engagement.refresh_from_db()
+        assert engagement.llm_api_key == "sk-existing"
+
+    def test_clear_checkbox_removes_api_key(self, client, admin_user):
+        engagement = _engagement_for(admin_user, provider="openai")
+        engagement.llm_api_key = "sk-existing"
+        engagement.save()
+        _login(client, admin_user, engagement)
+
+        client.post(
+            "/engagements/settings/llm/",
+            {
+                "action": "save",
+                "llm_provider": "openai",
+                "llm_model": "",
+                "llm_api_key": "",
+                "clear_llm_api_key": "on",
+            },
+        )
+        engagement.refresh_from_db()
+        assert engagement.llm_api_key == ""
+        assert engagement.has_llm_api_key is False
+
+    def test_member_cannot_set_api_key(self, client, general_user):
+        engagement = _engagement_for(general_user, provider="openai")
+        _login(client, general_user, engagement)
+
+        client.post(
+            "/engagements/settings/llm/",
+            {"action": "save", "llm_provider": "openai", "llm_model": "", "llm_api_key": "sk-new-key"},
+        )
+        engagement.refresh_from_db()
+        assert engagement.llm_api_key == ""
+
+    def test_saved_api_key_is_never_rendered_in_response(self, client, admin_user):
+        engagement = _engagement_for(admin_user, provider="openai")
+        engagement.llm_api_key = "sk-super-secret-value"
+        engagement.save()
+        _login(client, admin_user, engagement)
+
+        response = client.get("/engagements/settings/llm/")
+        assert b"sk-super-secret-value" not in response.content
+
+    def test_shows_configured_indicator_without_leaking_value(self, client, admin_user):
+        engagement = _engagement_for(admin_user, provider="openai")
+        engagement.llm_api_key = "sk-super-secret-value"
+        engagement.save()
+        _login(client, admin_user, engagement)
+
+        response = client.get("/engagements/settings/llm/")
+        assert "設定済み".encode() in response.content
+
+
+@pytest.mark.django_db
+class TestModelChoiceFiltering:
+    def test_ollama_provider_does_not_render_other_provider_models(self, client, admin_user):
+        engagement = _engagement_for(admin_user, provider="ollama")
+        _login(client, admin_user, engagement)
+
+        response = client.get("/engagements/settings/llm/")
+        content = response.content.decode()
+        assert 'value="gpt-5"' not in content
+        assert 'value="claude-sonnet-5"' not in content
+
+    def test_openai_provider_does_not_render_ollama_models_as_options(self, client, admin_user):
+        engagement = _engagement_for(admin_user, provider="openai")
+        _login(client, admin_user, engagement)
+
+        response = client.get("/engagements/settings/llm/")
+        content = response.content.decode()
+        assert 'value="qwen2.5:7b"' not in content
+
+    def test_all_provider_model_data_available_for_js_filtering(self, client, admin_user):
+        """サーバー初期描画では絞り込むが、プロバイダ切替用に全件データはJSON化して埋め込まれていること。"""
+        engagement = _engagement_for(admin_user, provider="ollama")
+        _login(client, admin_user, engagement)
+
+        response = client.get("/engagements/settings/llm/")
+        content = response.content.decode()
+        assert "gpt-5" in content
+        assert "claude-sonnet-5" in content
+        assert "qwen2.5:7b" in content

@@ -26,8 +26,22 @@ def run_completion(
     provider = get_provider(provider_name)
     started = time.monotonic()
 
+    credential_kwargs = {}
+    api_key = getattr(engagement, "llm_api_key", "") or ""
+    if api_key and provider_name in ("openai", "claude"):
+        credential_kwargs["api_key"] = api_key
+    if provider_name == "openai":
+        organization = getattr(engagement, "llm_org_id", "") or ""
+        project = getattr(engagement, "llm_project_id", "") or ""
+        if organization:
+            credential_kwargs["organization"] = organization
+        if project:
+            credential_kwargs["project"] = project
+
     try:
-        text = provider.complete(prompt, system=system, max_tokens=max_tokens, model=model)
+        text = provider.complete(
+            prompt, system=system, max_tokens=max_tokens, model=model, **credential_kwargs
+        )
     except LlmError as exc:
         duration_ms = int((time.monotonic() - started) * 1000)
         LlmCallLog.objects.create(

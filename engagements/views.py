@@ -172,6 +172,15 @@ def llm_settings(request):
                 messages.error(request, "選択したプロバイダで利用できないモデルです。")
                 return redirect("engagements:llm_settings")
             engagement.llm_model = model
+
+            # APIキー/Organization ID/Project ID: 入力欄が空欄のままなら既存値を維持し、
+            # 画面に平文を出さない(F-6方針)。クリア用チェックボックスで明示的に消去できる。
+            _apply_credential_field(request, engagement, "llm_api_key", "clear_llm_api_key")
+            _apply_credential_field(request, engagement, "llm_org_id", "clear_llm_org_id")
+            _apply_credential_field(
+                request, engagement, "llm_project_id", "clear_llm_project_id"
+            )
+
             engagement.save()
             messages.success(request, "LLM設定を更新しました。")
             return redirect("engagements:llm_settings")
@@ -191,3 +200,17 @@ def llm_settings(request):
             "all_model_choices": MODEL_CHOICES,
         },
     )
+
+
+def _apply_credential_field(request, engagement, field_name: str, clear_field_name: str) -> None:
+    """資格情報系フィールドの入力を反映する。
+
+    入力欄が空欄かつクリアチェックが無ければ既存値を維持し、画面には平文を
+    再表示しない(F-6方針)。クリアチェックがあれば明示的に空文字へ更新する。
+    """
+    value = request.POST.get(field_name, "").strip()
+    should_clear = request.POST.get(clear_field_name) == "on"
+    if value:
+        setattr(engagement, field_name, value)
+    elif should_clear:
+        setattr(engagement, field_name, "")

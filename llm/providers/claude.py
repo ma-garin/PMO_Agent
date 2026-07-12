@@ -12,9 +12,17 @@ class ClaudeProvider(LlmProvider):
     name = "claude"
 
     def complete(
-        self, prompt: str, *, system: str = "", max_tokens: int = 1024, model: str = ""
+        self,
+        prompt: str,
+        *,
+        system: str = "",
+        max_tokens: int = 1024,
+        model: str = "",
+        api_key: str = "",
+        organization: str = "",
+        project: str = "",
     ) -> str:
-        api_key = os.environ.get("ANTHROPIC_API_KEY", "")
+        api_key = api_key or os.environ.get("ANTHROPIC_API_KEY", "")
         if not api_key:
             raise LlmError("ANTHROPIC_API_KEYが未設定です。")
 
