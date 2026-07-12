@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}自律運転 | PMO Agent{% endblock %}
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/app_shell.css' %}">
+  <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+  <link rel="stylesheet" href="{% static 'css/autopilot.css' %}">
+{% endblock %}
+{% block body %}
+<div class="app-shell">
+  {% include "partials/sidebar.html" %}
+  <div style="flex:1; display:flex; flex-direction:column; min-width:0;">
+    {% include "partials/header.html" %}
+    <main class="app-main">
+      <div class="app-main-header">
+        <div>
+          <h1 class="page-title">自律運転 - 承認キュー</h1>
+          <p class="page-lead">
+            {% if latest_run %}
+              最終巡回: {{ latest_run.started_at|date:"Y-m-d H:i" }}（{{ latest_run.get_trigger_display }} / 検知{{ latest_run.findings_count }}件・提案{{ latest_run.proposals_count }}件）
+            {% else %}まだ巡回は実行されていません。{% endif %}
+          </p>
+        </div>
+        <div style="display:flex; gap:10px;">
+          <a href="{% url 'autopilot:history' %}" class="btn btn-secondary">履歴を見る</a>
+          <a href="{% url 'autopilot:settings' %}" class="btn btn-secondary">設定</a>
+          <form method="post" action="{% url 'autopilot:run_now' %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-primary">今すぐ巡回</button>
+          </form>
+        </div>
+      </div>
+
+      {% if messages %}
+        {% for message in messages %}<div class="alert{% if message.tags == 'error' %} alert-danger{% endif %}">{{ message }}</div>{% endfor %}
+      {% endif %}
+
+      {% for proposal in proposals %}
+        <div class="card panel autopilot-proposal">
+          <div class="panel-head">
+            <h2>
+              <span class="autopilot-kind-badge">{{ proposal.get_kind_display }}</span>
+              {{ proposal.title }}
+            </h2>
+            <span class="empty-note">{{ proposal.created_at|timesince }}前</span>
+          </div>
+
+          <table class="autopilot-evidence-table">
+            <tbody>
+              {% for key, value in proposal.evidence.items %}
+                <tr><th>{{ key }}</th><td>{{ value }}</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+
+          <p class="autopilot-body">{{ proposal.body }}</p>
+
+          <div class="autopilot-decision-forms">
+            <form method="post" action="{% url 'autopilot:approve' proposal.pk %}">
+              {% csrf_token %}
+              <input type="text" name="note" class="form-input" placeholder="判断メモ（任意）">
+              <button type="submit" class="btn btn-primary">承認して登録</button>
+            </form>
+            <form method="post" action="{% url 'autopilot:reject' proposal.pk %}">
+              {% csrf_token %}
+              <input type="text" name="note" class="form-input" placeholder="却下理由（任意）">
+              <button type="submit" class="btn btn-secondary">却下</button>
+            </form>
+          </div>
+        </div>
+      {% empty %}
+        <div class="card panel">
+          <p class="empty-note">承認待ちの提案はありません。</p>
+        </div>
+      {% endfor %}
+    </main>
+  </div>
+</div>
+{% endblock %}

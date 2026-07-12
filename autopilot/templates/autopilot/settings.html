@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}自律運転 - 設定 | PMO Agent{% endblock %}
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/app_shell.css' %}">
+  <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+{% block body %}
+<div class="app-shell">
+  {% include "partials/sidebar.html" %}
+  <div style="flex:1; display:flex; flex-direction:column; min-width:0;">
+    {% include "partials/header.html" %}
+    <main class="app-main">
+      <div class="breadcrumb"><a href="{% url 'autopilot:queue' %}">← 承認キューに戻る</a></div>
+      <h1 class="page-title">自律運転 - 設定</h1>
+      <p class="page-lead">分析と提案のみを自律実行します。承認された提案のみシステム内に登録され、外部への自動送信は行いません。</p>
+
+      {% if messages %}
+        {% for message in messages %}<div class="alert">{{ message }}</div>{% endfor %}
+      {% endif %}
+
+      <div class="card panel" style="max-width:520px;">
+        <form method="post">
+          {% csrf_token %}
+          <div class="form-group">
+            <label class="form-label">
+              <input type="checkbox" name="enabled" {% if agent_settings.enabled %}checked{% endif %}>
+              自律運転を有効にする（定期巡回＋同期後イベント巡回）
+            </label>
+          </div>
+          <div class="form-group">
+            <label class="form-label">停滞急増の閾値（直近24hの件数）</label>
+            <input type="number" name="stagnant_spike_threshold" class="form-input" value="{{ agent_settings.stagnant_spike_threshold }}" min="1">
+          </div>
+          <div class="form-group">
+            <label class="form-label">欠陥急増の閾値（直近24hの件数）</label>
+            <input type="number" name="defect_spike_threshold" class="form-input" value="{{ agent_settings.defect_spike_threshold }}" min="1">
+          </div>
+          <div class="form-group">
+            <label class="form-label">期限超過の閾値（累計件数）</label>
+            <input type="number" name="overdue_threshold" class="form-input" value="{{ agent_settings.overdue_threshold }}" min="1">
+          </div>
+          <div class="form-group">
+            <label class="form-label">LLM呼び出し上限（1日あたり）</label>
+            <input type="number" name="max_llm_calls_per_day" class="form-input" value="{{ agent_settings.max_llm_calls_per_day }}" min="0">
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">保存</button>
+        </form>
+      </div>
+    </main>
+  </div>
+</div>
+{% endblock %}

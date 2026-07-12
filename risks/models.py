@@ -89,6 +89,7 @@ class GeneralNotification(models.Model):
     class Kind(models.TextChoices):
         RISK_OVERDUE = "risk_overdue", "リスク対応期限超過"
         ACTION_OVERDUE = "action_overdue", "改善アクション期限超過"
+        AGENT_PROPOSAL = "agent_proposal", "エージェント提案"
 
     engagement = models.ForeignKey(
         "engagements.Engagement", on_delete=models.CASCADE, related_name="general_notifications"

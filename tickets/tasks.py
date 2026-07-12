@@ -63,6 +63,15 @@ def sync_and_detect_engagement(engagement_id: int) -> None:
     else:
         create_auto_summary(engagement)
 
+    try:
+        from autopilot.models import AgentSettings
+        from autopilot.tasks import event_patrol
+    except ImportError:
+        pass
+    else:
+        if AgentSettings.objects.filter(engagement=engagement, enabled=True).exists():
+            event_patrol.defer(engagement_id=engagement.pk)
+
 
 @app.periodic(cron="0 * * * *")  # 毎時0分。外部API負荷とのバランスから1時間間隔とする
 @app.task(name="tickets.sync_and_detect_all_engagements")

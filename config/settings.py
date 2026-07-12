@@ -65,6 +65,7 @@ INSTALLED_APPS = [
     "testmgmt",
     "members",
     "audit",
+    "autopilot",
     "axes",
 ]
 

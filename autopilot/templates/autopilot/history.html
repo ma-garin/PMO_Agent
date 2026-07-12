@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}自律運転 - 履歴 | PMO Agent{% endblock %}
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/app_shell.css' %}">
+  <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+  <link rel="stylesheet" href="{% static 'css/tickets.css' %}">
+  <link rel="stylesheet" href="{% static 'css/autopilot.css' %}">
+{% endblock %}
+{% block body %}
+<div class="app-shell">
+  {% include "partials/sidebar.html" %}
+  <div style="flex:1; display:flex; flex-direction:column; min-width:0;">
+    {% include "partials/header.html" %}
+    <main class="app-main">
+      <div class="breadcrumb"><a href="{% url 'autopilot:queue' %}">← 承認キューに戻る</a></div>
+      <h1 class="page-title">自律運転 - 履歴</h1>
+
+      <div class="tab-switch" style="margin-bottom:16px;">
+        <a href="?tab=proposals" class="tab-btn{% if tab == 'proposals' %} active{% endif %}">判断済み提案</a>
+        <a href="?tab=runs" class="tab-btn{% if tab == 'runs' %} active{% endif %}">巡回履歴</a>
+      </div>
+
+      <div class="card panel">
+        <div style="overflow-x: auto;">
+          {% if tab == 'runs' %}
+            <table class="ticket-table">
+              <thead>
+                <tr><th>実行日時</th><th>トリガー</th><th>状態</th><th>検知数</th><th>提案数</th></tr>
+              </thead>
+              <tbody>
+                {% for run in page_obj %}
+                  <tr>
+                    <td>{{ run.started_at|date:"Y-m-d H:i" }}</td>
+                    <td>{{ run.get_trigger_display }}</td>
+                    <td>{{ run.get_status_display }}</td>
+                    <td>{{ run.findings_count }}</td>
+                    <td>{{ run.proposals_count }}</td>
+                  </tr>
+                {% empty %}
+                  <tr><td colspan="5"><p class="empty-note">巡回履歴はありません。</p></td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          {% else %}
+            <table class="ticket-table">
+              <thead>
+                <tr><th>提案</th><th>種別</th><th>判断</th><th>判断者</th><th>判断日時</th><th>メモ</th></tr>
+              </thead>
+              <tbody>
+                {% for proposal in page_obj %}
+                  <tr>
+                    <td>{{ proposal.title }}</td>
+                    <td>{{ proposal.get_kind_display }}</td>
+                    <td>{{ proposal.get_status_display }}</td>
+                    <td>{% if proposal.decided_by %}{{ proposal.decided_by.get_full_name|default:proposal.decided_by }}{% else %}-{% endif %}</td>
+                    <td>{{ proposal.decided_at|date:"Y-m-d H:i"|default:"-" }}</td>
+                    <td>{{ proposal.decision_note }}</td>
+                  </tr>
+                {% empty %}
+                  <tr><td colspan="6"><p class="empty-note">判断済みの提案はありません。</p></td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          {% endif %}
+        </div>
+        {% if page_obj.has_other_pages %}
+          <div style="display:flex; gap:8px; margin-top:12px;">
+            {% if page_obj.has_previous %}
+              <a class="btn btn-secondary" href="?tab={{ tab }}&page={{ page_obj.previous_page_number }}">前へ</a>
+            {% endif %}
+            <span class="empty-note">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+            {% if page_obj.has_next %}
+              <a class="btn btn-secondary" href="?tab={{ tab }}&page={{ page_obj.next_page_number }}">次へ</a>
+            {% endif %}
+          </div>
+        {% endif %}
+      </div>
+    </main>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,28 @@
+.autopilot-proposal { margin-bottom: 18px; }
+.autopilot-kind-badge {
+  display: inline-block; font-size: 11px; font-weight: 700;
+  padding: 2px 10px; border-radius: 999px;
+  background: var(--primary-soft); color: var(--primary-deep);
+  margin-right: 8px; vertical-align: middle;
+}
+.autopilot-evidence-table { width: 100%; font-size: 12.5px; margin: 10px 0; border-collapse: collapse; }
+.autopilot-evidence-table th {
+  text-align: left; color: var(--ink-2); font-weight: 600;
+  padding: 4px 10px 4px 0; width: 140px; vertical-align: top;
+}
+.autopilot-evidence-table td { padding: 4px 0; }
+.autopilot-body {
+  font-size: 13.5px; line-height: 1.7; white-space: pre-line;
+  background: var(--ground); border-radius: 8px; padding: 12px 14px; margin: 10px 0 14px;
+}
+.autopilot-decision-forms { display: flex; gap: 10px; flex-wrap: wrap; }
+.autopilot-decision-forms form { display: flex; gap: 8px; align-items: center; }
+.autopilot-decision-forms .form-input { width: 220px; }
+
+.tab-switch { display: flex; gap: 4px; }
+.tab-btn {
+  border: none; background: var(--ground); color: var(--ink-2);
+  font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 999px;
+  cursor: pointer; text-decoration: none; display: inline-block;
+}
+.tab-btn.active { background: var(--primary); color: #fff; }

@@ -29,6 +29,7 @@
     <a href="{% url 'testmgmt:plans' %}" class="nav-item{% if nav_active == 'testmgmt' %} active{% endif %}" title="テスト計画">&#128221; <span class="nav-label">テスト計画</span></a>
     <a href="{% url 'dashboard:calendar' %}" class="nav-item{% if nav_active == 'calendar' %} active{% endif %}" title="カレンダー">&#128197; <span class="nav-label">カレンダー</span></a>
     <a href="{% url 'members:list' %}" class="nav-item{% if nav_active == 'members' %} active{% endif %}" title="メンバー">&#128101; <span class="nav-label">メンバー</span></a>
+    <a href="{% url 'autopilot:queue' %}" class="nav-item{% if nav_active == 'autopilot' %} active{% endif %}" title="自律運転">&#9992; <span class="nav-label">自律運転</span></a>
     <a href="{% url 'accounts:profile' %}" class="nav-item{% if nav_active == 'settings' %} active{% endif %}" title="設定">&#9881; <span class="nav-label">設定</span></a>
     {% if user.is_staff %}
     <div class="sidebar-section-label">管理</div>

@@ -50,6 +50,47 @@ class TestSyncAndDetectEngagement:
 
         mock_auto_summary.assert_called_once_with(engagement)
 
+    def test_defers_event_patrol_when_autopilot_enabled(self, engagement):
+        from autopilot.models import AgentSettings
+
+        AgentSettings.objects.create(engagement=engagement, enabled=True)
+
+        with (
+            patch("tickets.tasks.sync_engagement"),
+            patch("tickets.tasks.detect_stagnant_tickets", return_value=[]),
+            patch("copilot.services.create_auto_summary"),
+            patch("autopilot.tasks.event_patrol.defer") as mock_defer,
+        ):
+            sync_and_detect_engagement(engagement_id=engagement.pk)
+
+        mock_defer.assert_called_once_with(engagement_id=engagement.pk)
+
+    def test_does_not_defer_event_patrol_when_autopilot_disabled(self, engagement):
+        from autopilot.models import AgentSettings
+
+        AgentSettings.objects.create(engagement=engagement, enabled=False)
+
+        with (
+            patch("tickets.tasks.sync_engagement"),
+            patch("tickets.tasks.detect_stagnant_tickets", return_value=[]),
+            patch("copilot.services.create_auto_summary"),
+            patch("autopilot.tasks.event_patrol.defer") as mock_defer,
+        ):
+            sync_and_detect_engagement(engagement_id=engagement.pk)
+
+        mock_defer.assert_not_called()
+
+    def test_does_not_defer_event_patrol_when_no_settings_exist(self, engagement):
+        with (
+            patch("tickets.tasks.sync_engagement"),
+            patch("tickets.tasks.detect_stagnant_tickets", return_value=[]),
+            patch("copilot.services.create_auto_summary"),
+            patch("autopilot.tasks.event_patrol.defer") as mock_defer,
+        ):
+            sync_and_detect_engagement(engagement_id=engagement.pk)
+
+        mock_defer.assert_not_called()
+
 
 @pytest.mark.django_db
 class TestDeliverNotificationTask:
