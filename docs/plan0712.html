@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>PMO Agent 作り込み計画 2026-07-12</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script type="module">
+    import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+    mermaid.initialize({startOnLoad:true,theme:"neutral",securityLevel:"loose"});
+  </script>
+  <style>
+    :root{--qiita:#55c500;--ink:#17202a;--muted:#66717d;--line:#dfe3e8;--bg:#f6f7f8;--paper:#fff;--eng:#1769aa;--web:#9a4d00;--css:#7b3f98}
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;line-height:1.72;letter-spacing:0}
+    a{color:#1683c4}.topbar{height:56px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 24px;position:sticky;top:0;z-index:20}.brand{font-weight:800;color:var(--qiita);font-size:20px}.brand small{color:var(--muted);font-size:12px;margin-left:10px}
+    .layout{max-width:1240px;margin:0 auto;padding:30px 22px 72px;display:grid;grid-template-columns:minmax(0,850px) 260px;gap:26px}.article{background:var(--paper);border:1px solid var(--line);padding:38px 46px}.toc{position:sticky;top:80px;align-self:start;background:#fff;border:1px solid var(--line);padding:18px}.toc h2{font-size:13px;margin:0 0 8px}.toc a{display:block;padding:5px 0;color:var(--muted);font-size:12px;text-decoration:none}.toc a:hover{color:var(--qiita)}
+    h1{font-size:30px;line-height:1.35;margin:0 0 12px}.lead{color:var(--muted);margin:0 0 20px}.meta{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);padding-bottom:24px;border-bottom:1px solid var(--line)}h2{font-size:23px;margin:42px 0 16px;padding-bottom:8px;border-bottom:1px solid var(--line)}h3{font-size:18px;margin:0}.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.stat{border:1px solid var(--line);padding:12px;text-align:center;background:#fbfcfd}.stat b{display:block;font-size:22px;color:var(--qiita)}
+    .note{border-left:4px solid var(--qiita);background:#f1faed;padding:14px 16px;font-size:14px}.phase-table{width:100%;border-collapse:collapse;font-size:14px}.phase-table th,.phase-table td{border:1px solid var(--line);padding:10px;text-align:left}.phase-table th{background:#f3f5f7}.legend{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}.badge{display:inline-flex;align-items:center;border-radius:3px;padding:2px 7px;font-size:11px;font-weight:700}.eng{color:#fff;background:var(--eng)}.web{color:#fff;background:var(--web)}.css{color:#fff;background:var(--css)}.strong{color:#116329;background:#e4f5e8}.explore{color:#795300;background:#fff2c7}
+    .candidate{border-top:1px solid var(--line);padding:25px 0}.candidate:first-child{border-top:0}.candidate-head{display:flex;align-items:flex-start;gap:12px}.rank{flex:0 0 38px;height:38px;display:grid;place-items:center;background:#263238;color:#fff;font-weight:800;border-radius:4px}.candidate-title{min-width:0;flex:1}.badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}.files{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;color:#4b5662;background:#f4f5f6;padding:8px 10px;margin:12px 0;overflow-wrap:anywhere}.candidate p{font-size:14px;margin:8px 0}.ba{display:grid;grid-template-columns:1fr 34px 1fr;align-items:stretch;margin:12px 0}.before,.after{border:1px solid var(--line);padding:10px 12px;font-size:13px}.before{background:#fff4f4;border-color:#efcaca}.after{background:#f0faed;border-color:#bee2b3}.arrow{display:grid;place-items:center;color:var(--qiita);font-weight:900}.done{font-size:13px;border-left:3px solid #87929e;padding-left:10px;color:#3d4852}.team-check{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.team-box{border:1px solid var(--line);padding:14px}.team-box b{display:block;margin-bottom:5px}.top-rec{background:#263238;color:#fff;padding:22px;border-left:6px solid var(--qiita)}.top-rec a{color:#aaf27b}.foot{color:var(--muted);font-size:12px;margin-top:38px}
+    @media(max-width:900px){.layout{display:block;padding:14px}.article{padding:26px 20px}.toc{display:none}.stats{grid-template-columns:repeat(2,1fr)}.team-check{grid-template-columns:1fr}.topbar{padding:0 14px}.brand small{display:none}}
+    @media(max-width:520px){h1{font-size:25px}.ba{grid-template-columns:1fr}.arrow{height:28px;transform:rotate(90deg)}.candidate-head{gap:9px}.rank{flex-basis:34px;height:34px}.stats{grid-template-columns:1fr 1fr}}
+    @media print{.topbar,.toc{display:none}.layout{display:block;max-width:none;padding:0}.article{border:0;padding:0}.candidate{break-inside:avoid}}
+  </style>
+</head>
+<body>
+  <header class="topbar"><div class="brand">PMO Agent <small>Engineering Improvement Plan</small></div></header>
+  <div class="layout">
+    <article class="article">
+      <header>
+        <h1>PMO Agent 作り込み計画</h1>
+        <p class="lead">Engineering / Web Design / CSS の3チーム視点を、機密性・整合性・回復性・業務価値の順で統合した優先順位1〜30。</p>
+        <div class="meta"><span>作成日 2026-07-12</span><span>静的コード監査</span><span>Qiita風レポート</span><span>全30候補</span></div>
+      </header>
+
+      <section id="scope">
+        <h2>監査スコープ</h2>
+        <div class="stats"><div class="stat"><b>16</b>Django apps</div><div class="stat"><b>63</b>test modules</div><div class="stat"><b>48</b>templates</div><div class="stat"><b>12</b>CSS files</div><div class="stat"><b>152</b>inline styles</div></div>
+        <p class="note">`CONTEXT.md`、設計文書、3 ADR、主要model/view/service/adapter/task、共通テンプレート、CSS/JS、テストを走査。DBテスト、ビルド、ブラウザ実機確認、負荷試験は実施していません。</p>
+      </section>
+
+      <section id="roadmap">
+        <h2>実施ロードマップ</h2>
+        <div class="rounded border border-slate-200 bg-white p-4 overflow-x-auto"><pre class="mermaid">flowchart LR
+          A[Phase A<br/>1-3<br/>機密性・整合性] --> B[Phase B<br/>4-9<br/>回復性・Shell]
+          B --> C[Phase C<br/>10-17<br/>UX・品質Gate]
+          C --> D[Phase D<br/>18-26<br/>情報設計・状態]
+          D --> E[Phase E<br/>27-30<br/>CSS基盤]
+          classDef top fill:#55c500,color:#fff,stroke:#3d9400;
+          class A top;</pre></div>
+        <table class="phase-table"><thead><tr><th>Phase</th><th>順位</th><th>目的</th><th>Gate</th></tr></thead><tbody><tr><td>A</td><td>1-3</td><td>漏えい・二重反映を止める</td><td>権限/egress/並行承認</td></tr><tr><td>B</td><td>4-9</td><td>非同期処理を回復可能にする</td><td>再試行しても重複0</td></tr><tr><td>C</td><td>10-17</td><td>業務操作と品質Gate</td><td>主要flow完遂</td></tr><tr><td>D</td><td>18-26</td><td>情報設計と状態設計</td><td>3 viewport合格</td></tr><tr><td>E</td><td>27-30</td><td>CSS基盤を固定</td><td>visual regression</td></tr></tbody></table>
+      </section>
+
+      <section id="priorities"><h2>優先順位 1〜30</h2><div class="legend"><span class="badge eng">Engineering</span><span class="badge web">Web Design</span><span class="badge css">CSS</span><span class="badge strong">Strong</span><span class="badge explore">Worth exploring</span></div><div id="candidate-list"></div></section>
+
+      <section id="teams"><h2>チーム別チェック</h2><div class="team-check"><div class="team-box"><b style="color:var(--eng)">Engineering × 10</b>1, 2, 3, 5, 7, 8, 9, 12, 16, 17</div><div class="team-box"><b style="color:var(--web)">Web Design × 10</b>4, 6, 10, 11, 13, 15, 19, 24, 25, 26</div><div class="team-box"><b style="color:var(--css)">CSS × 10</b>14, 18, 20, 21, 22, 23, 27, 28, 29, 30</div></div></section>
+
+      <section id="first"><h2>最初の2週間</h2><ol><li>順位1〜3を独立PRに分け、権限・外部送信・並行承認の回帰テストを先に置く。</li><li>順位4〜6を静的HTMLプロトタイプで確認し、360/768/1440pxの導線を確定する。</li><li>順位7〜9はjob/outboxの状態機械と再実行規約をADRとして決める。</li><li>順位10〜12でアクセシビリティとCIを後退防止の品質Gateにする。</li></ol></section>
+
+      <section class="top-rec" id="top"><h2 style="margin:0 0 8px;border:0;padding:0;color:#fff">Top recommendation</h2><p style="margin:0"><a href="#item-1">#1 案件コンテキストを1つの深いmoduleへ集約</a>。ADR-0001の中心である案件単位アクセス制御を1つのinterfaceへ集めると、全画面・全テストへ最大のleverageが生まれ、権限バグのlocalityを回復できます。</p></section>
+      <p class="foot">詳細版・実装順・完了条件は同ディレクトリの `plan_712_codex.md` と対応しています。</p>
+    </article>
+    <aside class="toc"><h2>目次</h2><a href="#scope">監査スコープ</a><a href="#roadmap">実施ロードマップ</a><a href="#priorities">優先順位 1〜30</a><a href="#teams">チーム別チェック</a><a href="#first">最初の2週間</a><a href="#top">Top recommendation</a></aside>
+  </div>
+  <script>
+    const items = [
+      [1,"Engineering","案件コンテキストを1つの深いmoduleへ集約","reports/views.py、knowledge/views.py、tickets/views.py、dashboard/views.py","各viewがセッションIDだけで案件を取得し、membership確認が同じseamにない。","10以上の浅い取得関数","membershipを検証する1 interface","メンバー解除後は全案件URLが403/404。全view/testが共通interfaceを使用。","Strong"],
+      [2,"Engineering","LLM外向き送信ポリシーをcompletion/embeddingで統一","ADR-0002、llm/services.py、knowledge/ingest.py","embeddingがグローバル設定で外部へ送れ、機密案件のOllama指定をすり抜け得る。","送信経路ごとの判断","案件・目的・データ区分を受けるegress module","Ollama案件の外部HTTP 0件。違反設定は送信前にfail-closed。","Strong"],
+      [3,"Engineering","自律提案の承認・却下を原子的にする","autopilot/services.py:267-303","状態確認、成果物作成、更新、監査がtransaction外で二重反映できる。","分散した副作用","行ロック付き承認module","並行承認でも成果物1件。途中失敗は全rollback。","Strong"],
+      [4,"Web Design","モバイルのアプリシェルをオフキャンバス化","app_shell.css、partials/header.html","狭幅でも68px sidebarと過密headerが残り、本文と現在地を圧迫する。","常設アイコンレール","focus trap付きdrawer","360/768/1024pxで主要CTA・案件名・現在地を判別可能。","Strong"],
+      [5,"Engineering","チケット同期を明示的な状態機械へ深化","tickets/services.py:35-96","例外でSyncRunがRUNNINGのまま残り、部分同期も起こる。","成功経路中心の手続き","状態保証付き同期interface","任意例外後もRUNNING 0件。再実行で整合性回復。","Strong"],
+      [6,"Web Design","承認・却下・状態変更を意思決定UIにする","autopilot/queue.html、risks/list.html","影響、差分、理由、確認、Undoなしで重要操作を即時確定できる。","横並びの即時操作","根拠→影響→差分→確認","判断前に反映先を理解でき、誤操作を戻せる。","Strong"],
+      [7,"Engineering","非同期jobにretry/backoff/重複抑止を導入","tickets/tasks.py、autopilot/tasks.py","直列途中の失敗で後続が欠落し、再実行規約もない。","直列task","idempotency key付きjob module","一時障害から自動回復し、再実行で成果物が増えない。","Strong"],
+      [8,"Engineering","自律巡回のLLM利用枠をDBで予約","autopilot/services.py:48-54,140-156","開始時countだけで全findingを処理し、日次上限を超えられる。","非原子的count","quota ledger","並行巡回でも上限超過0。残量と利用理由を監査可能。","Strong"],
+      [9,"Engineering","通知配信をOutbox/DeliveryAttempt化","tickets/tasks.py、tickets/notify.py","チャネル別状態とidempotency keyがなく、重複送信・回復不能が起きる。","fire-and-forget","配信試行module","重複通知0。失敗だけを管理画面から再送可能。","Strong"],
+      [10,"Web Design","アクセシビリティ基盤を共通interface化","analytics/analysis.html、partials/header.html","skip link、aria-current、tab pattern、error関連付け、live regionが不足する。","ページごとの部分対応","shell/form/tab/message共通pattern","キーボードのみで主要flow完遂。状態変化を支援技術で認識。","Strong"],
+      [11,"Web Design","チケット一覧をPMOの作業キューへ再設計","tickets/list.html、tickets.css","件名検索中心で、担当・期限・優先度・接続元の複合条件や保存viewがない。","閲覧table","filter/sort/save view付きqueue","今週・高優先度・未割当を3操作以内で作れる。","Strong"],
+      [12,"Engineering","CIと静的品質Gateを全16appへ拡張","pytest.ini、repo root","coverage対象は4appで、CI/lint/type/security gateがない。","ローカル任意検証","PR必須品質interface","全16appを計測し、必須checkなしではmerge不可。","Strong"],
+      [13,"Web Design","sidebarをPMO業務単位へ再編","partials/sidebar.html:8-31","13項目が同階層で連続し、絵文字iconの環境差も大きい。","機能一覧","業務別情報設計","初見で主要入口と未処理量を遷移前に判断できる。","Strong"],
+      [14,"CSS","40ページのapp shellを共通templateへ集約","templates/**、adminpanel/**、audit/**","flex/overflow指定が反復し、min-width規則も揺れる。","40個の浅いlayout","1つの深いlayout module","layout修正箇所が1つになる。","Strong"],
+      [15,"Web Design","分析graphを意思決定可能な可視化へ","analytics/analysis.html、risks/list.html","軸、単位、基準線、前期間差、accessibilityが不足し色に依存する。","装飾的な線/色","目標・差分・drilldown付きchart","色覚/reader利用でも値を取得し、次の調査へ遷移できる。","Strong"],
+      [16,"Engineering","構造化log・correlation ID・healthを導入","config/settings.py、tasks/providers","案件、run、providerを横断する観測seamがない。","ファイルごとのlog","observability module","1 request/jobの全経路を追跡しSLOを定義できる。","Worth exploring"],
+      [17,"Engineering","主要queryへ複合indexとquery budgetを設定","tickets/models.py、llm/models.py、autopilot/models.py","常用複合条件のindexと性能回帰検知が弱い。","ORM任せ","EXPLAIN根拠のindex/test","代表量でp95とquery数が目標内。","Worth exploring"],
+      [18,"CSS","全data tableへresponsive基盤を導入","23 tables、tickets/list.html、risks/list.html","scroll containerは9件だけで、sticky/列優先度/最小幅の規約がない。","ページ固有table","table-scroll + sticky + priority column","200% zoom/360pxでも主要列と操作へ到達可能。","Strong"],
+      [19,"Web Design","状態・feedback・empty stateを統一","base.css、dashboard/home.html、autopilot/queue.html","結果・loading・empty・disabledの表現と復旧導線が画面ごとに異なる。","一行message","理由・鮮度・権限・CTA付きstate","保存/同期/AI/承認が同じ視覚言語になる。","Strong"],
+      [20,"CSS","全操作要素へfocus-visibleを実装","base.css、partials/header.html","form以外にfocus表示がなく、検索inputはoutline:none。","不可視focus","token化focus ring","キーボードfocusが常に3:1以上で見える。","Strong"],
+      [21,"CSS","152件のinline styleをCSS interfaceへ移行","43 templates、analytics/analysis.html、risks/list.html","固定値がtemplateへ漏れ、theme変更とCSP強化のlocalityを失う。","152個の局所指定","cluster/stack/table-scroll utilities","固定inline style 0件。","Strong"],
+      [22,"CSS","design tokenを余白・文字・寸法まで拡張","base.css、全CSS","spacing/radius/type/control/z/motionが直値で散在する。","色token中心","semantic token system","主要画面をtoken変更だけで調整できる。","Worth exploring"],
+      [23,"CSS","warning配色とdark theme contrastを修正","base.css、app_shell.css、analytics/risks/tpi.css","warning色が直書きで、小文字のAA contrastを満たさない。","固定色","warning ink/surface/border token","通常文字4.5:1、UI境界3:1以上。","Strong"],
+      [24,"Web Design","横断検索を情報探索の中心へ深化","partials/header.html、dashboard/search.html","件数、snippet、案件、状態、更新日、filter、highlightがない。","タイトル一覧","絞込み可能な検索interface","結果だけで対象を識別し誤遷移を防げる。","Worth exploring"],
+      [25,"Web Design","Copilotを根拠付きPMO支援へ再設計","copilot/thread.html、copilot.css","引用元、対象期間、鮮度、関連record、生成状態を確認しにくい。","会話欄","引用とrecordを往復する相談interface","根拠を確認し引用元へ直接遷移できる。","Worth exploring"],
+      [26,"Web Design","page header/tab/filterの狭幅規約を統一","app_shell.css、tickets.css、各header","wrap/scroll規約がなく、多くのpage CSSにbreakpointがない。","画面ごとの崩れ方","共通responsive behavior","48 templatesで見出し・CTA・filterが重ならない。","Worth exploring"],
+      [27,"CSS","固定grid/widthをcontainer依存へ置換","analytics.css、tpi.css、risks.css","4列form、220px input、3列kanbanが利用可能幅を無視する。","viewport依存","auto-fit/minmax/container query","sidebar状態や埋込み位置で破綻しない。","Worth exploring"],
+      [28,"CSS","操作targetを44px相当へ統一","app_shell.css、tickets.css、header icons","24/28/36pxのhit areaがタッチ操作に小さい。","見た目=hit area","視覚寸法を保つ44px hit area","主要操作が44px相当または十分な間隔を持つ。","Strong"],
+      [29,"CSS","reduced motionとtheme初期表示を整備","base.html、theme.js、各transition","defer後のtheme適用でflashし、motion削減設定もない。","描画後補正","初期theme確定 + reduced-motion","FOUCなし。OSの動き削減設定に従う。","Worth exploring"],
+      [30,"CSS","CSS重複・衝突をcascade layerと視覚回帰で固定","analytics.css、autopilot.css、reports/print.html","同名classとpage内CSSが重複し、影響範囲を予測しにくい。","暗黙cascade","明示layer + visual regression","重複tab定義0。desktop/mobile/dark/printをCI比較。","Worth exploring"]
+    ];
+    const teamClass={Engineering:"eng","Web Design":"web",CSS:"css"};
+    const list=document.getElementById("candidate-list");
+    items.forEach(i=>{const el=document.createElement("article");el.className="candidate";el.id=`item-${i[0]}`;el.innerHTML=`<div class="candidate-head"><div class="rank">${i[0]}</div><div class="candidate-title"><h3>${i[2]}</h3><div class="badges"><span class="badge ${teamClass[i[1]]}">${i[1]}</span><span class="badge ${i[8]==="Strong"?"strong":"explore"}">${i[8]}</span></div></div></div><div class="files">${i[3]}</div><p><b>Problem:</b> ${i[4]}</p><div class="ba"><div class="before"><b>Before</b><br>${i[5]}</div><div class="arrow">→</div><div class="after"><b>After</b><br>${i[6]}</div></div><div class="done"><b>完了条件:</b> ${i[7]}</div>`;list.appendChild(el)});
+  </script>
+</body>
+</html>
