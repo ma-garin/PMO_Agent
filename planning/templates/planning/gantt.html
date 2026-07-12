@@ -47,8 +47,8 @@
               {% endfor %}
             </div>
           </div>
-          <div class="gantt-wrap">
-            <svg class="gantt-svg" width="{{ chart.width }}" height="{{ chart.height|add:42 }}" viewBox="0 0 {{ chart.width }} {{ chart.height|add:42 }}">
+          <div class="gantt-wrap{% if zoom == 'all' %} gantt-wrap-fit{% endif %}">
+            <svg class="gantt-svg{% if zoom == 'all' %} gantt-svg-fit{% endif %}" width="{{ chart.width }}" height="{{ chart.height|add:42 }}" viewBox="0 0 {{ chart.width }} {{ chart.height|add:42 }}" preserveAspectRatio="xMinYMin meet">
               <g transform="translate(0, 26)">
                 {% for bar in chart.bars %}
                   <rect class="gantt-row-bg" x="0" y="{{ bar.y }}" width="{{ chart.width }}" height="34"></rect>
@@ -83,7 +83,7 @@
                 {% endif %}
               </g>
               {% for tick in chart.axis_ticks %}
-                <text class="gantt-axis-label" x="{{ tick.x }}" y="16" text-anchor="middle">{{ tick.label }}</text>
+                <text class="gantt-axis-label" x="{{ tick.x }}" y="16" text-anchor="{% if forloop.first %}start{% elif forloop.last %}end{% else %}middle{% endif %}">{{ tick.label }}</text>
               {% endfor %}
             </svg>
           </div>

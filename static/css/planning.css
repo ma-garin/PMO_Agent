@@ -1,5 +1,8 @@
 .gantt-wrap { overflow-x: auto; padding: 8px 0; }
+/* 全期間ズーム: スクロールせず全体をコンテナ幅にフィットさせる */
+.gantt-wrap-fit { overflow-x: hidden; }
 .gantt-svg { display: block; }
+.gantt-svg-fit { width: 100%; height: auto; }
 .gantt-row-bg { fill: var(--ground); }
 .gantt-row-bg:nth-child(odd) { fill: var(--surface); }
 .gantt-bar-track { fill: var(--ground); stroke: var(--border); stroke-width: 1; rx: 4; }
@@ -11,6 +14,13 @@
 .gantt-progress-line { fill: none; stroke: var(--warning); stroke-width: 2; }
 .gantt-progress-point { fill: var(--warning); stroke: var(--surface); stroke-width: 1.5; }
 .gantt-row-label { fill: var(--ink); font-size: 11.5px; }
+.gantt-dependency-line { fill: none; stroke: var(--ink-2); stroke-width: 1; opacity: .55; }
+.gantt-dependency-arrow { fill: var(--ink-2); opacity: .7; }
+.gantt-axis-gridline { stroke: var(--border); stroke-width: 1; }
+.gantt-axis-label { fill: var(--ink-2); font-size: 10.5px; }
+.gantt-baseline-bar { fill: var(--ink-2); opacity: .35; rx: 3; }
+.gantt-baseline-bar.slipped { fill: var(--danger); opacity: .55; }
+.gantt-baseline-bar.ahead { fill: var(--success); opacity: .55; }
 
 .gantt-legend { display: flex; gap: 16px; font-size: 12px; color: var(--ink-2); margin-top: 10px; flex-wrap: wrap; }
 .gantt-legend .swatch { display: inline-block; width: 12px; height: 8px; border-radius: 2px; margin-right: 5px; vertical-align: middle; }
