@@ -198,14 +198,29 @@ table.log{border-collapse:collapse;width:100%;font-size:12.5px;}
   </ul>
 </div>
 
-<h3 class="sec">残課題（正直な未対応・別対応）</h3>
+<!-- Batch I -->
+<div class="batch is-done">
+  <div class="batch-head">
+    <h2>Batch I: 残課題の解消（追加）</h2>
+    <span class="pill done">完了</span>
+  </div>
+  <div class="batch-head"><span></span><span class="meta">commit 9be8324</span></div>
+  <ul class="items">
+    <li class="d"><span class="id">K2</span> ナレッジの文書詳細ビューを実装（状態/スコープ/登録者/チャンク本文を閲覧、一覧からリンク）</li>
+    <li class="d"><span class="id">G6+</span> ガントのタスク編集に「先行タスク(複数選択)」を追加、依存関係を同期（循環は自動スキップ）。実機で作成→往復を確認</li>
+    <li class="d"><span class="id">MINOR</span> 監査ログの操作コードを日本語ラベル化</li>
+    <li class="d">レポートのシステムプロンプトに日本語出力指示を追加（用語崩れ軽減）</li>
+    <li class="d">Batch Aの文言変更で更新漏れだったガントテスト2件を修正。全450テストパス</li>
+  </ul>
+</div>
+
+<h3 class="sec">残課題（正直な未対応・コード外）</h3>
 <div class="batch is-todo">
   <ul class="items">
-    <li class="t"><span class="id">K2</span> ナレッジの文書詳細閲覧画面が未実装（機能追加が必要）</li>
-    <li class="t"><span class="id">MODEL</span> 3bローカルモデルの出力品質（レポートの用語崩れ・中国語混入）はモデル選択側の課題。より大きなモデルで改善</li>
-    <li class="t"><span class="id">G6+</span> ガントの依存関係(先行/後続)のUI編集は未実装</li>
-    <li class="t"><span class="id">AP1'</span> 自律運転の既存デモ提案は旧本文が残る（新規検知分はコード修正済）</li>
-    <li class="t"><span class="id">MINOR</span> 監査ログの操作コードが英語snake_case（管理者向け・許容範囲）／本番はDEBUG=Falseで404詳細を非表示に</li>
+    <li class="t"><span class="id">MODEL</span> 3bローカルモデルの出力品質（レポートの用語崩れ等）はモデル選択側の課題。より大きなモデル選択で改善（コード外）</li>
+    <li class="t"><span class="id">AP1'</span> 自律運転の既存デモ提案は旧本文が残る（新規検知分はコード修正済。既存はデータ更新が必要）</li>
+    <li class="t"><span class="id">CLEANUP</span> 検証で作成したテストデータ（チケット/WBS/レポート3件・ナレッジ、いずれも「検証:」表記）の掃除</li>
+    <li class="t"><span class="id">K2検証</span> ナレッジ詳細のブラウザ目視は外部プロセスのタブ乗っ取りで妨害。テンプレートコンパイル＋テストで検証済み（レンダリング目視は保留）</li>
   </ul>
 </div>
 
@@ -220,6 +235,7 @@ table.log{border-collapse:collapse;width:100%;font-size:12.5px;}
   <tr><td><code>6c3d115</code></td><td>feat: ガントのタスク追加・編集・削除を実装 (Batch F)</td></tr>
   <tr><td><code>7cf9ceb</code></td><td>fix: Ollama不通の根本原因を修正 (Batch G)</td></tr>
   <tr><td><code>569d282</code></td><td>fix: 再クロールで発見した課題を修正 (Batch H)</td></tr>
+  <tr><td><code>9be8324</code></td><td>feat: 残課題を解消 (Batch I)</td></tr>
 </table>
 
 <p class="note" style="margin-top:24px;">関連: 実機点検の不具合台帳
