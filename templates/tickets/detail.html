@@ -31,7 +31,7 @@
         <div style="display:flex; gap:10px;">
           {% if ticket.is_manual %}
             <a href="{% url 'tickets:edit' ticket.pk %}" class="btn btn-secondary">編集</a>
-            <form method="post" action="{% url 'tickets:delete' ticket.pk %}" onsubmit="return confirm('このチケットを削除します。よろしいですか？');">
+            <form method="post" action="{% url 'tickets:delete' ticket.pk %}" data-confirm="このチケットを削除します。よろしいですか？">
               {% csrf_token %}
               <button type="submit" class="btn btn-danger">削除</button>
             </form>

@@ -53,7 +53,7 @@
                       </form>
                     </td>
                     <td>
-                      <form method="post">
+                      <form method="post" data-confirm="この通知チャネルを削除します。よろしいですか？">
                         {% csrf_token %}
                         <input type="hidden" name="action" value="delete">
                         <input type="hidden" name="channel_id" value="{{ channel.pk }}">

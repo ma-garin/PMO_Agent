@@ -86,7 +86,7 @@
           </div>
         </form>
         {% if item.pk %}
-        <form method="post" action="{% url 'planning:work_item_delete' item.pk %}" onsubmit="return confirm('このタスク（と配下の子タスク）を削除します。よろしいですか？');" style="margin-top:16px; border-top:1px solid var(--border); padding-top:16px;">
+        <form method="post" action="{% url 'planning:work_item_delete' item.pk %}" data-confirm="このタスク（と配下の子タスク）を削除します。よろしいですか？" style="margin-top:16px; border-top:1px solid var(--border); padding-top:16px;">
           {% csrf_token %}
           <button type="submit" class="btn btn-danger">このタスクを削除</button>
         </form>

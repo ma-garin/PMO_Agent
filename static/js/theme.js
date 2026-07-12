@@ -55,6 +55,38 @@
     if (sidebarToggle) sidebarToggle.addEventListener("click", toggleSidebar);
   });
 
+  // 全フォーム共通の二重送信防止＋処理中表示。
+  // 送信ボタンのname/valueが欠落しないよう disabled は使わず、
+  // aria-busy と data-submitting フラグで多重送信を抑止する。
+  document.addEventListener(
+    "submit",
+    function (e) {
+      const form = e.target;
+      if (!(form instanceof HTMLFormElement)) return;
+      const confirmMsg = form.getAttribute("data-confirm");
+      if (confirmMsg && !window.confirm(confirmMsg)) {
+        e.preventDefault();
+        return;
+      }
+      if (form.getAttribute("data-no-busy") !== null) return;
+      if (form.dataset.submitting === "1") {
+        e.preventDefault();
+        return;
+      }
+      form.dataset.submitting = "1";
+      const btn = e.submitter ||
+        form.querySelector('button[type="submit"], input[type="submit"], button:not([type])');
+      if (btn) {
+        btn.setAttribute("aria-busy", "true");
+        if (btn.tagName === "BUTTON") {
+          btn.dataset.origHtml = btn.innerHTML;
+          btn.textContent = "処理中…";
+        }
+      }
+    },
+    true
+  );
+
   document.addEventListener("keydown", function (e) {
     if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
       const input = document.getElementById("global-search-input");

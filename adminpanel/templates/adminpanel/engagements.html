@@ -56,7 +56,7 @@
                     </form>
                   </td>
                   <td>
-                    <form method="post" onsubmit="return confirm('案件「{{ target.name|escapejs }}」と、その全関連データ（チケット・レポート・リスク・テスト等）を完全に削除します。元に戻せません。よろしいですか？');">
+                    <form method="post" data-confirm="案件「{{ target.name }}」と、その全関連データ（チケット・レポート・リスク・テスト等）を完全に削除します。元に戻せません。よろしいですか？">
                       {% csrf_token %}
                       <input type="hidden" name="action" value="delete">
                       <input type="hidden" name="engagement_id" value="{{ target.pk }}">

@@ -68,7 +68,7 @@
                     </form>
                   </td>
                   <td>
-                    <form method="post">
+                    <form method="post" data-confirm="この接続トークンを削除します。よろしいですか？">
                       {% csrf_token %}
                       <input type="hidden" name="action" value="delete">
                       <input type="hidden" name="source_id" value="{{ source.pk }}">

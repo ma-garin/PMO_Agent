@@ -86,6 +86,8 @@ button { font-family: inherit; }
 .btn-danger { background: var(--surface); color: var(--danger); border-color: var(--danger); }
 .btn-danger:hover { background: var(--danger-soft); }
 .btn-block { width: 100%; }
+/* 送信中(二重送信防止): クリック不可＋進行中カーソル */
+[aria-busy="true"] { opacity: .65; cursor: progress; pointer-events: none; }
 
 /* ---------- フォーム ---------- */
 .form-group { margin-bottom: 18px; }

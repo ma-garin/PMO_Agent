@@ -47,7 +47,7 @@
                         {% csrf_token %}<button type="submit" class="btn btn-secondary">再取込</button>
                       </form>
                     {% endif %}
-                    <form method="post" action="{% url 'knowledge:delete' doc.pk %}" style="display:inline;">
+                    <form method="post" action="{% url 'knowledge:delete' doc.pk %}" style="display:inline;" data-confirm="文書「{{ doc.title }}」を削除します。よろしいですか？">
                       {% csrf_token %}<button type="submit" class="btn btn-secondary">削除</button>
                     </form>
                   </td>
