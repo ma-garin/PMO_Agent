@@ -35,6 +35,8 @@ def analysis(request):
     )
     series = services.convergence_series(engagement)
     monthly_trend = services.monthly_odc_trend(engagement)
+    monthly_bars = services.monthly_odc_bars(monthly_trend)
+    monthly_max = max((b["total"] for b in monthly_bars), default=0)
 
     context = {
         "engagement": engagement,
@@ -44,7 +46,9 @@ def analysis(request):
         "reopen": services.reopen_stats(engagement),
         "series": series,
         "svg": services.convergence_svg_points(series),
-        "monthly_bars": services.monthly_odc_bars(monthly_trend),
+        "monthly_bars": monthly_bars,
+        "monthly_max": monthly_max,
+        "monthly_half": round(monthly_max / 2),
         "monthly_defect_types": monthly_trend["defect_types"],
         "odc": services.odc_distribution(engagement),
         "defects": defects,

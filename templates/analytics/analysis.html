@@ -119,15 +119,25 @@
           <div data-tab-panel="monthly" style="display:none;">
           {% if monthly_bars %}
             <div class="chart-wrap">
-              <svg class="chart-svg" viewBox="-8 -8 616 176" preserveAspectRatio="none">
-                {% for bar in monthly_bars %}
-                  {% for seg in bar.segments %}
-                    <rect x="{{ seg.x }}" y="{{ seg.y }}" width="{{ seg.width }}" height="{{ seg.height }}" fill="{{ seg.color }}">
-                      <title>{{ bar.label }} {{ seg.label }}: {{ seg.count }}件</title>
-                    </rect>
+              <div class="chart-plot">
+                <div class="chart-yaxis">
+                  <span>{{ monthly_max }}</span>
+                  <span>{{ monthly_half }}</span>
+                  <span>0</span>
+                </div>
+                <svg class="chart-svg" viewBox="-8 -8 616 176" preserveAspectRatio="none">
+                  <line class="chart-grid-line" x1="0" y1="0" x2="600" y2="0"/>
+                  <line class="chart-grid-line" x1="0" y1="80" x2="600" y2="80"/>
+                  <line class="chart-grid-line" x1="0" y1="160" x2="600" y2="160"/>
+                  {% for bar in monthly_bars %}
+                    {% for seg in bar.segments %}
+                      <rect x="{{ seg.x }}" y="{{ seg.y }}" width="{{ seg.width }}" height="{{ seg.height }}" fill="{{ seg.color }}">
+                        <title>{{ bar.label }} {{ seg.label }}: {{ seg.count }}件</title>
+                      </rect>
+                    {% endfor %}
                   {% endfor %}
-                {% endfor %}
-              </svg>
+                </svg>
+              </div>
               <div class="chart-legend">
                 {% for dt in monthly_defect_types %}
                   <span><span class="swatch" style="background: {{ dt.color }};"></span>{{ dt.label }}</span>
