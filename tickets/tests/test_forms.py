@@ -41,6 +41,21 @@ class TestTicketSourceForm:
         assert source.api_token == "raw-token-value"
         assert "raw-token-value" not in source._api_token_encrypted
 
+    def test_internal_base_url_is_rejected(self, engagement):
+        # F-13: 内部アドレスを接続先に指定できない
+        form = TicketSourceForm(
+            data={
+                "kind": "jira",
+                "name": "JIRA",
+                "base_url": "http://169.254.169.254/",
+                "project_key": "T",
+                "username": "u",
+                "is_active": True,
+            }
+        )
+        assert not form.is_valid()
+        assert "base_url" in form.errors
+
     def test_blank_token_keeps_existing_value(self, engagement):
         from tickets.models import TicketSource
 
