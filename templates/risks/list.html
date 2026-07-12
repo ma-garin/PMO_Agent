@@ -76,7 +76,7 @@
           <table class="ticket-table">
             <thead><tr><th>リスク</th><th>重要度</th><th>状態</th><th></th></tr></thead>
             <tbody>
-              {% for risk in risks %}
+              {% for risk in page_obj %}
                 <tr>
                   <td><strong>{{ risk.title }}</strong><br><span style="font-size:11.5px; color:var(--ink-2);">確率{{ risk.probability }}×影響{{ risk.impact }}={{ risk.score }}</span></td>
                   <td><span class="severity-badge {{ risk.severity }}">{{ risk.get_status_display }}</span></td>
@@ -97,6 +97,7 @@
               {% endfor %}
             </tbody>
           </table>
+          {% include "partials/pagination.html" %}
         </div>
       </div>
     </main>

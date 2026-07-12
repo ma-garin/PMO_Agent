@@ -24,10 +24,14 @@
       <div class="dash-columns" style="grid-template-columns: 1fr 1fr;">
         <div class="card panel">
           <div class="panel-head"><h2>報告書一覧</h2></div>
+          <form method="get" style="display:flex; gap:8px; margin-bottom:12px;">
+            <input type="text" name="q" value="{{ query }}" placeholder="タイトルで絞り込む" class="form-input" style="flex:1;">
+            <button type="submit" class="btn btn-secondary">検索</button>
+          </form>
           <table class="ticket-table">
             <thead><tr><th>タイトル</th><th>期間</th><th>状態</th><th></th></tr></thead>
             <tbody>
-              {% for report in reports %}
+              {% for report in page_obj %}
                 <tr>
                   <td>{{ report.title }}</td>
                   <td>{{ report.period_start|date:"n/j" }} 〜 {{ report.period_end|date:"n/j" }}</td>
@@ -41,10 +45,11 @@
                   <td><a href="{% url 'reports:edit' report.pk %}" class="btn btn-secondary">開く</a></td>
                 </tr>
               {% empty %}
-                <tr><td colspan="4"><p class="empty-note">報告書はまだありません。</p></td></tr>
+                <tr><td colspan="4"><p class="empty-note">{% if query %}該当する報告書はありません。{% else %}報告書はまだありません。{% endif %}</p></td></tr>
               {% endfor %}
             </tbody>
           </table>
+          {% include "partials/pagination.html" %}
         </div>
 
         <div class="card panel">

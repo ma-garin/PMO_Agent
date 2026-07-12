@@ -1,0 +1,23 @@
+{% comment %}
+再利用ページネーション。page_obj(必須)と、任意で page_query(pageを除いた現在のクエリ文字列)を渡す。
+{% endcomment %}
+{% if page_obj.paginator.num_pages > 1 %}
+<div class="pagination">
+  <span>{{ page_obj.start_index }}-{{ page_obj.end_index }} / {{ page_obj.paginator.count }}件</span>
+  <div class="page-links">
+    {% if page_obj.has_previous %}
+      <a href="?{% if page_query %}{{ page_query }}&{% endif %}page={{ page_obj.previous_page_number }}" aria-label="前のページ">&#8249;</a>
+    {% endif %}
+    {% for num in page_obj.paginator.page_range %}
+      {% if num == page_obj.number %}
+        <span class="current" aria-current="page">{{ num }}</span>
+      {% else %}
+        <a href="?{% if page_query %}{{ page_query }}&{% endif %}page={{ num }}">{{ num }}</a>
+      {% endif %}
+    {% endfor %}
+    {% if page_obj.has_next %}
+      <a href="?{% if page_query %}{{ page_query }}&{% endif %}page={{ page_obj.next_page_number }}" aria-label="次のページ">&#8250;</a>
+    {% endif %}
+  </div>
+</div>
+{% endif %}

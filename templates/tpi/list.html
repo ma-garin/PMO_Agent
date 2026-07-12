@@ -27,7 +27,7 @@
           <table class="ticket-table">
             <thead><tr><th>タイトル</th><th>状態</th><th></th></tr></thead>
             <tbody>
-              {% for a in assessments %}
+              {% for a in page_obj %}
                 <tr>
                   <td>{{ a.title }}</td>
                   <td>{% if a.status == 'final' %}<span class="status-pill done">確定</span>{% else %}<span class="status-pill open">実施中</span>{% endif %}</td>
@@ -38,6 +38,7 @@
               {% endfor %}
             </tbody>
           </table>
+          {% include "partials/pagination.html" %}
         </div>
         <div class="card panel">
           <div class="panel-head"><h2>新規作成</h2></div>

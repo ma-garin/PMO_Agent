@@ -1,5 +1,8 @@
+from urllib.parse import urlencode
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.dateparse import parse_date
 
@@ -49,11 +52,16 @@ def risk_list(request):
         for impact_value in range(5, 0, -1)
     ]
 
+    paginator = Paginator(risks, 20)
+    page_obj = paginator.get_page(request.GET.get("page"))
+    filter_params = {k: v for k, v in {"p": probability, "i": impact}.items() if v}
+
     context = {
         "engagement": engagement,
         "nav_active": "risks",
         "matrix_rows": matrix_rows,
-        "risks": risks,
+        "page_obj": page_obj,
+        "page_query": urlencode(filter_params),
         "filtered": bool(probability or impact),
         "proposals": proposals,
         "status_choices": RiskItem.Status.choices,

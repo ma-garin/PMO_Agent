@@ -152,3 +152,17 @@ input[type="file"].form-input::file-selector-button:hover { background: var(--pr
 }
 
 .section-note { color: var(--ink-2); font-size: 13px; margin: 0 0 16px; }
+
+/* ---------- ページネーション(全一覧共通) ---------- */
+.pagination {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: 18px; font-size: 13px; color: var(--ink-2);
+}
+.pagination .page-links { display: flex; gap: 4px; flex-wrap: wrap; }
+.pagination .page-links a, .pagination .page-links span {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 28px; height: 28px; padding: 0 6px; border-radius: 6px;
+  text-decoration: none; color: var(--ink-2);
+}
+.pagination .page-links a:hover { background: var(--ground); }
+.pagination .page-links .current { background: var(--primary); color: #fff; font-weight: 600; }

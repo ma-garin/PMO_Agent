@@ -31,7 +31,7 @@
           <table class="ticket-table">
             <thead><tr><th>タイトル</th><th>スコープ</th><th>状態</th><th></th></tr></thead>
             <tbody>
-              {% for doc in documents %}
+              {% for doc in page_obj %}
                 <tr>
                   <td><a href="{% url 'knowledge:detail' doc.pk %}">{{ doc.title }}</a></td>
                   <td>{% if doc.engagement %}この案件{% else %}全社共通{% endif %}</td>
@@ -57,6 +57,7 @@
               {% endfor %}
             </tbody>
           </table>
+          {% include "partials/pagination.html" %}
         </div>
 
         <div class="card panel">

@@ -1,5 +1,8 @@
+from urllib.parse import urlencode
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
@@ -24,10 +27,19 @@ def report_list(request):
     if engagement is None:
         return redirect("engagements:select")
 
+    reports_qs = engagement.reports.all()
+    query = request.GET.get("q", "").strip()
+    if query:
+        reports_qs = reports_qs.filter(title__icontains=query)
+    paginator = Paginator(reports_qs, 15)
+    page_obj = paginator.get_page(request.GET.get("page"))
+
     context = {
         "engagement": engagement,
         "nav_active": "reports",
-        "reports": engagement.reports.all(),
+        "page_obj": page_obj,
+        "query": query,
+        "page_query": urlencode({"q": query} if query else {}),
         "today": timezone.localdate(),
         "templates": ReportTemplate.objects.all(),
     }
