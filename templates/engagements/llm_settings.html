@@ -29,7 +29,8 @@
         {% endfor %}
       {% endif %}
 
-      <div class="card panel llm-settings-card" style="max-width: 560px;">
+      <div class="dash-columns llm-settings-grid">
+      <div class="card panel llm-settings-card">
         <div class="panel-head"><h2>{{ engagement.name }} のLLM API設定</h2></div>
         <p class="section-note">
           顧客との契約・機密区分に応じて、この案件で使用するLLMプロバイダとモデルを選択してください。
@@ -179,7 +180,7 @@
         {% endif %}
       </div>
 
-      <div class="card panel llm-settings-card" style="max-width: 560px; margin-top: 18px;">
+      <div class="card panel llm-settings-card llm-test-card">
         <div class="panel-head"><h2>疎通確認</h2></div>
         <p class="section-note">
           保存済みの設定（{{ engagement.get_llm_provider_display }}{% if engagement.llm_model %} / {{ engagement.llm_model }}{% endif %}）で
@@ -188,17 +189,74 @@
         <form method="post">
           {% csrf_token %}
           <input type="hidden" name="action" value="test">
-          <button type="submit" class="btn btn-secondary">疎通確認を実行</button>
+          <button type="submit" class="btn btn-secondary btn-block">疎通確認を実行</button>
         </form>
-        {% for message in messages %}
-          {% if "llm_test" in message.tags %}
-            <div class="llm-test-result {% if 'error' in message.tags %}is-error{% else %}is-success{% endif %}">
-              {{ message }}
-            </div>
-          {% endif %}
-        {% endfor %}
+        <p class="llm-field-hint">結果は画面中央にポップアップで表示されます。</p>
       </div>
+      </div>
+
+      {% for message in messages %}
+        {% if "llm_test" in message.tags %}
+          <div id="llm-toast-data" data-status="{% if 'error' in message.tags %}error{% else %}success{% endif %}" hidden>{{ message }}</div>
+        {% endif %}
+      {% endfor %}
+      <div id="llm-toast-container" class="llm-toast-container" aria-live="polite"></div>
     </main>
   </div>
 </div>
+
+<script>
+(function () {
+  var data = document.getElementById("llm-toast-data");
+  if (!data) return;
+  var container = document.getElementById("llm-toast-container");
+  var status = data.getAttribute("data-status");
+
+  var backdrop = document.createElement("div");
+  backdrop.className = "llm-toast-backdrop";
+
+  var toast = document.createElement("div");
+  toast.className = "llm-toast " + (status === "error" ? "is-error" : "is-success");
+  toast.setAttribute("role", "alert");
+
+  var icon = document.createElement("span");
+  icon.className = "llm-toast-icon";
+  icon.textContent = status === "error" ? "⚠" : "✓";
+
+  var text = document.createElement("span");
+  text.className = "llm-toast-text";
+  text.textContent = data.textContent;
+
+  var closeBtn = document.createElement("button");
+  closeBtn.type = "button";
+  closeBtn.className = "llm-toast-close";
+  closeBtn.setAttribute("aria-label", "閉じる");
+  closeBtn.textContent = "×";
+
+  toast.appendChild(closeBtn);
+  toast.appendChild(icon);
+  toast.appendChild(text);
+  container.appendChild(backdrop);
+  container.appendChild(toast);
+
+  requestAnimationFrame(function () {
+    container.classList.add("is-visible");
+  });
+
+  var dismissTimer = setTimeout(dismiss, 8000);
+  function dismiss() {
+    clearTimeout(dismissTimer);
+    container.classList.remove("is-visible");
+    setTimeout(function () { container.remove(); }, 200);
+  }
+  closeBtn.addEventListener("click", dismiss);
+  backdrop.addEventListener("click", dismiss);
+  document.addEventListener("keydown", function onKey(e) {
+    if (e.key === "Escape") {
+      dismiss();
+      document.removeEventListener("keydown", onKey);
+    }
+  });
+})();
+</script>
 {% endblock %}

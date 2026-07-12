@@ -61,6 +61,8 @@
 .portfolio-stats-row .stat-muted { margin-left: auto; }
 
 /* ---------- LLM設定 ---------- */
+.llm-settings-grid { align-items: start; }
+.llm-test-card { position: sticky; top: 20px; }
 .llm-settings-card { padding: 24px; }
 .llm-settings-card .panel-head { margin-bottom: 4px; }
 .llm-settings-card .section-note { margin-bottom: 20px; }
@@ -127,12 +129,65 @@
 }
 .llm-section-divider:first-of-type { margin-top: 0; }
 
-.llm-test-result {
-  margin-top: 16px;
-  padding: 12px 14px;
-  border-radius: 8px;
-  font-size: 13.5px;
-  font-weight: 600;
+/* ---------- 疎通確認: 中央ポップアップ ---------- */
+.llm-toast-container {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
 }
-.llm-test-result.is-success { background: var(--success-soft); color: var(--success); border: 1px solid var(--success); }
-.llm-test-result.is-error { background: var(--danger-soft); color: var(--danger); border: 1px solid var(--danger); }
+.llm-toast-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, .45);
+  opacity: 0;
+  transition: opacity .2s ease;
+}
+.llm-toast-container.is-visible .llm-toast-backdrop { opacity: 1; }
+.llm-toast-container.is-visible { pointer-events: auto; }
+
+.llm-toast {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+  padding: 28px 32px;
+  border-radius: 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, .3);
+  font-size: 15px;
+  font-weight: 600;
+  max-width: 420px;
+  opacity: 0;
+  transform: scale(.92);
+  transition: opacity .2s ease, transform .2s ease;
+}
+.llm-toast-container.is-visible .llm-toast { opacity: 1; transform: scale(1); }
+.llm-toast.is-success { color: var(--success); }
+.llm-toast.is-error { color: var(--danger); }
+.llm-toast-icon {
+  width: 44px; height: 44px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; flex-shrink: 0;
+}
+.llm-toast.is-success .llm-toast-icon { background: var(--success-soft); }
+.llm-toast.is-error .llm-toast-icon { background: var(--danger-soft); }
+.llm-toast-text { line-height: 1.6; color: var(--ink); }
+.llm-toast-close {
+  position: absolute;
+  top: 10px; right: 12px;
+  background: none; border: none; cursor: pointer;
+  font-size: 18px; line-height: 1; color: var(--ink-2);
+  padding: 4px;
+}
+.llm-toast-close:hover { color: var(--ink); }
+
+@media (max-width: 640px) {
+  .llm-toast { max-width: calc(100vw - 40px); }
+}
