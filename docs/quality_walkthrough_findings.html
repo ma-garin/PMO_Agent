@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>実機点検 不具合一覧（全17画面・証拠ベース）</title>
+<style>
+:root{
+  --primary:#1976D2; --primary-deep:#0D47A1; --primary-soft:#EEF5FD;
+  --ground:#F4F6F9; --surface:#FFFFFF; --border:#E3E8EE;
+  --ink:#1A212B; --ink-2:#56616F;
+  --ok:#2E7D32; --ok-soft:#E8F5E9;
+  --warn:#ED6C02; --warn-soft:#FFF3E0;
+  --bad:#D32F2F; --bad-soft:#FDECEC;
+  --shadow:0 1px 3px rgba(20,32,50,.08);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --primary:#4B9EF2; --primary-deep:#7FB6F5; --primary-soft:#163554;
+    --ground:#12161C; --surface:#1B2029; --border:#2B323D;
+    --ink:#EDF0F4; --ink-2:#9AA5B1;
+    --ok:#7BC67E; --ok-soft:#1E3320;
+    --warn:#F5A356; --warn-soft:#3A2E1B;
+    --bad:#F28B82; --bad-soft:#3A2222;
+    --shadow:0 1px 3px rgba(0,0,0,.4);
+  }
+}
+*{box-sizing:border-box;}
+body{margin:0; background:var(--ground); color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic","Noto Sans JP",Meiryo,sans-serif;
+  line-height:1.75; font-size:15px;}
+.wrap{max-width:1060px; margin:0 auto; padding:40px 24px 96px;}
+header.doc{background:linear-gradient(135deg,var(--primary),var(--primary-deep));
+  color:#fff; border-radius:16px; padding:32px 34px; box-shadow:var(--shadow);}
+header.doc h1{margin:0 0 8px; font-size:25px;}
+header.doc p{margin:6px 0 0; opacity:.92; font-size:14px;}
+.meta-row{display:flex; flex-wrap:wrap; gap:10px; margin-top:18px;}
+.meta-chip{background:rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.28);
+  padding:5px 12px; border-radius:999px; font-size:12.5px;}
+h2.sec{font-size:19px; margin:44px 0 6px; padding-bottom:8px; border-bottom:2px solid var(--primary);}
+h2.sec .n{color:var(--primary); font-weight:800; margin-right:8px;}
+.lead{color:var(--ink-2); font-size:14px; margin:4px 0 18px;}
+.card{background:var(--surface); border:1px solid var(--border); border-radius:12px;
+  box-shadow:var(--shadow); padding:20px 24px; margin:16px 0;}
+.callout{border-left:4px solid var(--primary); background:var(--primary-soft);
+  padding:14px 18px; border-radius:8px; margin:16px 0; font-size:13.5px;}
+.legend{display:flex; flex-wrap:wrap; gap:16px; font-size:13px; margin:6px 0 0;}
+.legend span{display:inline-flex; align-items:center; gap:7px;}
+.dot{width:20px; height:20px; border-radius:6px; display:inline-flex; align-items:center;
+  justify-content:center; font-weight:800; font-size:12px;}
+.dot.ok{background:var(--ok-soft); color:var(--ok);}
+.dot.warn{background:var(--warn-soft); color:var(--warn);}
+.dot.bad{background:var(--bad-soft); color:var(--bad);}
+.tbl-scroll{overflow-x:auto;}
+table{border-collapse:collapse; width:100%; font-size:13.5px; min-width:640px;}
+th,td{text-align:left; padding:10px 12px; border-bottom:1px solid var(--border); vertical-align:top;}
+th{background:var(--ground); font-weight:700; font-size:12.5px; color:var(--ink-2); white-space:nowrap;}
+td.st{white-space:nowrap; text-align:center; font-weight:800;}
+td.st.ok{color:var(--ok);} td.st.warn{color:var(--warn);} td.st.bad{color:var(--bad);}
+code{background:var(--ground); border:1px solid var(--border); border-radius:5px;
+  padding:1px 6px; font-size:12.5px; font-family:ui-monospace,SFMono-Regular,Menlo,monospace;}
+.rank{counter-reset:r; list-style:none; padding:0; margin:0;}
+.rank li{counter-increment:r; position:relative; padding:12px 14px 12px 52px; margin:10px 0;
+  background:var(--surface); border:1px solid var(--border); border-radius:10px; font-size:14px;}
+.rank li::before{content:counter(r); position:absolute; left:14px; top:12px;
+  width:26px; height:26px; border-radius:50%; background:var(--bad); color:#fff;
+  display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px;}
+.rank li.p2::before{background:var(--warn);}
+.rank .why{color:var(--ink-2); font-size:12.5px; margin-top:4px;}
+.tag{display:inline-block; font-size:11px; font-weight:700; padding:1px 8px; border-radius:999px;
+  background:var(--bad-soft); color:var(--bad); margin-left:6px; white-space:nowrap;}
+.tag.warn{background:var(--warn-soft); color:var(--warn);}
+.id{font-family:ui-monospace,Menlo,monospace; font-weight:700; color:var(--primary); font-size:12.5px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="doc">
+  <h1>実機点検 不具合一覧（全17画面・証拠ベース）</h1>
+  <p>PMO Agent ／ 実際にアプリを起動・操作し、描画結果を目視して記録した不具合台帳</p>
+  <div class="meta-row">
+    <span class="meta-chip">点検日: 2026-07-12</span>
+    <span class="meta-chip">方法: ブラウザ実操作＋スクリーンショット</span>
+    <span class="meta-chip">対象案件: 基幹システム刷新 / PMO Agent R-04〜R-10</span>
+    <span class="meta-chip">網羅: 17/17 画面</span>
+  </div>
+</header>
+
+<div class="callout">
+  <b>この台帳の位置づけ:</b> 先行版
+  <a href="quality_baseline_audit.html">quality_baseline_audit.html</a>
+  はコードのURL経路から机上で作った推定で、<b>横スクロール欠如・日付見切れ・文言崩れといった「描画・挙動レベルの当たり前」を構造的に取りこぼしていた</b>。
+  本台帳はその欠陥を是正し、<b>全画面を実際に起動・操作して観測した事実のみ</b>を記録する。各項目は稼働中アプリで再現確認済み。
+</div>
+
+<div class="card">
+  <div class="legend">
+    <span><span class="dot bad">✗</span> 不具合（当たり前が未達／要修正）</span>
+    <span><span class="dot warn">△</span> 要改善（軽微・品質低下）</span>
+    <span><span class="dot ok">○</span> 現状良好</span>
+  </div>
+</div>
+
+<!-- ===== 最優先 ===== -->
+<h2 class="sec"><span class="n">★</span>優先度つき重大ギャップ</h2>
+<ol class="rank">
+  <li><b>チケットを開けない／作れない／編集できない</b> <span class="tag">機能欠落</span>
+    <div class="why">一覧はあるが行クリックは外部JIRAへ遷移するだけ。アプリ内に詳細・新規作成・編集・状態変更・コメントが一切ない。「＋新規」ボタンも存在せず、外部同期でしか増えない。課題管理ツールの中核が空。</div></li>
+  <li><b>計画（ガント）の表示・操作品質が破綻</b> <span class="tag">描画/操作</span>
+    <div class="why">「全期間」ズームが効かず全体が収まらない／最終タスクが右端で見切れる／横スクロールバーが初期表示で画面外にあり発見不能／右端の日付ラベルが途中で切れる。加えてタスクの追加・編集自体ができない閲覧専用。</div></li>
+  <li><b>LLM(Ollama)呼び出しが常態的に失敗</b> <span class="tag">機能欠損</span>
+    <div class="why">管理＞LLM利用状況で失敗率 75.8〜100%。自律運転も「LLMを利用できなかった」とフォールバック表示。モデル名設定だけの問題ではなく、呼び出し自体が通っていない。</div></li>
+  <li class="p2"><b>開発者向けの生データ・文言がUIに露出</b> <span class="tag warn">文言</span>
+    <div class="why">自律運転に生Python辞書 <code>{'observed':1,'threshold':1}</code>、空状態に <code>python manage.py init_roadmap_schedule</code>、進捗CSVに英語カラム名、チケット状態バッジに英語 <code>In Progress</code> 等。ユーザーに見せる面に内部表現が漏れている。</div></li>
+  <li class="p2"><b>文字列・レイアウトの崩れ（当たり前の描画品質）</b> <span class="tag warn">描画</span>
+    <div class="why">ホーム日付列が「◯/◯ま／で」と単語途中で折返し／進捗見出しが空変数で「の実績推移」と助詞だけ浮く／ナレッジのファイル選択が「選択さ...ません」と切れる／全ページ favicon 404。</div></li>
+</ol>
+
+<!-- ===== 画面別 ===== -->
+<h2 class="sec"><span class="n">◇</span>画面別 観測結果（全17画面）</h2>
+<div class="card"><div class="tbl-scroll"><table>
+  <tr><th>画面</th><th>観測した事実</th><th>判定</th></tr>
+
+  <tr><td><b>案件選択</b><br><span class="id">/engagements/</span></td>
+    <td>一覧・進捗・未同期・メンバー数を表示。新規作成導線あり。切替も機能。</td><td class="st ok">○</td></tr>
+
+  <tr><td><b>ホーム</b><br><span class="id">/dashboard/</span></td>
+    <td><span class="id">H1</span> 期限列が全行「◯/◯ま／で」と単語途中で折返し。<br>
+        <span class="id">H2</span> KPIタイルにRAG色分けなし（全数値が同色）。<br>
+        下部カード（今日のチケット・アクティビティ）が空で余白過多。</td><td class="st bad">✗</td></tr>
+
+  <tr><td><b>計画（ガント）</b><br><span class="id">/planning/</span></td>
+    <td><span class="id">G1</span>「全期間」ズームが無効（<code>?zoom=all</code>でも日表示と同一、全体が収まらない）。<br>
+        <span class="id">G2</span> 最終タスクが右端で見切れる。<br>
+        <span class="id">G3</span> 横スクロールバーが初期表示で画面外＝発見不能。<br>
+        <span class="id">G4</span> 右端の日付ラベルが途中で切れる（「7/2…」）。<br>
+        <span class="id">G5</span> WBS未登録案件の空状態に開発者コマンド <code>python manage.py init_roadmap_schedule</code> が露出。<br>
+        <span class="id">G6</span> タスクの追加・編集・依存設定ができない閲覧専用。</td><td class="st bad">✗</td></tr>
+
+  <tr><td><b>チケット一覧</b><br><span class="id">/tickets/</span></td>
+    <td><span class="id">T1</span>「＋新規作成」ボタンが画面に存在しない（作成不可）。<br>
+        <span class="id">T2</span> 詳細・編集・状態変更なし。行クリックは外部JIRAへ遷移。<br>
+        <span class="id">T3</span> 状態バッジが英語生値 <code>In Progress</code>（日本語UIに混在）。<br>
+        <span class="id">T4</span> 絞り込みは件名＋タブのみ。列ソート・一括操作・保存ビューなし。</td><td class="st bad">✗</td></tr>
+
+  <tr><td><b>分析（ODC）</b><br><span class="id">/analytics/</span></td>
+    <td><span class="id">A1</span> 傾向分析の折れ線グラフにY軸目盛・グリッドがなく絶対値が読めない。<br>
+        機能面（KPI・ODC分類プルダウン・確定・AI推定・CSV）は充実。</td><td class="st warn">△</td></tr>
+
+  <tr><td><b>Copilot</b><br><span class="id">/copilot/</span></td>
+    <td>スレッド一覧・入力欄・送信あり。チャット中央の余白がやや広い。LLM応答は上記のLLM失敗の影響を受ける可能性。</td><td class="st ok">○</td></tr>
+
+  <tr><td><b>レポート</b><br><span class="id">/reports/</span></td>
+    <td>一覧＋新規作成（期間・テンプレート・印刷）。整っている。</td><td class="st ok">○</td></tr>
+
+  <tr><td><b>ナレッジ</b><br><span class="id">/knowledge/</span></td>
+    <td><span class="id">K1</span> ファイル選択の「選択されていません」が「選択さ...ません」と切れる。<br>
+        <span class="id">K2</span> 文書詳細の閲覧画面がない（開いて中身・チャンクを確認できない）。</td><td class="st warn">△</td></tr>
+
+  <tr><td><b>TPI評価</b><br><span class="id">/tpi/</span></td>
+    <td>一覧＋新規作成、詳細の成熟度マトリクス（色分け・到達レベル・回答導線・AI改善提言）とも良好。</td><td class="st ok">○</td></tr>
+
+  <tr><td><b>リスク・改善</b><br><span class="id">/risks/</span></td>
+    <td>5×5リスクマトリクス・スコア・状態遷移・AI提案は良い作り込み。ただし
+        <span class="id">R1</span> 新規フォームにPMBOK標準項目が欠落：<b>リスクオーナー（単一責任者）・対応戦略（回避/転嫁/軽減/受容）・トリガー/予兆・カテゴリ</b>がない。確率・影響・対策テキストのみ。</td><td class="st warn">△</td></tr>
+
+  <tr><td><b>テスト計画/進捗/ゲート</b><br><span class="id">/testmgmt/</span></td>
+    <td><span class="id">P1</span> 進捗見出しが空変数で「<b>の</b>実績推移」と助詞だけ浮く。<br>
+        進捗CSV書式ヒントに英語カラム名 <code>test_level,date,...</code> が露出。<br>
+        計画・進捗記録・品質ゲート・CSV入出力の骨格は機能。</td><td class="st warn">△</td></tr>
+
+  <tr><td><b>カレンダー</b><br><span class="id">/dashboard/calendar/</span></td>
+    <td>月グリッド・前月翌月・当日ハイライト・イベント表示とも良好。セル内「…」省略は標準的で問題なし。</td><td class="st ok">○</td></tr>
+
+  <tr><td><b>メンバー</b><br><span class="id">/members/</span></td>
+    <td>案件メンバー表＋名寄せ（対応付け追加）機能。整っている。</td><td class="st ok">○</td></tr>
+
+  <tr><td><b>自律運転</b><br><span class="id">/autopilot/</span></td>
+    <td><span class="id">AP1</span> 検知根拠が生Python辞書 <code>{'observed':1,'threshold':1}</code> でユーザーに露出。<br>
+        <span class="id">AP2</span> observed/threshold/window等の英語キーがそのままラベル表示。<br>
+        <span class="id">AP3</span>「詳細分析にはLLMを利用できなかった」＝LLM失敗のフォールバック（機能欠損の証跡）。<br>
+        承認/却下/履歴/巡回の統制フロー自体は機能。</td><td class="st warn">△</td></tr>
+
+  <tr><td><b>設定</b><br><span class="id">/accounts/profile/ 他</span></td>
+    <td>タブ（アカウント/パスワード変更/LLM設定/チケット接続）。LLM設定は本セッションで当たり前品質を回復済み。</td><td class="st ok">○</td></tr>
+
+  <tr><td><b>管理（Adminpanel）</b><br><span class="id">/manage/</span></td>
+    <td>KPIタイル＋各管理カード（ユーザー/案件/トークン/LLM利用状況/通知/監査/案件間比較）で整理。<b>LLM利用状況は失敗率と「機密案件でクラウド呼び出し」警告まで備える良い設計</b>。</td><td class="st ok">○</td></tr>
+</table></div></div>
+
+<!-- ===== 横断 ===== -->
+<h2 class="sec"><span class="n">◆</span>横断的な当たり前（机上版で欠けていた軸）</h2>
+<div class="card"><div class="tbl-scroll"><table>
+  <tr><th>ID</th><th>横断的な問題</th><th>該当箇所</th></tr>
+  <tr><td class="id">X1</td><td>LLM(Ollama)呼び出しが失敗率75.8〜100%で常態的に失敗</td><td>autopilot / connectivity_test（管理＞LLM利用状況で定量確認）</td></tr>
+  <tr><td class="id">X2</td><td>開発者向け生データ・文言のUI露出（Python辞書 / manageコマンド / 英語カラム名 / 英語ステータス）</td><td>自律運転・計画空状態・進捗CSV・チケット</td></tr>
+  <tr><td class="id">X3</td><td>文字列補間の崩れ（単語途中折返し・空変数の助詞残り・ラベル見切れ）</td><td>ホーム・テスト進捗・ナレッジ</td></tr>
+  <tr><td class="id">X4</td><td>全ページで <code>favicon.ico</code> が404（ファビコン未設定）</td><td>全画面（コンソールエラー）</td></tr>
+  <tr><td class="id">X5</td><td>データ可視化のY軸/グリッド欠如、KPIのRAG色分け欠如</td><td>分析・ホーム</td></tr>
+</table></div></div>
+
+<div class="card">
+  <h2 class="sec" style="border:none; margin-top:0; padding:0;">現状良好（当たり前を満たす）</h2>
+  <p class="lead" style="margin-bottom:0;">案件選択 ／ レポート ／ TPI評価 ／ カレンダー ／ メンバー ／ 設定 ／ 管理（Adminpanel）。
+  リスクとテスト管理は骨格良好だが上記の個別欠落あり。</p>
+</div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>当たり前品質 棚卸し｜画面・機能別ベースライン</title>
+<style>
+:root{
+  --primary:#1976D2; --primary-deep:#0D47A1; --primary-soft:#EEF5FD;
+  --ground:#F4F6F9; --surface:#FFFFFF; --border:#E3E8EE;
+  --ink:#1A212B; --ink-2:#56616F;
+  --ok:#2E7D32; --ok-soft:#E8F5E9;
+  --warn:#ED6C02; --warn-soft:#FFF3E0;
+  --bad:#D32F2F; --bad-soft:#FDECEC;
+  --shadow:0 1px 3px rgba(20,32,50,.08);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --primary:#4B9EF2; --primary-deep:#7FB6F5; --primary-soft:#163554;
+    --ground:#12161C; --surface:#1B2029; --border:#2B323D;
+    --ink:#EDF0F4; --ink-2:#9AA5B1;
+    --ok:#7BC67E; --ok-soft:#1E3320;
+    --warn:#F5A356; --warn-soft:#3A2E1B;
+    --bad:#F28B82; --bad-soft:#3A2222;
+    --shadow:0 1px 3px rgba(0,0,0,.4);
+  }
+}
+*{box-sizing:border-box;}
+body{
+  margin:0; background:var(--ground); color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic","Noto Sans JP",Meiryo,sans-serif;
+  line-height:1.75; font-size:15px;
+}
+.wrap{max-width:1080px; margin:0 auto; padding:40px 24px 96px;}
+header.doc{
+  background:linear-gradient(135deg,var(--primary),var(--primary-deep));
+  color:#fff; border-radius:16px; padding:32px 34px; box-shadow:var(--shadow);
+}
+header.doc h1{margin:0 0 8px; font-size:26px; letter-spacing:.01em;}
+header.doc p{margin:6px 0 0; opacity:.92; font-size:14px;}
+.meta-row{display:flex; flex-wrap:wrap; gap:10px; margin-top:18px;}
+.meta-chip{background:rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.28);
+  padding:5px 12px; border-radius:999px; font-size:12.5px;}
+h2.sec{font-size:19px; margin:44px 0 6px; padding-bottom:8px; border-bottom:2px solid var(--primary);}
+h2.sec .n{color:var(--primary); font-weight:800; margin-right:8px;}
+.lead{color:var(--ink-2); font-size:14px; margin:4px 0 18px;}
+.card{background:var(--surface); border:1px solid var(--border); border-radius:12px;
+  box-shadow:var(--shadow); padding:22px 24px; margin:16px 0;}
+.legend{display:flex; flex-wrap:wrap; gap:16px; font-size:13px; margin:10px 0 0;}
+.legend span{display:inline-flex; align-items:center; gap:7px;}
+.dot{width:20px; height:20px; border-radius:6px; display:inline-flex; align-items:center;
+  justify-content:center; font-weight:800; font-size:12px; flex-shrink:0;}
+.dot.ok{background:var(--ok-soft); color:var(--ok);}
+.dot.warn{background:var(--warn-soft); color:var(--warn);}
+.dot.bad{background:var(--bad-soft); color:var(--bad);}
+.tbl-scroll{overflow-x:auto; -webkit-overflow-scrolling:touch;}
+table{border-collapse:collapse; width:100%; font-size:13.5px; min-width:640px;}
+th,td{text-align:left; padding:10px 12px; border-bottom:1px solid var(--border); vertical-align:top;}
+th{background:var(--ground); font-weight:700; font-size:12.5px; color:var(--ink-2);
+  text-transform:none; white-space:nowrap;}
+td.st{white-space:nowrap; text-align:center; font-weight:800;}
+td.st.ok{color:var(--ok);} td.st.warn{color:var(--warn);} td.st.bad{color:var(--bad);}
+.bench{font-size:12.5px; color:var(--ink-2);}
+.screen-head{display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap; gap:8px;}
+.screen-head h3{margin:0; font-size:16.5px;}
+.screen-head .route{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12px;
+  color:var(--ink-2); background:var(--ground); padding:2px 8px; border-radius:6px;}
+.verdict{font-size:13px; margin:12px 0 0; padding:10px 14px; border-radius:8px; border:1px solid var(--border);}
+.verdict.bad{background:var(--bad-soft); border-color:var(--bad);}
+.verdict.warn{background:var(--warn-soft); border-color:var(--warn);}
+.verdict.ok{background:var(--ok-soft); border-color:var(--ok);}
+.verdict b{font-weight:800;}
+.note{background:var(--warn-soft); border:1px solid var(--warn); border-radius:10px;
+  padding:14px 16px; font-size:13px; margin:16px 0;}
+.rank{counter-reset:r; list-style:none; padding:0; margin:0;}
+.rank li{counter-increment:r; position:relative; padding:12px 14px 12px 52px; margin:10px 0;
+  background:var(--surface); border:1px solid var(--border); border-radius:10px; font-size:14px;}
+.rank li::before{content:counter(r); position:absolute; left:14px; top:12px;
+  width:26px; height:26px; border-radius:50%; background:var(--bad); color:#fff;
+  display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px;}
+.rank li.p2::before{background:var(--warn);}
+.rank li.p3::before{background:var(--primary);}
+.rank .why{color:var(--ink-2); font-size:12.5px; margin-top:4px;}
+.sources{font-size:12.5px; color:var(--ink-2);}
+.sources li{margin:4px 0;}
+a{color:var(--primary);}
+.toc{columns:2; column-gap:28px; font-size:13.5px;}
+.toc a{display:block; padding:3px 0; text-decoration:none;}
+@media(max-width:640px){.toc{columns:1;} .wrap{padding:24px 14px 72px;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="doc">
+  <h1>当たり前品質 棚卸し</h1>
+  <p>PMO Agent ／ 画面・機能別「あるべきベースライン」と現状ギャップの一次評価</p>
+  <div class="meta-row">
+    <span class="meta-chip">作成日: 2026-07-12</span>
+    <span class="meta-chip">ステータス: レビュー用ドラフト</span>
+    <span class="meta-chip">根拠: コード経路の実査 + 類似ツール調査</span>
+  </div>
+</header>
+
+<div class="card">
+  <h2 class="sec" style="margin-top:6px; border:none; padding:0;">このドキュメントの位置づけ</h2>
+  <p class="lead" style="margin-bottom:10px;">
+    「当たり前品質（狩野モデル: must-be quality）」＝<b>満たされても満足は生まれないが、欠けると強い不満・怒りを生む</b>要素。
+    その中身は作り手ではなく<b>使い手の暗黙の期待</b>で決まり、要求仕様に書かれないため作り手側から列挙すると必ず抜ける。
+    そこで本書は「私の主観」ではなく、<b>①実際のコード経路（URL/テンプレート）の実査</b>と
+    <b>②世の中の類似ツールが標準搭載する機能の調査</b>の2点から、画面ごとの当たり前を客観的に定義する。
+  </p>
+  <div class="legend">
+    <span><span class="dot ok">○</span> 概ね充足（当たり前を満たす）</span>
+    <span><span class="dot warn">△</span> 部分的・深さ不足／要現物確認</span>
+    <span><span class="dot bad">✗</span> 欠落（当たり前が未達）</span>
+  </div>
+  <div class="note" style="margin-top:16px;">
+    現状評価はコードのURL経路・テンプレートからの<b>一次評価</b>です。挙動の深さ（実際に詰まるか）は、
+    次段の「通し点検（探索的テスト）」で最終確認します。当たり前品質は作り手側の机上評価では取りこぼすため、
+    この二段構えを前提とします。
+  </div>
+</div>
+
+<h2 class="sec"><span class="n">目次</span></h2>
+<div class="card"><div class="toc">
+  <a href="#s0">総括: 優先度つきギャップ一覧</a>
+  <a href="#s1">1. 認証・アカウント</a>
+  <a href="#s2">2. 案件選択・作成</a>
+  <a href="#s3">3. ホーム（ダッシュボード）</a>
+  <a href="#s4">4. 計画（WBS・ガント）</a>
+  <a href="#s5">5. チケット一覧・詳細</a>
+  <a href="#s6">6. 分析（ODC）</a>
+  <a href="#s7">7. Copilot（チャット）</a>
+  <a href="#s8">8. レポート</a>
+  <a href="#s9">9. ナレッジ（RAG）</a>
+  <a href="#s10">10. TPI評価</a>
+  <a href="#s11">11. リスク・改善</a>
+  <a href="#s12">12. テスト計画・進捗・ゲート</a>
+  <a href="#s13">13. メンバー</a>
+  <a href="#s14">14. 自律運転（Autopilot）</a>
+  <a href="#s15">15. 設定（LLM・接続）</a>
+  <a href="#s16">16. 管理（Adminpanel）</a>
+  <a href="#src">調査出典</a>
+</div></div>
+
+<!-- ===================== 総括 ===================== -->
+<h2 class="sec" id="s0"><span class="n">★</span>総括: 優先度つきギャップ一覧</h2>
+<p class="lead">当たり前品質の欠落を、ユーザーが実使用で踏み抜く痛みの大きさ順に並べたもの。</p>
+<ol class="rank">
+  <li><b>チケットを開けない／作れない／編集できない</b>
+    <div class="why">一覧はあるが、行クリックは外部JIRA/Redmineへ飛ぶだけ。アプリ内に詳細・新規作成・編集・ステータス変更・コメントが一切ない。課題管理ツールの中核が空。既に本人が「致命的」と指摘済み。</div></li>
+  <li><b>計画（ガント）が閲覧専用</b>
+    <div class="why">タスクの追加・編集・削除・並べ替え・依存関係の設定・ドラッグでの日程変更ができない。計画ツールとして「編集できない計画表」は当たり前を満たさない。</div></li>
+  <li class="p2"><b>チケット一覧の絞り込みが貧弱</b>
+    <div class="why">検索が件名部分一致のみ。担当者・優先度・ステータス・期間での絞り込み、列ソート、一括操作、保存ビューがない。エンタープライズのデータテーブル標準に未達。</div></li>
+  <li class="p2"><b>ナレッジに詳細閲覧がない</b>
+    <div class="why">アップロード・削除・再インデックスはあるが、文書を開いて中身・チャンク・引用元を確認する画面がない。</div></li>
+  <li class="p3"><b>各登録フォームの標準項目の充足確認</b>
+    <div class="why">リスク・テストケース等が、PMBOK/TestRail等の標準項目（リスク: 発生確率×影響×スコア×対応戦略×オーナー×トリガー）を満たすか要現物確認。</div></li>
+  <li class="p3"><b>ダッシュボードのRAGステータス／ドリルダウン</b>
+    <div class="why">PMOダッシュボードの当たり前（RAG信号・変動要因への深掘りリンク・是正記録導線）の充足を要確認。</div></li>
+</ol>
+
+<!-- ===================== 1 認証 ===================== -->
+<h2 class="sec" id="s1"><span class="n">1</span>認証・アカウント</h2>
+<div class="card">
+  <div class="screen-head"><h3>ログイン / ログアウト / プロフィール / パスワード変更</h3>
+    <span class="route">accounts:login, logout, profile, password_change</span></div>
+  <div class="tbl-scroll"><table>
+    <tr><th>あるべき当たり前</th><th>根拠（一般的なWeb業務システム）</th><th>現状</th></tr>
+    <tr><td>ログイン／ログアウト導線</td><td>認証系の基本1セット</td><td class="st ok">○</td></tr>
+    <tr><td>プロフィール編集</td><td>アカウント自己管理の基本</td><td class="st ok">○</td></tr>
+    <tr><td>パスワード変更</td><td>同上</td><td class="st ok">○</td></tr>
+    <tr><td>テーマ切替（ライト/ダーク）</td><td>近年の標準</td><td class="st ok">○</td></tr>
+    <tr><td>パスワードリセット（メール）</td><td>忘れた場合の自己復旧</td><td class="st warn">△ 要確認</td></tr>
+  </table></div>
+  <div class="verdict ok"><b>評価:</b> 認証系の当たり前は概ね充足。パスワードリセット（自己復旧）導線の有無のみ確認。</div>
+</div>
+
+<!-- ===================== 2 案件選択 ===================== -->
+<h2 class="sec" id="s2"><span class="n">2</span>案件選択・作成</h2>
+<div class="card">
+  <div class="screen-head"><h3>案件（Engagement）選択・新規作成・切替</h3>
+    <span class="route">engagements:select, create, enter</span></div>
+  <div class="tbl-scroll"><table>
+    <tr><th>あるべき当たり前</th><th>根拠</th><th>現状</th></tr>
+    <tr><td>案件一覧・選択</td><td>マルチプロジェクト前提の入口</td><td class="st ok">○</td></tr>
+    <tr><td>案件の新規作成</td><td>同上</td><td class="st ok">○</td></tr>
+    <tr><td>案件の切替（コンテキスト保持）</td><td>同上</td><td class="st ok">○</td></tr>
+    <tr><td>案件のアーカイブ／編集</td><td>ライフサイクル管理</td><td class="st warn">△ 管理画面側で確認</td></tr>
+  </table></div>
+  <div class="verdict ok"><b>評価:</b> 入口の当たり前は充足。編集・終了は管理（16章）で担保されているか確認。</div>
+</div>
+
+<!-- ===================== 3 ホーム ===================== -->
+<h2 class="sec" id="s3"><span class="n">3</span>ホーム（ダッシュボード）</h2>
+<div class="card">
+  <div class="screen-head"><h3>プロジェクト健全性ダッシュボード</h3>
+    <span class="route">dashboard:home</span></div>
+  <div class="tbl-scroll"><table>
+    <tr><th>あるべき当たり前</th><th>根拠（PMOダッシュボード標準）</th><th>現状</th></tr>
+    <tr><td>スケジュール／コスト／品質のサマリKPI</td><td>PMOダッシュボードの中核指標</td><td class="st warn">△ 要現物確認</td></tr>
+    <tr><td>RAG（赤/黄/緑）ステータス表示</td><td>ポートフォリオ健全性の標準表現</td><td class="st warn">△</td></tr>
+    <tr><td>サマリタイルからのドリルダウン</td><td>変動要因の根本原因へ深掘りする導線</td><td class="st warn">△</td></tr>
+    <tr><td>5〜7個に絞った「介入を促す」指標</td><td>指標過多を避ける設計原則</td><td class="st warn">△</td></tr>
+  </table></div>
+  <div class="verdict warn"><b>評価:</b> ダッシュボードは存在。PMO標準の「RAG信号＋ドリルダウン＋是正導線」の深さは通し点検で確認が必要。</div>
+</div>
+
+<!-- ===================== 4 計画 ===================== -->
+<h2 class="sec" id="s4"><span class="n">4</span>計画（WBS・ガント）</h2>
+<div class="card">
+  <div class="screen-head"><h3>WBS・ガントチャート</h3>
+    <span class="route">planning:gantt（表示ビューのみ）</span></div>
+  <div class="tbl-scroll"><table>
+    <tr><th>あるべき当たり前</th><th>根拠（MS Project / Smartsheet / GanttPRO 等）</th><th>現状</th></tr>
+    <tr><td>タスクの追加・編集・削除</td><td>計画ツールの最低限のCRUD</td><td class="st bad">✗</td></tr>
+    <tr><td>WBS階層（親子・番号）</td><td>WBSとガントの標準連携</td><td class="st warn">△ 表示のみ確認</td></tr>
+    <tr><td>依存関係（FS/SS/FF/SF）の設定</td><td>ガントの必須機能</td><td class="st bad">✗</td></tr>
+    <tr><td>ドラッグでの日程変更・自動再計算</td><td>スケジュール調整の基本操作</td><td class="st bad">✗</td></tr>
+    <tr><td>クリティカルパス表示</td><td>遅延に直結する経路の識別</td><td class="st bad">✗</td></tr>
+    <tr><td>ベースライン対比（計画 vs 実績）</td><td>スリップ検知の標準</td><td class="st warn">△ フィールド追加中</td></tr>
+  </table></div>
+  <div class="verdict bad"><b>評価:</b> ガントが<b>閲覧専用</b>。タスク編集・依存・日程変更ができず、計画ツールの当たり前を満たさない。ベースライン系は作り込み進行中の痕跡あり。</div>
+</div>
+
+<!-- ===================== 5 チケット ===================== -->
+<h2 class="sec" id="s5"><span class="n">5</span>チケット一覧・詳細</h2>
+<div class="card">
+  <div class="screen-head"><h3>課題（チケット）管理</h3>
+    <span class="route">tickets:list, export_csv, source_settings（詳細/作成/編集なし）</span></div>
+  <div class="tbl-scroll"><table>
+    <tr><th>あるべき当たり前</th><th>根拠（JIRA / Redmine / Backlog + データテーブルUX）</th><th>現状</th></tr>
+    <tr><td>チケット詳細画面（アプリ内で開ける）</td><td>課題トラッカーの中核</td><td class="st bad">✗ 外部URLへ遷移のみ</td></tr>
+    <tr><td>チケットの新規作成</td><td>同上（本人が「致命的」と指摘済み）</td><td class="st bad">✗</td></tr>
+    <tr><td>編集・ステータス変更・担当割当</td><td>ワークフロー運用の基本</td><td class="st bad">✗</td></tr>
+    <tr><td>コメント・添付</td><td>JIRA/Redmine双方の標準</td><td class="st bad">✗</td></tr>
+    <tr><td>一覧の絞り込み（担当/優先度/状態/期間）</td><td>エンタープライズ表の標準</td><td class="st warn">△ タブ＋件名検索のみ</td></tr>
+    <tr><td>列ソート</td><td>スプレッドシート慣習</td><td class="st bad">✗</td></tr>
+    <tr><td>一括操作・保存ビュー</td><td>スーパーユーザー向け標準</td><td class="st bad">✗</td></tr>
+    <tr><td>ページネーション</td><td>大量データの基本（25件既定が最適）</td><td class="st warn">△ あり（既定10件）</td></tr>
+    <tr><td>CSVエクスポート</td><td>データ持ち出しの基本</td><td class="st ok">○</td></tr>
+  </table></div>
+  <div class="verdict bad"><b>評価:</b> 課題管理ツールの中核（開く・作る・編集・状態変更・コメント）が<b>全欠落</b>。最優先。一覧の絞り込みも件名一致のみで標準に未達。</div>
+</div>
+
+<!-- ===================== 6 分析 ===================== -->
+<h2 class="sec" id="s6"><span class="n">6</span>分析（ODC）</h2>
+<div class="card">
+  <div class="screen-head"><h3>ODC（Orthogonal Defect Classification）分析</h3>
+    <span class="route">analytics:analysis, classify, suggest_bulk, export_odc_csv, settings</span></div>
+  <div class="tbl-scroll"><table>
+    <tr><th>あるべき当たり前</th><th>根拠（品質メトリクス分析）</th><th>現状</th></tr>
+    <tr><td>欠陥の分類（個別・一括）</td><td>ODC/根本原因分析の基本</td><td class="st ok">○</td></tr>
+    <tr><td>集計の可視化（偏りの発見）</td><td>特定機能/チームへの集中検知</td><td class="st warn">△ 深さ要確認</td></tr>
+    <tr><td>分類結果のエクスポート</td><td>外部レポート連携</td><td class="st ok">○</td></tr>
+    <tr><td>分類軸・閾値の設定</td><td>案件ごとの調整</td><td class="st ok">○</td></tr>
+  </table></div>
+  <div class="verdict ok"><b>評価:</b> ODCの当たり前は概ね充足。可視化の実用性（偏りが一目でわかるか）は通し点検で確認。</div>
+</div>
+
+<!-- ===================== 7 Copilot ===================== -->
+<h2 class="sec" id="s7"><span class="n">7</span>Copilot（チャット）</h2>
+<div class="card">
+  <div class="screen-head"><h3>AIチャット・アシスタント</h3>
+    <span class="route">copilot:home, new_thread, thread, send</span></div>
+  <div class="tbl-scroll"><table>
+    <tr><th>あるべき当たり前</th><th>根拠（チャットUIの標準）</th><th>現状</th></tr>
+    <tr><td>スレッド作成・履歴保持</td><td>会話の継続性</td><td class="st ok">○</td></tr>
+    <tr><td>メッセージ送信・応答</td><td>基本動作</td><td class="st ok">○</td></tr>
+    <tr><td>回答の根拠・引用提示（RAG連携）</td><td>信頼性の担保</td><td class="st warn">△ 要確認</td></tr>
+    <tr><td>送信中/エラー状態の表示</td><td>LLM呼び出しの当たり前</td><td class="st warn">△</td></tr>
+  </table></div>
+  <div class="verdict ok"><b>評価:</b> チャットの骨格は充足。引用提示・失敗時の状態表示（LLM設定と直結する当たり前）を確認。</div>
+</div>
+
+<!-- ===================== 8 レポート ===================== -->
+<h2 class="sec" id="s8"><span class="n">8</span>レポート</h2>
+<div class="card">
+  <div class="screen-head"><h3>週次・月次レポート</h3>
+    <span class="route">reports:list, create, edit, print</span></div>
+  <div class="tbl-scroll"><table>
+    <tr><th>あるべき当たり前</th><th>根拠</th><th>現状</th></tr>
+    <tr><td>一覧・作成・編集</td><td>ドキュメントCRUDの基本</td><td class="st ok">○</td></tr>
+    <tr><td>印刷／PDF出力</td><td>配布の基本</td><td class="st ok">○</td></tr>
+    <tr><td>テンプレート／自動生成</td><td>作業省力化</td><td class="st warn">△ 要確認</td></tr>
+  </table></div>
+  <div class="verdict ok"><b>評価:</b> レポートCRUD＋印刷は充足。自動生成の実用度は確認。</div>
+</div>
+
+<!-- ===================== 9 ナレッジ ===================== -->
+<h2 class="sec" id="s9"><span class="n">9</span>ナレッジ（RAG）</h2>
+<div class="card">
+  <div class="screen-head"><h3>ナレッジ管理・RAG</h3>
+    <span class="route">knowledge:list, upload, delete, reindex（詳細閲覧なし）</span></div>
+  <div class="tbl-scroll"><table>
+    <tr><th>あるべき当たり前</th><th>根拠（ナレッジベース／RAG）</th><th>現状</th></tr>
+    <tr><td>文書のアップロード・削除</td><td>基本CRUD</td><td class="st ok">○</td></tr>
+    <tr><td>再インデックス</td><td>RAG運用の基本</td><td class="st ok">○</td></tr>
+    <tr><td>文書詳細の閲覧（本文・チャンク・状態）</td><td>登録物を開いて確認する当たり前</td><td class="st bad">✗</td></tr>
+    <tr><td>全文／意味検索</td><td>ナレッジベースの中核</td><td class="st warn">△ 一覧絞り込みのみ</td></tr>
+    <tr><td>インデックス状態・失敗表示</td><td>取り込み品質の可視化</td><td class="st warn">△</td></tr>
+  </table></div>
+  <div class="verdict warn"><b>評価:</b> 取り込み系はあるが<b>文書を開く画面がない</b>。検索も一覧フィルタ止まりで、ナレッジベースの当たり前（開く・探す）に不足。</div>
+</div>
+
+<!-- ===================== 10 TPI ===================== -->
+<h2 class="sec" id="s10"><span class="n">10</span>TPI評価</h2>
+<div class="card">
+  <div class="screen-head"><h3>TPI NEXT 成熟度評価</h3>
+    <span class="route">tpi:list, detail, answer, finalize, suggest</span></div>
+  <div class="tbl-scroll"><table>
+    <tr><th>あるべき当たり前</th><th>根拠（成熟度アセスメント）</th><th>現状</th></tr>
+    <tr><td>評価の一覧・詳細</td><td>アセスメント管理</td><td class="st ok">○</td></tr>
+    <tr><td>キーエリアごとの回答</td><td>TPI NEXTの構造</td><td class="st ok">○</td></tr>
+    <tr><td>確定（finalize）・改善提案</td><td>評価→改善の接続</td><td class="st ok">○</td></tr>
+    <tr><td>スコアの推移・可視化</td><td>成熟度の経年比較</td><td class="st warn">△ 要確認</td></tr>
+  </table></div>
+  <div class="verdict ok"><b>評価:</b> TPIの当たり前は充足。可視化（推移）の有無のみ確認。</div>
+</div>
+
+<!-- ===================== 11 リスク ===================== -->
+<h2 class="sec" id="s11"><span class="n">11</span>リスク・改善</h2>
+<div class="card">
+  <div class="screen-head"><h3>リスク登録簿・改善アクション</h3>
+    <span class="route">risks:list, create, edit, change_status, suggest, adopt_proposal, actions…</span></div>
+  <div class="tbl-scroll"><table>
+    <tr><th>あるべき当たり前</th><th>根拠（PMBOK リスク登録簿）</th><th>現状</th></tr>
+    <tr><td>リスクの登録・編集・状態変更</td><td>登録簿の基本CRUD</td><td class="st ok">○</td></tr>
+    <tr><td>改善アクションの管理</td><td>対応の実行管理</td><td class="st ok">○</td></tr>
+    <tr><td>標準項目: 発生確率／影響／スコア（=確率×影響）</td><td>PMBOK標準フィールド</td><td class="st warn">△ 項目充足を要確認</td></tr>
+    <tr><td>対応戦略（回避/転嫁/軽減/受容）</td><td>PMBOK標準</td><td class="st warn">△</td></tr>
+    <tr><td>単一のリスクオーナー</td><td>「一人の説明責任者」が機能する登録簿の要</td><td class="st warn">△</td></tr>
+    <tr><td>トリガー／予兆</td><td>顕在化前の早期警告</td><td class="st warn">△</td></tr>
+  </table></div>
+  <div class="verdict warn"><b>評価:</b> CRUDと改善連携は良好。PMBOK標準項目（確率×影響×スコア×対応戦略×オーナー×トリガー）を満たすかフォーム現物で確認。</div>
+</div>
+
+<!-- ===================== 12 テスト ===================== -->
+<h2 class="sec" id="s12"><span class="n">12</span>テスト計画・進捗・ゲート</h2>
+<div class="card">
+  <div class="screen-head"><h3>テスト管理</h3>
+    <span class="route">testmgmt:plans, progress, gates（+CSV import/export）</span></div>
+  <div class="tbl-scroll"><table>
+    <tr><th>あるべき当たり前</th><th>根拠（TestRail 等 テスト管理）</th><th>現状</th></tr>
+    <tr><td>テスト計画の作成・編集</td><td>テスト管理の基本</td><td class="st ok">○</td></tr>
+    <tr><td>進捗の記録（合格/失敗/ブロック）</td><td>結果ログの標準</td><td class="st ok">○ 要粒度確認</td></tr>
+    <tr><td>品質ゲート（判定）</td><td>マイルストーン判定</td><td class="st ok">○</td></tr>
+    <tr><td>CSV 取込／出力</td><td>既存資産の連携</td><td class="st ok">○</td></tr>
+    <tr><td>テストケース⇄欠陥の紐付け（トレーサビリティ）</td><td>TestRailの中核（要件-ケース-欠陥）</td><td class="st warn">△ 要確認</td></tr>
+    <tr><td>カバレッジ／進捗の可視化</td><td>ダッシュボード・ウィジェット</td><td class="st warn">△</td></tr>
+  </table></div>
+  <div class="verdict ok"><b>評価:</b> 計画・進捗・ゲート・CSVは充足。欠陥トレーサビリティとカバレッジ可視化の有無を確認。</div>
+</div>
+
+<!-- ===================== 13 メンバー ===================== -->
+<h2 class="sec" id="s13"><span class="n">13</span>メンバー</h2>
+<div class="card">
+  <div class="screen-head"><h3>メンバー・別名管理</h3>
+    <span class="route">members:list, alias_create, alias_delete</span></div>
+  <div class="tbl-scroll"><table>
+    <tr><th>あるべき当たり前</th><th>根拠</th><th>現状</th></tr>
+    <tr><td>メンバー一覧</td><td>体制の可視化</td><td class="st ok">○</td></tr>
+    <tr><td>別名（外部ツール表記ゆれ）の統合</td><td>JIRA/Redmine連携時の名寄せ</td><td class="st ok">○</td></tr>
+    <tr><td>招待・ロール割当</td><td>体制管理（※管理画面側の可能性）</td><td class="st warn">△ 16章で確認</td></tr>
+  </table></div>
+  <div class="verdict ok"><b>評価:</b> 名寄せは良い作り込み。招待・ロールは管理画面との役割分担を確認。</div>
+</div>
+
+<!-- ===================== 14 Autopilot ===================== -->
+<h2 class="sec" id="s14"><span class="n">14</span>自律運転（Autopilot）</h2>
+<div class="card">
+  <div class="screen-head"><h3>自律エージェント運転</h3>
+    <span class="route">autopilot:queue, approve, reject, history, settings, run_now</span></div>
+  <div class="tbl-scroll"><table>
+    <tr><th>あるべき当たり前</th><th>根拠（Human-in-the-loop 自動化）</th><th>現状</th></tr>
+    <tr><td>提案キューの承認／却下</td><td>人間の統制点</td><td class="st ok">○</td></tr>
+    <tr><td>実行履歴</td><td>監査・追跡</td><td class="st ok">○</td></tr>
+    <tr><td>動作設定（閾値等）</td><td>案件ごとの制御</td><td class="st ok">○</td></tr>
+    <tr><td>即時実行</td><td>手動トリガ</td><td class="st ok">○</td></tr>
+  </table></div>
+  <div class="verdict ok"><b>評価:</b> Human-in-the-loopの当たり前は充足。</div>
+</div>
+
+<!-- ===================== 15 設定 ===================== -->
+<h2 class="sec" id="s15"><span class="n">15</span>設定（LLM・接続）</h2>
+<div class="card">
+  <div class="screen-head"><h3>LLM設定・チケット接続・分析設定</h3>
+    <span class="route">engagements:llm_settings, tickets:source_settings, analytics:update_settings</span></div>
+  <div class="tbl-scroll"><table>
+    <tr><th>あるべき当たり前</th><th>根拠</th><th>現状</th></tr>
+    <tr><td>プロバイダ・モデルの選択（プロバイダに連動した候補）</td><td>設定画面の当たり前</td><td class="st ok">○ 修正済</td></tr>
+    <tr><td>APIキー／Org／Project の入力・暗号化保存</td><td>クラウドLLM利用の前提</td><td class="st ok">○ 修正済</td></tr>
+    <tr><td>疎通確認（結果の明示表示）</td><td>設定が効くかの確証</td><td class="st ok">○ 中央ポップアップ</td></tr>
+    <tr><td>外部ツール接続情報（暗号化）・同期</td><td>連携の前提</td><td class="st ok">○</td></tr>
+    <tr><td>設定値の妥当性エラーの分かりやすさ</td><td>失敗時の当たり前</td><td class="st warn">△ 継続改善</td></tr>
+  </table></div>
+  <div class="verdict ok"><b>評価:</b> 本セッションで当たり前品質を回復済み。文言・エラー表現の磨き込みは継続。</div>
+</div>
+
+<!-- ===================== 16 管理 ===================== -->
+<h2 class="sec" id="s16"><span class="n">16</span>管理（Adminpanel）</h2>
+<div class="card">
+  <div class="screen-head"><h3>管理者機能</h3>
+    <span class="route">adminpanel: users, engagements, tokens, notification_channels, llm_logs, audit, benchmark</span></div>
+  <div class="tbl-scroll"><table>
+    <tr><th>あるべき当たり前</th><th>根拠（管理コンソール）</th><th>現状</th></tr>
+    <tr><td>ユーザー管理</td><td>権限運用の基本</td><td class="st ok">○</td></tr>
+    <tr><td>案件管理（編集）</td><td>ライフサイクル管理</td><td class="st ok">○</td></tr>
+    <tr><td>トークン・通知チャンネル管理</td><td>連携運用</td><td class="st ok">○</td></tr>
+    <tr><td>LLMログ・監査ログ</td><td>説明責任・追跡</td><td class="st ok">○</td></tr>
+    <tr><td>ベンチマーク</td><td>モデル比較</td><td class="st ok">○</td></tr>
+  </table></div>
+  <div class="verdict ok"><b>評価:</b> 管理系は当たり前を広くカバー。個別画面の操作性は通し点検で確認。</div>
+</div>
+
+<!-- ===================== 出典 ===================== -->
+<h2 class="sec" id="src"><span class="n">出典</span>調査したソース</h2>
+<div class="card">
+  <ul class="sources">
+    <li>課題トラッカー標準機能（コメント/添付/担当/状態/ワークフロー）:
+      <a href="https://www.redmineflux.com/redmine-vs-jira-2026-comparison/">Redmine vs Jira 2026</a>、
+      <a href="https://www.redmineup.com/pages/help/redmine/issues-list">Redmine Issues list</a></li>
+    <li>テスト管理標準機能（ケース/実行/結果/欠陥トレーサビリティ）:
+      <a href="https://www.testrail.com/">TestRail</a>、
+      <a href="https://testrigor.com/blog/test-management-tools/">Top Test Management Tools 2026</a>、
+      <a href="https://support.testrail.com/hc/en-us/articles/7747333895700-Introduction-to-reference-and-defect-integrations">TestRail defect integrations</a></li>
+    <li>ガント/WBS必須機能（依存/クリティカルパス/ベースライン/自動再計算）:
+      <a href="https://www.projectmanager.com/blog/wbs-and-gantt-chart">WBS &amp; Gantt (ProjectManager)</a>、
+      <a href="https://www.projectmanager.com/blog/critical-path-on-gantt">Critical Path on Gantt</a>、
+      <a href="https://www.smartsheet.com/content/wbs-gantt">Gantt &amp; WBS (Smartsheet)</a></li>
+    <li>リスク登録簿の標準項目（PMBOK: 確率/影響/スコア/対応戦略/オーナー/トリガー）:
+      <a href="https://en.wikipedia.org/wiki/Risk_register">Risk register (Wikipedia)</a>、
+      <a href="https://riskpublishing.com/key-elements-of-a-risk-register/">Key Elements of a Risk Register</a></li>
+    <li>データテーブルUX（絞り込み/ソート/一括操作/保存ビュー/ページネーション既定25件）:
+      <a href="https://www.pencilandpaper.io/articles/ux-pattern-analysis-enterprise-data-tables">Enterprise Data Tables (Pencil &amp; Paper)</a>、
+      <a href="https://uxplanet.org/best-practices-for-usable-and-efficient-data-table-in-applications-4a1d1fb29550">Data Table Best Practices (UX Planet)</a></li>
+    <li>PMOダッシュボード標準（RAGステータス/ドリルダウン/介入を促す5〜7指標）:
+      <a href="https://triskellsoftware.com/blog/pmo-dashboards/">PMO Dashboards (Triskell)</a>、
+      <a href="https://www.celoxis.com/article/project-management-bi-dashboards">Top 10 PM BI KPIs (Celoxis)</a></li>
+  </ul>
+</div>
+
+</div>
+</body>
+</html>
