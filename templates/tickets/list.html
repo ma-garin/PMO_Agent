@@ -23,7 +23,7 @@
           </p>
         </div>
         <div style="display:flex; gap:10px;">
-          <a href="{% url 'tickets:export_csv' %}?tab={{ tab }}&q={{ query }}" class="btn btn-secondary">CSVエクスポート</a>
+          <a href="{% url 'tickets:export_csv' %}?{{ sort_query }}" class="btn btn-secondary">CSVエクスポート</a>
           <a href="{% url 'tickets:source_settings' %}" class="btn btn-secondary">接続設定</a>
         </div>
       </div>
@@ -37,23 +37,38 @@
 
       <form method="get" class="filter-bar">
         <input type="hidden" name="tab" value="{{ tab }}">
+        {% if sort %}<input type="hidden" name="sort" value="{{ sort }}"><input type="hidden" name="dir" value="{{ direction }}">{% endif %}
         <div class="search-input">
           <span>&#128269;</span>
           <input type="text" name="q" value="{{ query }}" placeholder="チケット名で絞り込む">
         </div>
-        <button type="submit" class="btn btn-secondary">検索</button>
+        <select name="assignee" class="filter-select">
+          <option value="">担当: すべて</option>
+          {% for a in assignee_options %}<option value="{{ a }}"{% if a == assignee %} selected{% endif %}>{{ a }}</option>{% endfor %}
+        </select>
+        <select name="priority" class="filter-select">
+          <option value="">優先度: すべて</option>
+          {% for p in priority_options %}<option value="{{ p }}"{% if p == priority %} selected{% endif %}>{{ p }}</option>{% endfor %}
+        </select>
+        <input type="date" name="due_from" value="{{ due_from }}" class="filter-date" title="期限(開始)">
+        <span style="color:var(--ink-2);">〜</span>
+        <input type="date" name="due_to" value="{{ due_to }}" class="filter-date" title="期限(終了)">
+        <button type="submit" class="btn btn-secondary">絞り込む</button>
+        {% if query or assignee or priority or due_from or due_to %}
+          <a href="?tab={{ tab }}" class="btn btn-secondary">クリア</a>
+        {% endif %}
       </form>
 
       <div class="card panel">
         <table class="ticket-table">
           <thead>
             <tr>
-              <th>チケット</th>
+              <th><a class="sort-link{% if sort == 'summary' %} active{% endif %}" href="?{% if sort_query %}{{ sort_query }}&{% endif %}sort=summary&dir={% if sort == 'summary' and direction == 'asc' %}desc{% else %}asc{% endif %}">チケット{% if sort == 'summary' %}{% if direction == 'asc' %} ▲{% else %} ▼{% endif %}{% endif %}</a></th>
               <th>接続元</th>
-              <th>優先度</th>
-              <th>担当</th>
-              <th>期限</th>
-              <th>状態</th>
+              <th><a class="sort-link{% if sort == 'priority' %} active{% endif %}" href="?{% if sort_query %}{{ sort_query }}&{% endif %}sort=priority&dir={% if sort == 'priority' and direction == 'asc' %}desc{% else %}asc{% endif %}">優先度{% if sort == 'priority' %}{% if direction == 'asc' %} ▲{% else %} ▼{% endif %}{% endif %}</a></th>
+              <th><a class="sort-link{% if sort == 'assignee' %} active{% endif %}" href="?{% if sort_query %}{{ sort_query }}&{% endif %}sort=assignee&dir={% if sort == 'assignee' and direction == 'asc' %}desc{% else %}asc{% endif %}">担当{% if sort == 'assignee' %}{% if direction == 'asc' %} ▲{% else %} ▼{% endif %}{% endif %}</a></th>
+              <th><a class="sort-link{% if sort == 'due' %} active{% endif %}" href="?{% if sort_query %}{{ sort_query }}&{% endif %}sort=due&dir={% if sort == 'due' and direction == 'asc' %}desc{% else %}asc{% endif %}">期限{% if sort == 'due' %}{% if direction == 'asc' %} ▲{% else %} ▼{% endif %}{% endif %}</a></th>
+              <th><a class="sort-link{% if sort == 'status' %} active{% endif %}" href="?{% if sort_query %}{{ sort_query }}&{% endif %}sort=status&dir={% if sort == 'status' and direction == 'asc' %}desc{% else %}asc{% endif %}">状態{% if sort == 'status' %}{% if direction == 'asc' %} ▲{% else %} ▼{% endif %}{% endif %}</a></th>
             </tr>
           </thead>
           <tbody>
@@ -89,17 +104,17 @@
           <span>{{ page_obj.start_index }}-{{ page_obj.end_index }} / {{ page_obj.paginator.count }}件</span>
           <div class="page-links">
             {% if page_obj.has_previous %}
-              <a href="?tab={{ tab }}&q={{ query }}&page={{ page_obj.previous_page_number }}">&#8249;</a>
+              <a href="?{% if page_query %}{{ page_query }}&{% endif %}page={{ page_obj.previous_page_number }}">&#8249;</a>
             {% endif %}
             {% for num in page_obj.paginator.page_range %}
               {% if num == page_obj.number %}
                 <span class="current">{{ num }}</span>
               {% else %}
-                <a href="?tab={{ tab }}&q={{ query }}&page={{ num }}">{{ num }}</a>
+                <a href="?{% if page_query %}{{ page_query }}&{% endif %}page={{ num }}">{{ num }}</a>
               {% endif %}
             {% endfor %}
             {% if page_obj.has_next %}
-              <a href="?tab={{ tab }}&q={{ query }}&page={{ page_obj.next_page_number }}">&#8250;</a>
+              <a href="?{% if page_query %}{{ page_query }}&{% endif %}page={{ page_obj.next_page_number }}">&#8250;</a>
             {% endif %}
           </div>
         </div>

@@ -1,8 +1,11 @@
+from urllib.parse import urlencode
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.utils.dateparse import parse_date
 from django.utils.http import url_has_allowed_host_and_scheme
 
 from audit.services import record
@@ -14,6 +17,15 @@ from .models import Notification, Ticket
 from .services import detect_stagnant_tickets, sync_ticket_source
 
 
+SORT_FIELDS = {
+    "summary": "summary",
+    "priority": "priority",
+    "assignee": "assignee_name",
+    "due": "due_date",
+    "status": "status",
+}
+
+
 def _current_engagement(request):
     engagement_id = request.session.get("current_engagement_id")
     if not engagement_id:
@@ -21,17 +33,9 @@ def _current_engagement(request):
     return get_object_or_404(Engagement, pk=engagement_id)
 
 
-@login_required
-def ticket_list(request):
-    engagement = _current_engagement(request)
-    if engagement is None:
-        return redirect("engagements:select")
-
-    today = timezone.localdate()
-    all_tickets = Ticket.objects.filter(source__engagement=engagement)
-
+def _apply_ticket_filters(request, tickets, today):
+    """一覧・CSV共通の絞り込み(タブ/検索/担当/優先度/期限)を適用する。ソートは含まない。"""
     tab = request.GET.get("tab", "all")
-    tickets = all_tickets
     if tab == "in_progress":
         tickets = tickets.exclude(is_done=True)
     elif tab == "done":
@@ -45,7 +49,50 @@ def ticket_list(request):
     if query:
         tickets = tickets.filter(summary__icontains=query)
 
-    tickets = tickets.select_related("source")
+    assignee = request.GET.get("assignee", "").strip()
+    if assignee:
+        tickets = tickets.filter(assignee_name=assignee)
+
+    priority = request.GET.get("priority", "").strip()
+    if priority:
+        tickets = tickets.filter(priority=priority)
+
+    due_from_raw = request.GET.get("due_from", "").strip()
+    due_from = parse_date(due_from_raw) if due_from_raw else None
+    if due_from:
+        tickets = tickets.filter(due_date__gte=due_from)
+
+    due_to_raw = request.GET.get("due_to", "").strip()
+    due_to = parse_date(due_to_raw) if due_to_raw else None
+    if due_to:
+        tickets = tickets.filter(due_date__lte=due_to)
+
+    return tickets
+
+
+@login_required
+def ticket_list(request):
+    engagement = _current_engagement(request)
+    if engagement is None:
+        return redirect("engagements:select")
+
+    today = timezone.localdate()
+    all_tickets = Ticket.objects.filter(source__engagement=engagement)
+
+    tickets = _apply_ticket_filters(request, all_tickets, today).select_related("source")
+
+    tab = request.GET.get("tab", "all")
+    query = request.GET.get("q", "").strip()
+    assignee = request.GET.get("assignee", "").strip()
+    priority = request.GET.get("priority", "").strip()
+    due_from_raw = request.GET.get("due_from", "").strip()
+    due_to_raw = request.GET.get("due_to", "").strip()
+
+    sort = request.GET.get("sort", "")
+    direction = "desc" if request.GET.get("dir") == "desc" else "asc"
+    if sort in SORT_FIELDS:
+        order = SORT_FIELDS[sort]
+        tickets = tickets.order_by(("-" if direction == "desc" else "") + order)
 
     counts = {
         "all": all_tickets.count(),
@@ -54,10 +101,31 @@ def ticket_list(request):
         "overdue": all_tickets.filter(is_done=False, due_date__lt=today).count(),
     }
 
+    assignee_options = list(
+        all_tickets.exclude(assignee_name="").order_by("assignee_name")
+        .values_list("assignee_name", flat=True).distinct()
+    )
+    priority_options = list(
+        all_tickets.exclude(priority="").order_by("priority")
+        .values_list("priority", flat=True).distinct()
+    )
+
     page_size = request.GET.get("page_size", "10")
     page_size = int(page_size) if page_size.isdigit() else 10
     paginator = Paginator(tickets, page_size)
     page_obj = paginator.get_page(request.GET.get("page"))
+
+    # ページ送り・ソートリンク用のクエリ文字列(pageを除く)
+    filter_params = {
+        k: v
+        for k, v in {
+            "tab": tab, "q": query, "assignee": assignee, "priority": priority,
+            "due_from": due_from_raw, "due_to": due_to_raw, "page_size": str(page_size),
+        }.items()
+        if v
+    }
+    sort_query = urlencode(filter_params)
+    page_query = urlencode({**filter_params, **({"sort": sort, "dir": direction} if sort in SORT_FIELDS else {})})
 
     context = {
         "engagement": engagement,
@@ -69,6 +137,16 @@ def ticket_list(request):
         "total_tickets": counts["all"],
         "page_size": page_size,
         "today": today,
+        "assignee": assignee,
+        "priority": priority,
+        "due_from": due_from_raw,
+        "due_to": due_to_raw,
+        "assignee_options": assignee_options,
+        "priority_options": priority_options,
+        "sort": sort if sort in SORT_FIELDS else "",
+        "direction": direction,
+        "sort_query": sort_query,
+        "page_query": page_query,
     }
     return render(request, "tickets/list.html", context)
 
@@ -80,19 +158,8 @@ def ticket_export_csv(request):
         return redirect("engagements:select")
 
     today = timezone.localdate()
-    tickets = Ticket.objects.filter(source__engagement=engagement).select_related("source")
-
-    tab = request.GET.get("tab", "all")
-    if tab == "in_progress":
-        tickets = tickets.exclude(is_done=True)
-    elif tab == "done":
-        tickets = tickets.filter(is_done=True)
-    elif tab == "overdue":
-        tickets = tickets.filter(is_done=False, due_date__lt=today)
-
-    query = request.GET.get("q", "").strip()
-    if query:
-        tickets = tickets.filter(summary__icontains=query)
+    base = Ticket.objects.filter(source__engagement=engagement).select_related("source")
+    tickets = _apply_ticket_filters(request, base, today)
 
     header = ["チケットID", "概要", "接続元", "優先度", "担当", "期限", "状態", "完了"]
     rows = (
