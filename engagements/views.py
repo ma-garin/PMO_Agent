@@ -140,7 +140,14 @@ def llm_settings(request):
     if engagement is None:
         return redirect("engagements:select")
 
+    # F-12(CWE-200): LLMプロバイダの変更は機密データのクラウド送信可否を左右するため、
+    # 変更操作は管理者に限定する。閲覧は案件メンバーに許可する(表示のみ)。
+    can_edit = request.user.is_staff
+
     if request.method == "POST":
+        if not can_edit:
+            messages.error(request, "LLMプロバイダの変更には管理者権限が必要です。")
+            return redirect("engagements:llm_settings")
         form = EngagementLlmSettingsForm(request.POST, instance=engagement)
         if form.is_valid():
             form.save()
@@ -152,5 +159,10 @@ def llm_settings(request):
     return render(
         request,
         "engagements/llm_settings.html",
-        {"form": form, "engagement": engagement, "nav_active": "settings"},
+        {
+            "form": form,
+            "engagement": engagement,
+            "nav_active": "settings",
+            "can_edit": can_edit,
+        },
     )

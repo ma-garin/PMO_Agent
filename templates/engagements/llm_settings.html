@@ -30,8 +30,10 @@
         <div class="panel-head"><h2>{{ engagement.name }} のLLMプロバイダ</h2></div>
         <p class="section-note">
           顧客との契約・機密区分に応じて、この案件で使用するLLMを選択してください。
-          機密性が高い案件はローカルLLM(Ollama)を推奨します。実行系の接続はPhase 3で提供予定です。
+          機密性が高い案件はローカルLLM(Ollama)を推奨します。
+          クラウドLLMへの切替は機密情報の社外送信につながるため、変更は管理者のみ可能です。
         </p>
+        {% if can_edit %}
         <form method="post" novalidate>
           {% csrf_token %}
           <div class="form-group">
@@ -40,6 +42,13 @@
           </div>
           <button type="submit" class="btn btn-primary">保存する</button>
         </form>
+        {% else %}
+        <div class="form-group">
+          <label class="form-label">既定LLMプロバイダ</label>
+          <p style="font-weight:600;">{{ engagement.get_llm_provider_display }}</p>
+        </div>
+        <p class="section-note">変更するには管理者に依頼してください。</p>
+        {% endif %}
       </div>
     </main>
   </div>
