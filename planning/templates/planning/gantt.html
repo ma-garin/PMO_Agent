@@ -93,7 +93,7 @@
                   </td>
                   <td>{{ item.start_date|date:"n/j" }} 〜 {{ item.finish_date|date:"n/j" }}</td>
                   <td>
-                    <span class="wbs-progress-track"><span class="wbs-progress-fill{% if item.status == 'done' %} done{% endif %}" style="width: {{ item.progress }}%;"></span></span>
+                    <span class="wbs-progress-track"><span class="wbs-progress-fill{% if item.status == 'done' %} done{% endif %}" style="width: {{ item.progress }}%; --pct: {{ item.progress }};"></span></span>
                     {{ item.progress }}%
                   </td>
                   <td>{% if item.owner %}{% firstof item.owner.get_full_name item.owner.username %}{% else %}-{% endif %}</td>

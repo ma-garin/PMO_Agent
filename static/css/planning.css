@@ -22,5 +22,9 @@
 .wbs-table tr:last-child td { border-bottom: none; }
 .wbs-code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--ink-2); }
 .wbs-progress-track { width: 80px; height: 6px; border-radius: 999px; background: var(--ground); overflow: hidden; display: inline-block; vertical-align: middle; margin-right: 8px; }
-.wbs-progress-fill { height: 100%; background: var(--primary); }
+.wbs-progress-fill {
+  height: 100%;
+  /* 0%=赤 → 50%=黄 → 100%=緑 のグラデーション(HSL色相を0→120で補間) */
+  background: hsl(calc(min(max(var(--pct, 0), 0), 100) * 1.2), 70%, 45%);
+}
 .wbs-progress-fill.done { background: var(--success); }
