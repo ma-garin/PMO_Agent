@@ -73,13 +73,13 @@ table.log{border-collapse:collapse;width:100%;font-size:12.5px;}
   <p>PMO Agent ／ 実機点検で検出した当たり前品質の欠落を全件修正する作業の進捗</p>
   <div class="overall">
     <div style="display:flex;justify-content:space-between;font-size:13px;">
-      <span>全体進捗</span><span><b>1 / 7 バッチ完了</b>（約14%）</span>
+      <span>全体進捗</span><span><b>2 / 7 バッチ完了</b>（約29%）</span>
     </div>
-    <div class="bar"><i style="width:14%"></i></div>
+    <div class="bar"><i style="width:29%"></i></div>
   </div>
 </header>
 
-<div class="updated">最終更新: 2026-07-12 21:20（このページは60秒ごとに自動再読込／作業の都度更新）</div>
+<div class="updated">最終更新: 2026-07-12 21:33（このページは60秒ごとに自動再読込／作業の都度更新）</div>
 
 <div class="legend">
   <span><span class="pill done">完了</span> コミット済み・実機検証済み</span>
@@ -109,24 +109,25 @@ table.log{border-collapse:collapse;width:100%;font-size:12.5px;}
 </div>
 
 <!-- Batch B -->
-<div class="batch is-prog">
+<div class="batch is-done">
   <div class="batch-head">
     <h2>Batch B: ガント表示品質の修正</h2>
-    <span class="pill prog">進行中（次）</span>
+    <span class="pill done">完了</span>
   </div>
+  <div class="batch-head"><span></span><span class="meta">commit 43209c8</span></div>
   <ul class="items">
-    <li class="t"><span class="id">G1</span> 「全期間」ズームが無効（全体が収まらない）</li>
-    <li class="t"><span class="id">G2</span> 最終タスクが右端で見切れる</li>
-    <li class="t"><span class="id">G3</span> 横スクロールバーが初期表示で画面外＝発見不能</li>
-    <li class="t"><span class="id">G4</span> 右端の日付ラベルが途中で切れる</li>
+    <li class="d"><span class="id">G1</span> 「全期間」でSVGをコンテナ幅にフィット（全体を一望）実機検証済み</li>
+    <li class="d"><span class="id">G2</span> 最終タスクの右端見切れを解消（検証済み）</li>
+    <li class="d"><span class="id">G3</span> 全期間は横スクロール不要に（既定表示で全体が収まる）</li>
+    <li class="d"><span class="id">G4</span> 端の日付ラベルを端寄せにして見切れ解消（検証済み）</li>
   </ul>
 </div>
 
 <!-- Batch C -->
-<div class="batch is-todo">
+<div class="batch is-prog">
   <div class="batch-head">
     <h2>Batch C: リスク登録簿のPMBOK標準項目追加</h2>
-    <span class="pill todo">未着手</span>
+    <span class="pill prog">進行中（次）</span>
   </div>
   <ul class="items">
     <li class="t"><span class="id">R1</span> リスクオーナー・対応戦略(回避/転嫁/軽減/受容)・トリガー/予兆・カテゴリを追加（model+form+migration）</li>
@@ -181,6 +182,7 @@ table.log{border-collapse:collapse;width:100%;font-size:12.5px;}
 <table class="log">
   <tr><th>コミット</th><th>内容</th></tr>
   <tr><td><code>d5e5e42</code></td><td>fix: 描画・文言の当たり前品質を修正 (Batch A)</td></tr>
+  <tr><td><code>43209c8</code></td><td>fix: ガント表示品質を修正 (Batch B)</td></tr>
 </table>
 
 <p class="note" style="margin-top:24px;">関連: 実機点検の不具合台帳
