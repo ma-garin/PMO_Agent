@@ -41,6 +41,19 @@ def _month_token_usage(engagement=None, user=None) -> int:
     return _estimate_tokens(chars)
 
 
+def _recent_ai_avg_ms(engagement) -> int:
+    """直近の成功したLLM呼び出しの平均所要ms(残り想定時間の初期値に使う)。"""
+    durations = list(
+        LlmCallLog.objects.filter(engagement=engagement, status=LlmCallLog.Status.SUCCESS)
+        .exclude(duration_ms=0)
+        .order_by("-created_at")
+        .values_list("duration_ms", flat=True)[:10]
+    )
+    if not durations:
+        return 20000  # 実績が無ければローカルLLM想定の既定値
+    return int(sum(durations) / len(durations))
+
+
 def check_ai_quota(engagement, user) -> tuple[bool, str]:
     """案件・ユーザーの月間トークン上限を確認する。超過なら(False, 理由)を返す。"""
     limit = getattr(engagement, "monthly_token_limit", 0) or 0
@@ -160,6 +173,7 @@ def _server_tokens(request: HttpRequest, engagement: Engagement) -> dict[str, st
         "__PMO_LLM_PROVIDER_LABEL__": escape(engagement.get_llm_provider_display()),
         "__PMO_LLM_MODEL_LABEL__": escape(engagement.llm_model or "既定モデル"),
         "__PMO_AI_SYSTEM__": _json_for_script(AI_SYSTEM),
+        "__PMO_AI_AVG_MS__": str(_recent_ai_avg_ms(engagement)),
         "__PMO_CSS_URL__": static("pmo_agent/pmo_agent.css"),
         "__PMO_CSRF_TOKEN__": get_token(request),
         # ヘッダー右端(ユーザーメニュー/案件切替/ログアウト)用
@@ -329,7 +343,12 @@ def ai_run(request: HttpRequest) -> JsonResponse:
     action = str(payload.get("action", ""))[:60]
     request_text = str(payload.get("requestText", "")).strip()[:2000]
     screen_text = str(payload.get("screenText", "")).strip()[:4000]
-    if not screen or not action or not request_text:
+    # ユーザーがポップアップで編集したプロンプト(任意)。指定時はそれを優先する。
+    system_override = str(payload.get("system", "")).strip()[:8000]
+    prompt_override = str(payload.get("prompt", "")).strip()[:12000]
+    if not screen or not action:
+        return JsonResponse({"error": "missing_fields"}, status=400)
+    if not request_text and not prompt_override:
         return JsonResponse({"error": "missing_fields"}, status=400)
 
     quota_ok, quota_message = check_ai_quota(engagement, request.user)
@@ -346,21 +365,24 @@ def ai_run(request: HttpRequest) -> JsonResponse:
             status=429,
         )
 
-    prompt = f"{request_text}\n\n参考(現在の画面のデータ):\n{wrap_external(screen_text)}"
+    # 編集プロンプトが来ていればそれを使う(利用者=認証済みstaffが内容を確認済み)
+    prompt = prompt_override or f"{request_text}\n\n参考(現在の画面のデータ):\n{wrap_external(screen_text)}"
+    system = system_override or AI_SYSTEM
+    edited = bool(prompt_override or system_override)
     created_at = timezone.now().isoformat()
     try:
         answer = run_completion(
             engagement,
             purpose=f"pmo_{action}"[:60],
             prompt=prompt,
-            system=AI_SYSTEM,
+            system=system,
             max_tokens=1200,
             user=request.user,
         )
         used_fallback = not (answer and answer.strip())
         if used_fallback:
             answer = AI_FALLBACK
-        record(request.user, "pmo_ai_run", engagement, detail=f"{screen}/{action}")
+        record(request.user, "pmo_ai_run", engagement, detail=f"{screen}/{action}{' (編集)' if edited else ''}")
         return JsonResponse(
             {
                 "answer": answer,

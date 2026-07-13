@@ -836,3 +836,15 @@ body.knowledge-maximized .knowledge-max-btn{background:#fff;color:var(--blue);bo
 :root[data-theme="dark"] .pmo-ai-meta{background:#12203b;border-color:#2c4a7c}
 :root[data-theme="dark"] .pmo-ai-meta-model{color:#93c5fd}
 :root[data-theme="dark"] .pmo-ai-meta-btn{background:var(--surface)}
+
+/* AI実行ポップアップ: 編集/実行中/結果 */
+.pmo-ai-edit-label{display:block;font-size:11px;font-weight:900;color:var(--muted);margin:10px 0 4px}
+.pmo-ai-edit{width:100%;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font-family:Consolas,"Noto Sans JP",monospace;font-size:11.5px;line-height:1.6;padding:9px 10px;resize:vertical;outline:none}
+.pmo-ai-edit:focus{border-color:var(--blue);box-shadow:0 0 0 2px rgba(37,99,235,.10)}
+.pmo-ai-running{display:flex;flex-direction:column;align-items:center;gap:10px;padding:26px 10px}
+.pmo-ai-running-title{font-size:13px;font-weight:900;color:var(--ink)}
+.pmo-ai-running-time{font-size:12.5px;font-weight:800;color:var(--muted);font-variant-numeric:tabular-nums}
+.pmo-ai-running-bar{width:min(360px,90%);height:6px;border-radius:999px;background:var(--line);overflow:hidden}
+.pmo-ai-running-bar span{display:block;height:100%;width:0;border-radius:999px;background:var(--blue);transition:width .25s linear}
+.pmo-ai-result-body{max-height:min(52vh,460px);overflow:auto;border:1px solid var(--line);border-radius:8px;padding:12px 14px;background:var(--surface)}
+:root[data-theme="dark"] .pmo-ai-edit,:root[data-theme="dark"] .pmo-ai-result-body{background:var(--surface);color:var(--ink)}

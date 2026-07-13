@@ -1407,6 +1407,7 @@ const pmoApiConfig = {tasksUrl:'__PMO_TASKS_API_URL__', storesBase:'__PMO_STORES
 const pmoLlmProviderLabel = '__PMO_LLM_PROVIDER_LABEL__';
 const pmoLlmModelLabel = '__PMO_LLM_MODEL_LABEL__';
 const pmoAiSystemPrompt = __PMO_AI_SYSTEM__;
+const pmoAiAvgMs = Number('__PMO_AI_AVG_MS__') || 20000;
 async function pmoStorePost(kind, payload){
   try {
     const response = await fetch(`${pmoApiConfig.storesBase}${kind}/`, {
@@ -2007,7 +2008,40 @@ function pmoAiBindScreenActions(){
 }
 // 日本語混在のざっくり見積り(約3文字≒1token)。あくまで目安。
 function pmoAiEstimateTokens(text){ return Math.max(1, Math.round(String(text || '').length / 3)); }
-function pmoAiCloseConfirm(){ const m = document.getElementById('pmoAiConfirmModal'); if (m){ m.classList.remove('open'); m.setAttribute('aria-hidden', 'true'); } }
+let pmoAiTimer = null;
+let pmoAiAbortController = null;
+let pmoAiPendingRun = null;
+function pmoAiStopTimer(){ if (pmoAiTimer) { clearInterval(pmoAiTimer); pmoAiTimer = null; } }
+function pmoAiCloseConfirm(){
+  pmoAiStopTimer();
+  try { pmoAiAbortController?.abort(); } catch (e) {}
+  const m = document.getElementById('pmoAiConfirmModal');
+  if (m){ m.classList.remove('open'); m.setAttribute('aria-hidden', 'true'); }
+}
+function pmoAiSetModalState(state){
+  const modal = document.getElementById('pmoAiConfirmModal');
+  if (!modal) return;
+  modal.dataset.state = state;
+  const show = (id, on) => { const el = document.getElementById(id); if (el) el.hidden = !on; };
+  show('pmoAiEditSection', state === 'edit');
+  show('pmoAiRunSection', state === 'running');
+  show('pmoAiResultSection', state === 'result');
+  show('pmoAiConfirmCancel', state === 'edit');
+  show('pmoAiConfirmRun', state === 'edit');
+  show('pmoAiRunAbort', state === 'running');
+  show('pmoAiResultCopy', state === 'result');
+  show('pmoAiResultClose', state === 'result');
+  const titles = {edit:'生成AIを実行します', running:'生成AIを実行中…', result:'生成AIの結果'};
+  document.getElementById('pmoAiConfirmTitle').textContent = titles[state] || '生成AI';
+}
+function pmoAiUpdateEditTokens(){
+  const sys = document.getElementById('pmoAiEditSystem')?.value || '';
+  const prompt = document.getElementById('pmoAiEditPrompt')?.value || '';
+  const chars = sys.length + prompt.length;
+  const tokens = pmoAiEstimateTokens(sys) + pmoAiEstimateTokens(prompt);
+  const el = document.getElementById('pmoAiConfirmTokens');
+  if (el) el.textContent = `約 ${chars.toLocaleString()} 文字（≒ ${tokens.toLocaleString()} tokens の目安）`;
+}
 function pmoAiEnsureConfirmModal(){
   let modal = document.getElementById('pmoAiConfirmModal');
   if (modal) return modal;
@@ -2018,45 +2052,107 @@ function pmoAiEnsureConfirmModal(){
         <div class="pmo-modal-body pmo-ai-confirm">
           <div class="pmo-ai-confirm-row"><span class="k">実行モデル</span><span class="v" id="pmoAiConfirmModel"></span></div>
           <div class="pmo-ai-confirm-row"><span class="k">この機能</span><span class="v" id="pmoAiConfirmFeature"></span></div>
-          <div class="pmo-ai-confirm-row"><span class="k">推定送信量</span><span class="v" id="pmoAiConfirmTokens"></span></div>
-          <details class="pmo-ai-confirm-prompt"><summary>内部プロンプト（システム指示）を見る</summary><pre id="pmoAiConfirmSystem"></pre></details>
-          <details class="pmo-ai-confirm-prompt" open><summary>送信内容（この機能の指示 ＋ 画面データ抜粋）を見る</summary><pre id="pmoAiConfirmRequest"></pre></details>
-          <div class="pmo-ai-confirm-note">この画面データはインジェクション対策のうえ外部LLMへ送信されます。生成結果は参考情報で、採用・修正・承認はPM/PMOが行います。</div>
+          <div id="pmoAiEditSection">
+            <div class="pmo-ai-confirm-row"><span class="k">推定送信量</span><span class="v" id="pmoAiConfirmTokens"></span></div>
+            <label class="pmo-ai-edit-label">内部プロンプト（システム指示）— 編集できます</label>
+            <textarea class="pmo-ai-edit" id="pmoAiEditSystem" rows="5" aria-label="システムプロンプト"></textarea>
+            <label class="pmo-ai-edit-label">送信内容（指示 ＋ 画面データ）— 編集できます</label>
+            <textarea class="pmo-ai-edit" id="pmoAiEditPrompt" rows="8" aria-label="送信プロンプト"></textarea>
+            <div class="pmo-ai-confirm-note">編集した内容がそのままLLMへ送信されます。生成結果は参考情報で、採用・修正・承認はPM/PMOが行います。</div>
+          </div>
+          <div id="pmoAiRunSection" hidden>
+            <div class="pmo-ai-running"><span class="pmo-modal-spinner"></span><div class="pmo-ai-running-title">生成AIが応答を生成しています…</div><div class="pmo-ai-running-time" id="pmoAiRunTime">経過 0秒 / 残り想定 —</div><div class="pmo-ai-running-bar"><span id="pmoAiRunBar"></span></div></div>
+          </div>
+          <div id="pmoAiResultSection" hidden>
+            <div class="pmo-ai-confirm-row"><span class="k">所要時間</span><span class="v" id="pmoAiResultTime"></span></div>
+            <div class="ai-result-md pmo-ai-result-body" id="pmoAiResultBody"></div>
+          </div>
         </div>
-        <div class="pmo-modal-foot" style="justify-content:flex-end;gap:8px"><button class="btn-out sm" type="button" data-ai-confirm-close>キャンセル</button><button class="btn-b sm" type="button" id="pmoAiConfirmRun">実行する</button></div>
+        <div class="pmo-modal-foot" style="justify-content:flex-end;gap:8px">
+          <button class="btn-out sm" type="button" id="pmoAiConfirmCancel" data-ai-confirm-close>キャンセル</button>
+          <button class="btn-out sm" type="button" id="pmoAiRunAbort" hidden>中止</button>
+          <button class="btn-out sm" type="button" id="pmoAiResultCopy" hidden>原文コピー</button>
+          <button class="btn-out sm" type="button" id="pmoAiResultClose" data-ai-confirm-close hidden>閉じる</button>
+          <button class="btn-b sm" type="button" id="pmoAiConfirmRun">実行する</button>
+        </div>
       </div>
     </div>`);
   modal = document.getElementById('pmoAiConfirmModal');
   modal.querySelectorAll('[data-ai-confirm-close]').forEach(b => b.addEventListener('click', pmoAiCloseConfirm));
   modal.addEventListener('click', e => { if (e.target === modal) pmoAiCloseConfirm(); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && modal.classList.contains('open')) pmoAiCloseConfirm(); });
+  document.getElementById('pmoAiEditSystem').addEventListener('input', pmoAiUpdateEditTokens);
+  document.getElementById('pmoAiEditPrompt').addEventListener('input', pmoAiUpdateEditTokens);
+  document.getElementById('pmoAiConfirmRun').addEventListener('click', pmoAiExecuteFromModal);
+  document.getElementById('pmoAiRunAbort').addEventListener('click', () => { try { pmoAiAbortController?.abort(); } catch (e) {} pmoAiStopTimer(); pmoAiSetModalState('edit'); });
+  document.getElementById('pmoAiResultCopy').addEventListener('click', () => pmoAiCopyText(window.pmoAiResultRaw || ''));
   return modal;
 }
 function pmoAiOpenConfirm(params){
-  const modal = pmoAiEnsureConfirmModal();
-  const requestBody = `${params.requestText}\n\n参考(現在の画面のデータ):\n${params.screenText}`;
-  const totalChars = pmoAiSystemPrompt.length + requestBody.length;
-  const tokens = pmoAiEstimateTokens(pmoAiSystemPrompt) + pmoAiEstimateTokens(requestBody);
+  pmoAiEnsureConfirmModal();
+  pmoAiPendingRun = params;
   document.getElementById('pmoAiConfirmModel').textContent = `${pmoLlmProviderLabel} / ${pmoLlmModelLabel}`;
   document.getElementById('pmoAiConfirmFeature').textContent = params.title;
-  document.getElementById('pmoAiConfirmTokens').textContent = `約 ${totalChars.toLocaleString()} 文字（≒ ${tokens.toLocaleString()} tokens の目安）`;
-  document.getElementById('pmoAiConfirmSystem').textContent = pmoAiSystemPrompt;
-  document.getElementById('pmoAiConfirmRequest').textContent = requestBody;
-  const runBtn = document.getElementById('pmoAiConfirmRun');
-  const titleEl = document.getElementById('pmoAiConfirmTitle');
+  document.getElementById('pmoAiEditSystem').value = pmoAiSystemPrompt;
+  document.getElementById('pmoAiEditPrompt').value = `${params.requestText}\n\n参考(現在の画面のデータ):\n${params.screenText}`;
+  pmoAiUpdateEditTokens();
   if (params.viewOnly) {
-    titleEl.textContent = 'この機能のAI利用内容';
-    runBtn.hidden = true;
+    pmoAiSetModalState('edit');
+    document.getElementById('pmoAiConfirmRun').hidden = true;
+    document.getElementById('pmoAiConfirmTitle').textContent = 'この機能のAI利用内容（編集可）';
   } else {
-    titleEl.textContent = '生成AIを実行します';
-    runBtn.hidden = false;
-    runBtn.onclick = () => {
-      pmoAiCloseConfirm();
-      pmoAiExecute(params.screen, params.action, params.requestText, params.resultElementId, params.title, params.extraContext);
-    };
+    pmoAiSetModalState('edit');
   }
+  const modal = document.getElementById('pmoAiConfirmModal');
   modal.classList.add('open');
   modal.setAttribute('aria-hidden', 'false');
+}
+function pmoAiExecuteFromModal(){
+  const p = pmoAiPendingRun;
+  if (!p) return;
+  const system = document.getElementById('pmoAiEditSystem').value;
+  const prompt = document.getElementById('pmoAiEditPrompt').value;
+  pmoAiSetModalState('running');
+  const startedAt = Date.now();
+  const timeEl = document.getElementById('pmoAiRunTime');
+  const barEl = document.getElementById('pmoAiRunBar');
+  pmoAiStopTimer();
+  pmoAiTimer = setInterval(() => {
+    const elapsed = Date.now() - startedAt;
+    const remaining = Math.max(0, pmoAiAvgMs - elapsed);
+    const remLabel = remaining > 0 ? `残り想定 約${Math.ceil(remaining / 1000)}秒` : '残り想定 まもなく…';
+    timeEl.textContent = `経過 ${Math.floor(elapsed / 1000)}秒 / ${remLabel}`;
+    if (barEl) barEl.style.width = `${Math.min(98, elapsed / pmoAiAvgMs * 100)}%`;
+  }, 250);
+  const controller = new AbortController();
+  pmoAiAbortController = controller;
+  const requestId = `${p.screen}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  fetch(pmoApiConfig.aiRunUrl, {
+    method:'POST', signal:controller.signal, credentials:'same-origin',
+    headers:{'Content-Type':'application/json', 'X-CSRFToken':pmoApiConfig.csrfToken},
+    body:JSON.stringify({screen:p.screen, action:p.action, requestText:p.requestText, screenText:p.screenText, system, prompt})
+  }).then(async response => {
+    if (!response.ok && response.status !== 429) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+    pmoAiStopTimer();
+    const elapsedMs = Date.now() - startedAt;
+    document.getElementById('pmoAiResultTime').textContent = `${(elapsedMs / 1000).toFixed(1)}秒 ・ ${pmoLlmProviderLabel} / ${pmoLlmModelLabel}${data.usedFallback ? ' ・ フォールバック' : ''}`;
+    window.pmoAiResultRaw = data.answer || '';
+    document.getElementById('pmoAiResultBody').innerHTML = pmoAiRenderMarkdownSafe(data.answer || '');
+    pmoAiSetModalState('result');
+    // パネルにも反映(閉じても結果が残る)
+    const row = {request_id:requestId, screen:p.screen, action:p.action, status:'completed', provider:data.provider || 'llm', used_fallback:Boolean(data.usedFallback), answer:data.answer || '', created_at:data.createdAt || new Date().toISOString(), evidence_refs:[], structured_result:{human_review_required:true, adoption_policy:'生成結果は参考情報です。採用・修正・承認はPM/PMOが行います。'}};
+    pmoAiActionInjected.actions = pmoAiActionRows().filter(item => item.screen !== p.screen).concat(row);
+    pmoAiActionInjected.latest_by_screen = {...(pmoAiActionInjected.latest_by_screen || {}), [p.screen]:requestId};
+    pmoAiRenderResult(p.screen, p.resultElementId, p.title);
+  }).catch(error => {
+    pmoAiStopTimer();
+    if (error?.name === 'AbortError') return;
+    document.getElementById('pmoAiResultTime').textContent = 'エラー';
+    window.pmoAiResultRaw = '';
+    document.getElementById('pmoAiResultBody').innerHTML = pmoAiRenderMarkdownSafe(`## 生成AIを実行できませんでした\n\n- ${String(error?.message || error || '')}\n- 時間をおいて再実行するか、案件のLLM設定を確認してください。`);
+    pmoAiSetModalState('result');
+  });
 }
 // AI利用点の一覧(全画面)。メタバーと閲覧専用プロンプト表示に使う。
 function pmoAiRegistryList(){
@@ -2099,49 +2195,6 @@ function pmoAiRun(screen, action, requestText, resultElementId, title, extraCont
   }
   const screenText = (extraContext && extraContext.screenText) || pmoAiScreenText(screen);
   pmoAiOpenConfirm({screen, action, requestText, resultElementId, title, extraContext, screenText});
-}
-function pmoAiExecute(screen, action, requestText, resultElementId, title, extraContext = {}){
-  const requestId = `${screen}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-  const payload = {
-    kind:'pmo_ai_action_request',
-    request_id:requestId,
-    screen,
-    action,
-    requestText,
-    projectKey:pmoTaskProjectKey,
-    context:{...pmoAiCommonContext(), ...extraContext}
-  };
-  pmoAiSetPending(resultElementId, title);
-  window.pmoAiLastRunRequest = payload;
-  const commitRow = (row) => {
-    pmoAiActionInjected.actions = pmoAiActionRows().filter(item => item.screen !== screen).concat(row);
-    pmoAiActionInjected.latest_by_screen = {...(pmoAiActionInjected.latest_by_screen || {}), [screen]:requestId};
-    pmoAiRenderResult(screen, resultElementId, title);
-  };
-  const screenText = (extraContext && extraContext.screenText) || pmoAiScreenText(screen);
-  fetch(pmoApiConfig.aiRunUrl, {
-    method:'POST', credentials:'same-origin',
-    headers:{'Content-Type':'application/json', 'X-CSRFToken':pmoApiConfig.csrfToken},
-    body:JSON.stringify({screen, action, requestText, screenText})
-  }).then(async response => {
-    // 429(トークン上限)はbodyにメッセージがあるので、その内容を表示する
-    if (!response.ok && response.status !== 429) throw new Error(`HTTP ${response.status}`);
-    const data = await response.json();
-    commitRow({
-      request_id:requestId, screen, action, status:'completed',
-      provider:data.provider || 'llm', used_fallback:Boolean(data.usedFallback),
-      answer:data.answer || '', created_at:data.createdAt || new Date().toISOString(), evidence_refs:[],
-      structured_result:{human_review_required:true, adoption_policy:'生成結果は参考情報です。採用・修正・承認はPM/PMOが行います。'}
-    });
-  }).catch(error => {
-    window.pmoAiDebugLastError = String(error?.message || error || '');
-    commitRow({
-      request_id:requestId, screen, action, status:'completed', provider:'unavailable', used_fallback:true,
-      answer:`## 生成AIを実行できませんでした\n\n- サーバーへの接続に失敗しました(${window.pmoAiDebugLastError})。\n- 時間をおいて再実行するか、案件のLLM設定を確認してください。`,
-      created_at:new Date().toISOString(), evidence_refs:[],
-      structured_result:{human_review_required:true, adoption_policy:'生成結果は参考情報です。採用・修正・承認はPM/PMOが行います。'}
-    });
-  });
 }
 function pmoAiRenderAllResults(){
   pmoAiRenderResult('dashboard', 'dashboardAiResult', 'AI診断結果');

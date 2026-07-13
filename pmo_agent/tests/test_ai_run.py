@@ -73,6 +73,13 @@ class TestAiRun:
     def test_missing_fields_400(self, api_client: Client):
         assert _run(api_client, {"screen": "dashboard"}).status_code == 400
 
+    def test_prompt_override_is_used(self, api_client: Client):
+        with patch("pmo_agent.views.run_completion", return_value="ok") as mocked:
+            _run(api_client, {"screen": "dashboard", "action": "diagnose", "system": "編集システム", "prompt": "編集プロンプト"})
+        _, kwargs = mocked.call_args
+        assert kwargs["system"] == "編集システム"
+        assert kwargs["prompt"] == "編集プロンプト"
+
     def test_requires_engagement(self, client: Client, user: User):
         client.force_login(user)
         assert _run(client, BODY).status_code == 403
