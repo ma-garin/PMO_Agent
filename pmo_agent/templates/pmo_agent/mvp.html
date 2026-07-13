@@ -387,7 +387,7 @@
 <div class="screen" id="s-report_approval">
   <div class="ph">
     <div><div class="pk">PMO Report HITL</div><h1 class="pt">報告生成・承認</h1><p class="ps">WBS、KPI、AI介入提案、根拠確認をもとに週次報告と経営向け1枚サマリを作成し、人が編集・承認します。</p></div>
-    <div class="ph-right"><button class="btn-out" type="button" id="pmoReportRefreshBtn">下書き更新</button><button class="btn-b sm" type="button" id="pmoReportSaveBtn">共有保存</button></div>
+    <div class="ph-right"><button class="btn-out" type="button" id="pmoReportRefreshBtn">AIで下書き生成</button><button class="btn-b sm" type="button" id="pmoReportSaveBtn">共有保存</button></div>
   </div>
   <div class="project-strip"><span>報告対象</span><strong>__PROJECT_NAME__</strong><em id="pmoReportStatusChip">状態 -</em><em id="pmoReportSavedChip">保存 -</em><em>WBS 33.0-36.0</em></div>
   <div class="ai-action-result is-empty" id="reportAiResult" aria-live="polite"></div>
@@ -567,7 +567,7 @@
 
 <!-- S6 AI介入提案 -->
 <div class="screen" id="s-intervention">
-  <div class="ph"><div><div class="pk">AI Project Control</div><h1 class="pt">AI介入提案</h1><p class="ps">AI提案を人が採用・修正・却下・承認し、根拠と判断ログを残します。</p></div><div class="ph-right"><button class="btn-b sm" type="button" id="pmoProposalRefreshBtn">全提案を更新</button></div></div>
+  <div class="ph"><div><div class="pk">AI Project Control</div><h1 class="pt">AI介入提案</h1><p class="ps">AI提案を人が採用・修正・却下・承認し、根拠と判断ログを残します。</p></div><div class="ph-right"><button class="btn-b sm" type="button" id="pmoProposalRefreshBtn">AIで提案を生成</button></div></div>
   <div class="callout w" style="margin-bottom:12px">PMO介入レベル: <strong>要介入</strong> - 根拠なし重要主張は同じ詳細内で警告します。AIは提案まで、承認は人が行います。</div>
   <div class="ai-action-result is-empty" id="interventionAiResult" aria-live="polite"></div>
   <div class="proposal-summary" id="pmoProposalSummary"></div>
@@ -1987,7 +1987,7 @@ function pmoAiInjectScreenPanels(){
         </div>
         <button class="btn-b sm" type="button" id="${pmoTaskEsc(cfg.buttonId)}">${pmoTaskEsc(cfg.buttonLabel)}</button>
       </div>
-      <div class="pmo-ai-command-chips"><span class="pmo-ai-chip">🧠 ${pmoTaskEsc(pmoLlmProviderLabel)} / ${pmoTaskEsc(pmoLlmModelLabel)}</span><span class="pmo-ai-chip">実行前にプロンプト確認</span><span class="pmo-ai-chip">PMO確認待ち</span></div>
+      <div class="pmo-ai-command-chips"><span class="pmo-ai-chip">LLM/ローカル fallback</span><span class="pmo-ai-chip">RAG根拠確認</span><span class="pmo-ai-chip">PMO確認待ち</span></div>
       <div class="ai-action-result is-empty" id="${pmoTaskEsc(cfg.resultId)}" aria-live="polite"></div>
     `;
     const header = screenNode.querySelector('.ph');
@@ -2042,13 +2042,56 @@ function pmoAiOpenConfirm(params){
   document.getElementById('pmoAiConfirmTokens').textContent = `約 ${totalChars.toLocaleString()} 文字（≒ ${tokens.toLocaleString()} tokens の目安）`;
   document.getElementById('pmoAiConfirmSystem').textContent = pmoAiSystemPrompt;
   document.getElementById('pmoAiConfirmRequest').textContent = requestBody;
-  document.getElementById('pmoAiConfirmRun').onclick = () => {
-    pmoAiCloseConfirm();
-    pmoAiExecute(params.screen, params.action, params.requestText, params.resultElementId, params.title, params.extraContext);
-  };
+  const runBtn = document.getElementById('pmoAiConfirmRun');
+  const titleEl = document.getElementById('pmoAiConfirmTitle');
+  if (params.viewOnly) {
+    titleEl.textContent = 'この機能のAI利用内容';
+    runBtn.hidden = true;
+  } else {
+    titleEl.textContent = '生成AIを実行します';
+    runBtn.hidden = false;
+    runBtn.onclick = () => {
+      pmoAiCloseConfirm();
+      pmoAiExecute(params.screen, params.action, params.requestText, params.resultElementId, params.title, params.extraContext);
+    };
+  }
   modal.classList.add('open');
   modal.setAttribute('aria-hidden', 'false');
 }
+// AI利用点の一覧(全画面)。メタバーと閲覧専用プロンプト表示に使う。
+function pmoAiRegistryList(){
+  const fixed = [
+    {screen:'dashboard', resultId:'dashboardAiResult', title:'AI診断結果', action:'diagnose', request:'WBS、KPI、AI提案、RAG状態を集約し、健全性スコア、主要リスク、推奨アクション、根拠リンクを生成してください。'},
+    {screen:'consultation', resultId:'consultationAiResult', title:'PMO相談AI', action:'chat', request:'（入力欄に記載した相談内容をPMO観点で整理し、次に確認すべき点を提案します）'},
+    {screen:'intervention', resultId:'interventionAiResult', title:'AI介入提案生成', action:'generate_proposals', request:'遅延タスク、KPI、リスク、RAG根拠からAI介入提案キューを生成し、採用・修正・却下・承認ログへ接続できる形で整理してください。'},
+    {screen:'report_approval', resultId:'reportAiResult', title:'報告AI生成', action:'generate_report', request:'週次報告と経営向け1枚サマリを生成し、根拠チェック、根拠なし重要主張、HITL承認ログに残す前提で整理してください。'},
+    {screen:'tasks', resultId:'tasksAiResult', title:'生成AIのタスク影響分析結果', action:'task_impact_summary', request:'選択中タスクのPMO向けAI影響分析（判断サマリー・保存前チェック・ボール保持者・関連タスク・後続影響・リカバリ案・PMO次アクション・RAG根拠）を作成してください。'}
+  ];
+  const injected = Object.entries(pmoAiScreenActions).map(([screen, cfg]) => ({screen, resultId:cfg.resultId, title:cfg.title, action:cfg.action, request:cfg.request}));
+  return fixed.concat(injected);
+}
+function pmoAiRenderMetaBars(){
+  pmoAiRegistryList().forEach(entry => {
+    const result = taskEl(entry.resultId);
+    if (!result || result.previousElementSibling?.classList?.contains('pmo-ai-meta')) return;
+    if (!pmoAiFeatureEnabled(entry.screen)) return;
+    const bar = document.createElement('div');
+    bar.className = 'pmo-ai-meta';
+    bar.innerHTML = `<span class="pmo-ai-meta-badge">🧠 生成AI</span><span class="pmo-ai-meta-model">モデル: ${pmoTaskEsc(pmoLlmProviderLabel)} / ${pmoTaskEsc(pmoLlmModelLabel)}</span><span class="pmo-ai-meta-fn">${pmoTaskEsc(entry.title)}</span><button class="pmo-ai-meta-btn" type="button" data-ai-prompt-view="${pmoTaskEsc(entry.screen)}">内部プロンプトを見る</button>`;
+    result.parentNode.insertBefore(bar, result);
+  });
+}
+function pmoAiViewPrompt(screen){
+  const entry = pmoAiRegistryList().find(e => e.screen === screen);
+  if (!entry) return;
+  pmoAiOpenConfirm({screen:entry.screen, action:entry.action, requestText:entry.request, resultElementId:entry.resultId, title:entry.title, extraContext:{}, screenText:pmoAiScreenText(entry.screen), viewOnly:true});
+}
+document.addEventListener('click', event => {
+  const btn = event.target.closest('[data-ai-prompt-view]');
+  if (!btn) return;
+  event.preventDefault();
+  pmoAiViewPrompt(btn.dataset.aiPromptView);
+});
 function pmoAiRun(screen, action, requestText, resultElementId, title, extraContext = {}){
   if (!pmoAiFeatureEnabled(screen)) {
     pmoAiRenderStatus(taskEl(resultElementId), title, ['AI機能OFF'], 'この画面のAI実行はFeature Flagで無効化されています。');
@@ -3244,6 +3287,7 @@ function pmoAiInit(){
     }
   });
   pmoAiApplyFeatureFlags();
+  pmoAiRenderMetaBars();
   pmoAiRenderAllResults();
 }
 document.addEventListener('click', event => {
