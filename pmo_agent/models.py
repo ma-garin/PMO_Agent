@@ -27,3 +27,41 @@ class PmoTaskStore(models.Model):
 
     def __str__(self) -> str:
         return f"{self.engagement.name} ({len(self.tasks)}件)"
+
+
+class PmoJsonStore(models.Model):
+    """報告/KPI/AI提案などHITL成果物を案件×種別で保持する汎用JSONストア。
+
+    クライアントは各ストアのペイロード全量を保存する。保存のたびにAuditLogへ
+    記録するため、payload内の表示用ログが上書きされても監査証跡はDBに残る。
+    """
+
+    class Kind(models.TextChoices):
+        REPORT = "report", "報告生成・承認"
+        KPI = "kpi", "KPI・効果測定"
+        PROPOSAL = "proposal", "AI介入提案"
+
+    engagement = models.ForeignKey(
+        "engagements.Engagement", on_delete=models.CASCADE, related_name="pmo_json_stores"
+    )
+    kind = models.CharField("種別", max_length=20, choices=Kind.choices)
+    payload = models.JSONField("ペイロード", default=dict, blank=True)
+    saved_at = models.CharField("保存日時(ISO)", max_length=40, blank=True)
+    updated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="pmo_json_stores",
+    )
+    updated_at = models.DateTimeField("更新日時", auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["engagement", "kind"], name="uniq_pmo_json_store_engagement_kind"
+            )
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.engagement.name} / {self.get_kind_display()}"

@@ -14,10 +14,12 @@ from django.views.decorators.http import require_http_methods
 from audit.services import record
 from engagements.models import Engagement
 
-from .models import PmoTaskStore
+from .models import PmoJsonStore, PmoTaskStore
 
 # クライアントは全量保存のため、異常な巨大リクエストだけを弾く上限
 MAX_TASKS = 500
+# 汎用JSONストアの1件あたりの最大バイト数(報告本文など。過大POSTを弾く)
+MAX_STORE_BYTES = 512 * 1024
 
 
 def _current_engagement(request: HttpRequest) -> Engagement | None:
@@ -85,15 +87,34 @@ def _project_tokens(engagement: Engagement) -> dict[str, str]:
     }
 
 
+def _json_stores(engagement: Engagement) -> dict[str, PmoJsonStore]:
+    """案件の報告/KPI/AI提案ストアを種別キーで取得する。"""
+    rows = PmoJsonStore.objects.filter(engagement=engagement)
+    return {row.kind: row for row in rows}
+
+
 def _server_tokens(request: HttpRequest, engagement: Engagement) -> dict[str, str]:
     """サーバー保存データとAPI設定をMVPテンプレートへ注入するトークン。"""
     store = PmoTaskStore.objects.filter(engagement=engagement).first()
+    json_stores = _json_stores(engagement)
+    report = json_stores.get(PmoJsonStore.Kind.REPORT)
+    kpi = json_stores.get(PmoJsonStore.Kind.KPI)
+    proposal = json_stores.get(PmoJsonStore.Kind.PROPOSAL)
     return {
         "__PMO_TASKS_JSON__": _json_for_script(store.tasks if store else []),
         "__PMO_USE_DEMO__": "false",
         "__PMO_TASKS_SAVED_AT__": escape(store.saved_at if store else ""),
         "__PMO_TASKS_STORE_HASH__": escape(store.store_hash if store else ""),
         "__PMO_TASKS_API_URL__": reverse("pmo_agent:tasks_api"),
+        "__PMO_REPORT_JSON__": _json_for_script(report.payload if report else {}),
+        "__PMO_REPORT_SAVED_AT__": escape(report.saved_at if report else ""),
+        "__PMO_KPI_JSON__": _json_for_script(kpi.payload if kpi else {}),
+        "__PMO_KPI_SAVED_AT__": escape(kpi.saved_at if kpi else ""),
+        "__PMO_PROPOSAL_JSON__": _json_for_script(proposal.payload if proposal else {}),
+        "__PMO_PROPOSAL_SAVED_AT__": escape(proposal.saved_at if proposal else ""),
+        "__PMO_STORES_API_BASE__": reverse("pmo_agent:stores_api", args=["_kind_"]).replace(
+            "_kind_/", ""
+        ),
         "__PMO_CSRF_TOKEN__": get_token(request),
         # ヘッダー右端(ユーザーメニュー/案件切替/ログアウト)用
         "__PMO_USER_NAME__": escape(request.user.get_full_name() or request.user.username),
@@ -177,3 +198,46 @@ def tasks_api(request: HttpRequest) -> JsonResponse:
         detail=f"{payload.get('action', 'save')} / {len(tasks)}件",
     )
     return JsonResponse({"ok": True, "savedAt": store.saved_at, "storeHash": store.store_hash})
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def stores_api(request: HttpRequest, kind: str) -> JsonResponse:
+    """報告/KPI/AI提案の汎用JSONストアAPI。GET=取得 / POST=全量保存。
+
+    保存はlast-write-winsだが、保存のたびにAuditLogへ記録するため
+    「誰がいつ保存したか」の監査証跡はDBに残る。
+    """
+    if kind not in PmoJsonStore.Kind.values:
+        return JsonResponse({"error": "invalid_kind"}, status=404)
+    engagement = _current_engagement(request)
+    if engagement is None:
+        return JsonResponse({"error": "engagement_not_selected"}, status=403)
+
+    if request.method == "GET":
+        store = PmoJsonStore.objects.filter(engagement=engagement, kind=kind).first()
+        return JsonResponse(
+            {"payload": store.payload if store else {}, "savedAt": store.saved_at if store else ""}
+        )
+
+    if len(request.body) > MAX_STORE_BYTES:
+        return JsonResponse({"error": "payload_too_large"}, status=413)
+    try:
+        payload = json.loads(request.body.decode("utf-8"))
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return JsonResponse({"error": "invalid_json"}, status=400)
+    if not isinstance(payload, dict):
+        return JsonResponse({"error": "invalid_payload"}, status=400)
+
+    store, _created = PmoJsonStore.objects.get_or_create(engagement=engagement, kind=kind)
+    store.payload = payload
+    store.saved_at = timezone.now().isoformat()
+    store.updated_by = request.user
+    store.save()
+    record(
+        request.user,
+        f"pmo_{kind}_store_save",
+        engagement,
+        detail=str(payload.get("action", "save")),
+    )
+    return JsonResponse({"ok": True, "savedAt": store.saved_at})
