@@ -77,6 +77,8 @@ button { font-family: inherit; }
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
+  white-space: nowrap;   /* ラベルを折り返さない(「追/加」で割れる不具合の修正) */
+  flex-shrink: 0;        /* flexヘッダ内で縮んで折り返さないようにする */
   transition: background .15s ease, border-color .15s ease;
 }
 .btn-primary { background: var(--primary); color: #fff; }
