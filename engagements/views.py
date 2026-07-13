@@ -15,15 +15,35 @@ from .models import Engagement
 
 
 def portfolio_stats(engagement_ids: list[int]) -> dict:
-    """案件横断のポートフォリオ統計プレースホルダ。
+    """案件横断のポートフォリオ統計。PMOタスクストアから残・遅延・最終保存を集計する。"""
+    from pmo_agent.models import PmoTaskStore
 
-    旧チケット/通知連携UIは廃止されたため外部集計は行わず、
-    案件選択カードのバッジ表示互換のためのキーのみ0で返す。
-    """
-    return {
-        eid: {"open": 0, "overdue": 0, "unread": 0, "last_sync": None}
-        for eid in engagement_ids
+    stats = {
+        eid: {"remaining": 0, "delayed": 0, "saved_at": None} for eid in engagement_ids
     }
+    for store in PmoTaskStore.objects.filter(engagement_id__in=engagement_ids):
+        tasks = store.tasks if isinstance(store.tasks, list) else []
+        remaining = 0
+        delayed = 0
+        for task in tasks:
+            if not isinstance(task, dict):
+                continue
+            status = str(task.get("status", ""))
+            done = status == "done"
+            if not done:
+                remaining += 1
+            try:
+                delay = float(task.get("delay", 0) or 0)
+            except (TypeError, ValueError):
+                delay = 0
+            if not done and (delay > 0 or status in ("delayed", "blocked")):
+                delayed += 1
+        stats[store.engagement_id] = {
+            "remaining": remaining,
+            "delayed": delayed,
+            "saved_at": store.updated_at,
+        }
+    return stats
 
 
 class EngagementSelectView(LoginRequiredMixin, ListView):
@@ -56,7 +76,7 @@ class EngagementSelectView(LoginRequiredMixin, ListView):
         ids = [e.pk for e in engagements]
         stats = portfolio_stats(ids)
         for e in engagements:
-            e.stats = stats.get(e.pk, {"open": 0, "overdue": 0, "unread": 0, "last_sync": None})
+            e.stats = stats.get(e.pk, {"remaining": 0, "delayed": 0, "saved_at": None})
         return context
 
 

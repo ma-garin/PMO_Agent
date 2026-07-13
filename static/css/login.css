@@ -93,6 +93,7 @@
 .login-links { text-align: right; margin-top: 8px; font-size: 13px; }
 .login-links a { color: var(--primary); text-decoration: none; font-weight: 600; }
 .login-links a:hover { text-decoration: underline; }
+.login-hint { color: var(--ink-2); font-weight: 500; }
 
 .login-divider {
   display: flex;

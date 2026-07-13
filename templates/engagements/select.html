@@ -53,10 +53,9 @@
           </div>
         </div>
         <div class="portfolio-stats-row">
-          <span title="未クローズ">&#128027; {{ engagement.stats.open }}</span>
-          <span title="期限超過" class="{% if engagement.stats.overdue %}stat-danger{% endif %}">&#9888; {{ engagement.stats.overdue }}</span>
-          <span title="未読通知" class="{% if engagement.stats.unread %}stat-danger{% endif %}">&#128276; {{ engagement.stats.unread }}</span>
-          <span title="最終同期" class="stat-muted">{% if engagement.stats.last_sync %}{{ engagement.stats.last_sync|timesince }}前{% else %}未同期{% endif %}</span>
+          <span title="残タスク">&#128203; 残 {{ engagement.stats.remaining }}</span>
+          <span title="遅延・ブロック" class="{% if engagement.stats.delayed %}stat-danger{% endif %}">&#9888; 遅延 {{ engagement.stats.delayed }}</span>
+          <span title="最終保存" class="stat-muted">{% if engagement.stats.saved_at %}保存 {{ engagement.stats.saved_at|timesince }}前{% else %}未保存{% endif %}</span>
         </div>
         <div class="project-card-footer">
           <div class="member-stack">

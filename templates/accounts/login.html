@@ -13,20 +13,20 @@
     </div>
     <div class="login-copy">
       <h1>案件を、<br>思考する自動化で。</h1>
-      <p>チケット・品質メトリクス・開発標準を横断的に可視化し、複数案件のPMO業務をエージェントが支援します。</p>
+      <p>案件のタスク・進捗・リスク・報告を横断的に整理し、複数案件のPMO業務をエージェントが支援します。</p>
     </div>
     <div class="login-stats">
       <div>
-        <div class="stat-value">12</div>
-        <div class="stat-label">稼働中案件</div>
+        <div class="stat-value">WBS</div>
+        <div class="stat-label">タスク・ガント管理</div>
       </div>
       <div>
-        <div class="stat-value">87%</div>
-        <div class="stat-label">今月の完了率</div>
+        <div class="stat-value">HITL</div>
+        <div class="stat-label">AI下書き × 人の承認</div>
       </div>
       <div>
-        <div class="stat-value">4</div>
-        <div class="stat-label">稼働中エージェント</div>
+        <div class="stat-value">RAG</div>
+        <div class="stat-label">根拠つき情報整理</div>
       </div>
     </div>
   </div>
@@ -46,7 +46,7 @@
       <form method="post" novalidate>
         {% csrf_token %}
         <div class="form-group">
-          <label class="form-label" for="{{ form.username.id_for_label }}">メールアドレス</label>
+          <label class="form-label" for="{{ form.username.id_for_label }}">ユーザー名</label>
           <input
             type="text"
             name="{{ form.username.html_name }}"
@@ -73,14 +73,14 @@
             <div class="form-error-text">{{ error }}</div>
           {% endfor %}
           <div class="login-links">
-            <a href="#">パスワードをお忘れですか？</a>
+            <span class="login-hint">パスワードをお忘れの場合は管理者にご連絡ください</span>
           </div>
         </div>
         <input type="hidden" name="next" value="{{ next }}">
         <button type="submit" class="btn btn-primary btn-block">ログイン</button>
       </form>
 
-      <p class="login-signup">アカウントをお持ちでないですか？ <a href="#">管理者にお問い合わせください</a></p>
+      <p class="login-signup">アカウントは管理者が発行します。お持ちでない場合は管理者にお問い合わせください。</p>
     </div>
   </div>
 </div>
