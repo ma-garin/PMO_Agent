@@ -1,10 +1,9 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib import messages
-from django.db.models import Count, Max, Q
+from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
-from django.utils import timezone
 from django.views.generic import CreateView, ListView
 
 from audit.services import record
@@ -16,40 +15,13 @@ from .models import Engagement
 
 
 def portfolio_stats(engagement_ids: list[int]) -> dict:
-    """案件横断のポートフォリオ統計。N+1を避けるため集計クエリ3本のみ実行する。"""
-    from tickets.models import Notification, Ticket
+    """案件横断のポートフォリオ統計プレースホルダ。
 
-    today = timezone.localdate()
-    open_counts = dict(
-        Ticket.objects.filter(source__engagement_id__in=engagement_ids)
-        .exclude(is_done=True)
-        .values_list("source__engagement_id")
-        .annotate(count=Count("id"))
-    )
-    overdue_counts = dict(
-        Ticket.objects.filter(source__engagement_id__in=engagement_ids, due_date__lt=today)
-        .exclude(is_done=True)
-        .values_list("source__engagement_id")
-        .annotate(count=Count("id"))
-    )
-    unread_counts = dict(
-        Notification.objects.filter(engagement_id__in=engagement_ids, is_read=False)
-        .values_list("engagement_id")
-        .annotate(count=Count("id"))
-    )
-    sync_dates = dict(
-        Engagement.objects.filter(pk__in=engagement_ids)
-        .values_list("pk")
-        .annotate(last_sync=Max("ticket_sources__last_synced_at"))
-    )
-
+    旧チケット/通知連携UIは廃止されたため外部集計は行わず、
+    案件選択カードのバッジ表示互換のためのキーのみ0で返す。
+    """
     return {
-        eid: {
-            "open": open_counts.get(eid, 0),
-            "overdue": overdue_counts.get(eid, 0),
-            "unread": unread_counts.get(eid, 0),
-            "last_sync": sync_dates.get(eid),
-        }
+        eid: {"open": 0, "overdue": 0, "unread": 0, "last_sync": None}
         for eid in engagement_ids
     }
 
@@ -101,7 +73,7 @@ class EngagementCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
         if not self.request.user.is_authenticated:
             return super().handle_no_permission()
         messages.error(self.request, "この操作には管理者権限が必要です。")
-        return redirect("dashboard:home")
+        return redirect("pmo_agent:home")
 
     def form_valid(self, form):
         form.instance.owner = self.request.user
@@ -121,7 +93,7 @@ def enter_engagement(request, pk):
     )
     request.session["current_engagement_id"] = engagement.pk
     request.session["current_engagement_name"] = engagement.name
-    return redirect("dashboard:home")
+    return redirect("pmo_agent:home")
 
 
 def _get_current_engagement(request):

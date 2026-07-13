@@ -47,7 +47,7 @@ def test_admin_required_redirects_non_staff_with_error_message(rf) -> None:
     response = _dummy_view(request)
 
     assert response.status_code == 302
-    assert response.url == reverse("dashboard:home")
+    assert response.url == reverse("pmo_agent:home")
     stored_messages = list(request._messages)
     assert any("管理者権限" in str(message) for message in stored_messages)
 

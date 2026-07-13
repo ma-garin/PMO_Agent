@@ -2,34 +2,11 @@
   <div class="sidebar-brand">
     <span class="mark">✓</span>
     <span class="brand-text">PMO Agent.</span>
-    <button type="button" class="sidebar-toggle" id="sidebar-toggle" aria-label="サイドバーを折りたたむ">&#9664;</button>
   </div>
 
   <nav class="sidebar-nav">
-    <a href="{% url 'dashboard:home' %}" class="nav-item{% if nav_active == 'home' %} active{% endif %}" title="ホーム">
-      &#127968; <span class="nav-label">ホーム</span>
-    </a>
-    <a href="{% url 'tickets:list' %}" class="nav-item{% if nav_active == 'tickets' %} active{% endif %}" title="チケット一覧">
-      &#128203; <span class="nav-label">チケット一覧</span>
-      {% if total_tickets %}<span class="badge-count">{{ total_tickets }}</span>{% endif %}
-    </a>
-    <a href="{% url 'analytics:analysis' %}" class="nav-item{% if nav_active == 'analytics' %} active{% endif %}" title="分析">
-      &#128202; <span class="nav-label">分析</span>
-    </a>
-    <a href="{% url 'copilot:home' %}" class="nav-item{% if nav_active == 'copilot' %} active{% endif %}" title="Copilot">&#129302; <span class="nav-label">Copilot</span></a>
-    <a href="{% url 'reports:list' %}" class="nav-item{% if nav_active == 'reports' %} active{% endif %}" title="レポート">&#128196; <span class="nav-label">レポート</span></a>
-    <a href="{% url 'knowledge:list' %}" class="nav-item{% if nav_active == 'knowledge' %} active{% endif %}" title="ナレッジ">&#128218; <span class="nav-label">ナレッジ</span></a>
-    <a href="{% url 'tpi:list' %}" class="nav-item{% if nav_active == 'tpi' %} active{% endif %}" title="TPI評価">&#128209; <span class="nav-label">TPI評価</span></a>
-    <a href="{% url 'risks:list' %}" class="nav-item{% if nav_active == 'risks' %} active{% endif %}" title="リスク・改善">&#9888; <span class="nav-label">リスク・改善</span></a>
-    <a href="{% url 'planning:gantt' %}" class="nav-item{% if nav_active == 'planning' %} active{% endif %}" title="WBS・ガント">&#128467; <span class="nav-label">計画</span></a>
-    <a href="{% url 'testmgmt:plans' %}" class="nav-item{% if nav_active == 'testmgmt' %} active{% endif %}" title="テスト計画">&#128221; <span class="nav-label">テスト計画</span></a>
-    <a href="{% url 'dashboard:calendar' %}" class="nav-item{% if nav_active == 'calendar' %} active{% endif %}" title="カレンダー">&#128197; <span class="nav-label">カレンダー</span></a>
-    <a href="{% url 'members:list' %}" class="nav-item{% if nav_active == 'members' %} active{% endif %}" title="メンバー">&#128101; <span class="nav-label">メンバー</span></a>
-    <a href="{% url 'autopilot:queue' %}" class="nav-item{% if nav_active == 'autopilot' %} active{% endif %}" title="自律運転">&#9992; <span class="nav-label">自律運転</span></a>
+    <a href="{% url 'pmo_agent:home' %}" class="nav-item{% if nav_active == 'pmo_agent' %} active{% endif %}" title="PMO Agent">&#129517; <span class="nav-label">PMO Agent</span></a>
+    <a href="{% url 'engagements:select' %}" class="nav-item{% if nav_active == 'engagements' %} active{% endif %}" title="案件を切替">&#128257; <span class="nav-label">案件を切替</span></a>
     <a href="{% url 'accounts:profile' %}" class="nav-item{% if nav_active == 'settings' %} active{% endif %}" title="設定">&#9881; <span class="nav-label">設定</span></a>
-    {% if user.is_staff %}
-    <div class="sidebar-section-label">管理</div>
-    <a href="{% url 'adminpanel:home' %}" class="nav-item{% if nav_active == 'manage' %} active{% endif %}" title="管理">&#128737; <span class="nav-label">管理</span></a>
-    {% endif %}
   </nav>
 </aside>

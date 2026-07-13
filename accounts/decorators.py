@@ -14,7 +14,7 @@ def admin_required(view_func: Callable[..., HttpResponse]) -> Callable[..., Http
             return redirect("accounts:login")
         if not request.user.is_staff:
             messages.error(request, "この操作には管理者権限が必要です。")
-            return redirect("dashboard:home")
+            return redirect("pmo_agent:home")
         return view_func(request, *args, **kwargs)
 
     return _wrapped

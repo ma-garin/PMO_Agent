@@ -29,7 +29,7 @@ def test_create_get_forbidden_for_general_user(client, general_user) -> None:
     response = client.get(reverse("engagements:create"))
 
     assert response.status_code == 302
-    assert response.url == reverse("dashboard:home")
+    assert response.url == reverse("pmo_agent:home")
 
 
 @pytest.mark.django_db
@@ -42,7 +42,7 @@ def test_create_post_forbidden_for_general_user(client, general_user) -> None:
     )
 
     assert response.status_code == 302
-    assert response.url == reverse("dashboard:home")
+    assert response.url == reverse("pmo_agent:home")
     assert Engagement.objects.count() == 0
 
 

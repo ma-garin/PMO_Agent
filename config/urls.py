@@ -19,25 +19,10 @@ from django.contrib import admin
 from django.urls import include, path
 from django.views.generic import RedirectView
 
-from dashboard import views as dashboard_views
-
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("search/", dashboard_views.search_results, name="search"),
     path("accounts/", include("accounts.urls")),
     path("engagements/", include("engagements.urls")),
-    path("dashboard/", include("dashboard.urls")),
-    path("tickets/", include("tickets.urls")),
-    path("analytics/", include("analytics.urls")),
-    path("manage/", include("adminpanel.urls")),
-    path("copilot/", include("copilot.urls")),
-    path("reports/", include("reports.urls")),
-    path("knowledge/", include("knowledge.urls")),
-    path("tpi/", include("tpi.urls")),
-    path("risks/", include("risks.urls")),
-    path("planning/", include("planning.urls")),
-    path("testmgmt/", include("testmgmt.urls")),
-    path("members/", include("members.urls")),
-    path("autopilot/", include("autopilot.urls")),
+    path("pmo-agent/", include("pmo_agent.urls")),
     path("", RedirectView.as_view(pattern_name="engagements:select", permanent=False)),
 ]

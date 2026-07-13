@@ -4,7 +4,6 @@ from django.contrib.auth.models import User
 from django.core.management import call_command
 
 from engagements.models import Engagement
-from tickets.models import Ticket
 
 TEST_KEY = Fernet.generate_key().decode()
 
@@ -23,14 +22,12 @@ class TestSeedDemo:
         call_command("seed_demo")
         first_user_count = User.objects.count()
         first_engagement_count = Engagement.objects.count()
-        first_ticket_count = Ticket.objects.count()
 
         call_command("seed_demo")
 
         assert first_user_count > 0
         assert User.objects.count() == first_user_count
         assert Engagement.objects.count() == first_engagement_count
-        assert Ticket.objects.count() == first_ticket_count
 
     def test_creates_expected_users(self, settings):
         settings.DEBUG = True
