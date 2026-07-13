@@ -9,4 +9,5 @@ urlpatterns = [
     path("api/tasks/", views.tasks_api, name="tasks_api"),
     path("api/stores/<str:kind>/", views.stores_api, name="stores_api"),
     path("api/ai/run/", views.ai_run, name="ai_run"),
+    path("api/ai/test/", views.ai_test, name="ai_test"),
 ]

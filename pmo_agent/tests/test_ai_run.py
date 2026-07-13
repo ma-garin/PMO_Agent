@@ -88,3 +88,27 @@ class TestAiRun:
 
     def test_get_not_allowed(self, api_client: Client):
         assert api_client.get(reverse("pmo_agent:ai_run")).status_code == 405
+
+
+@pytest.mark.django_db
+class TestAiTest:
+    def test_success(self, api_client: Client, engagement: Engagement):
+        with patch("pmo_agent.views.test_connection", return_value=(True, "応答: pong")) as mocked:
+            data = api_client.post(reverse("pmo_agent:ai_test")).json()
+        assert data["ok"] is True
+        assert data["provider"] == engagement.get_llm_provider_display()
+        assert "pong" in data["message"]
+        assert mocked.call_args.args[0] == engagement
+
+    def test_failure(self, api_client: Client):
+        with patch("pmo_agent.views.test_connection", return_value=(False, "モデル未取得")):
+            data = api_client.post(reverse("pmo_agent:ai_test")).json()
+        assert data["ok"] is False
+        assert "モデル未取得" in data["message"]
+
+    def test_requires_engagement(self, client: Client, user: User):
+        client.force_login(user)
+        assert client.post(reverse("pmo_agent:ai_test")).status_code == 403
+
+    def test_get_not_allowed(self, api_client: Client):
+        assert api_client.get(reverse("pmo_agent:ai_test")).status_code == 405

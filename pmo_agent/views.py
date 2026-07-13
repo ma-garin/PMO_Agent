@@ -15,7 +15,7 @@ from django.views.decorators.http import require_http_methods
 from audit.services import record
 from engagements.models import Engagement
 from llm.prompt_utils import EXTERNAL_DATA_GUARD, wrap_external
-from llm.services import LlmError, run_completion
+from llm.services import LlmError, run_completion, test_connection
 
 from .models import PmoJsonStore, PmoTaskStore
 from .throttle import throttle
@@ -120,6 +120,7 @@ def _server_tokens(request: HttpRequest, engagement: Engagement) -> dict[str, st
             "_kind_/", ""
         ),
         "__PMO_AI_RUN_URL__": reverse("pmo_agent:ai_run"),
+        "__PMO_AI_TEST_URL__": reverse("pmo_agent:ai_test"),
         "__PMO_CSS_URL__": static("pmo_agent/pmo_agent.css"),
         "__PMO_CSRF_TOKEN__": get_token(request),
         # ヘッダー右端(ユーザーメニュー/案件切替/ログアウト)用
@@ -324,3 +325,18 @@ def ai_run(request: HttpRequest) -> JsonResponse:
                 "createdAt": created_at,
             }
         )
+
+
+@login_required
+@require_http_methods(["POST"])
+@throttle("ai_test", limit=10)
+def ai_test(request: HttpRequest) -> JsonResponse:
+    """案件のLLM設定へ固定pingを送り疎通可否を返す(案件データは送らない)。"""
+    engagement = _current_engagement(request)
+    if engagement is None:
+        return JsonResponse({"error": "engagement_not_selected"}, status=403)
+    ok, message = test_connection(engagement, user=request.user)
+    provider_label = engagement.get_llm_provider_display()
+    model = engagement.llm_model or "(既定モデル)"
+    record(request.user, "pmo_ai_test", engagement, detail=f"{'ok' if ok else 'ng'}: {message}"[:200])
+    return JsonResponse({"ok": ok, "message": message, "provider": provider_label, "model": model})
