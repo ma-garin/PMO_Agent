@@ -797,3 +797,17 @@ body.knowledge-maximized .knowledge-max-btn{background:#fff;color:var(--blue);bo
 :root[data-theme="dark"] .del-chat,:root[data-theme="dark"] .out-col,:root[data-theme="dark"] .edu-inp-panel,:root[data-theme="dark"] .edu-rev,:root[data-theme="dark"] .knowledge-log,:root[data-theme="dark"] .chat-log,:root[data-theme="dark"] .edu-ta,:root[data-theme="dark"] .qa-row,:root[data-theme="dark"] .chat-input-row,:root[data-theme="dark"] .edu-act{background:var(--surface)}
 :root[data-theme="dark"] .hdr-badge.n{background:#26334a;color:#9fb0c7}
 :root[data-theme="dark"] .task-priority{background:var(--bg);border-color:var(--line);color:var(--muted)}
+
+/* 汎用ポップアップ(疎通確認など) */
+.pmo-modal{display:none;position:fixed;inset:0;z-index:90;align-items:center;justify-content:center;padding:20px;background:rgba(15,23,42,.5)}
+.pmo-modal.open{display:flex}
+.pmo-modal-dialog{width:min(460px,calc(100vw - 32px));background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 24px 60px rgba(15,23,42,.30);overflow:hidden}
+.pmo-modal-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 16px;border-bottom:1px solid var(--line);background:#f8fbff}
+.pmo-modal-head h2{margin:0;font-size:14px;font-weight:900;color:var(--ink)}
+.pmo-modal-close{width:30px;height:30px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font-weight:900;cursor:pointer}
+.pmo-modal-body{padding:18px 16px}
+.pmo-modal-icon{font-size:34px;line-height:1;text-align:center;margin-bottom:10px}
+.pmo-modal-body .pmo-modal-title{font-size:15px;font-weight:900;text-align:center;color:var(--ink);margin-bottom:6px}
+.pmo-modal-body .pmo-modal-detail{font-size:12.5px;color:var(--muted);line-height:1.7;text-align:center;overflow-wrap:anywhere}
+.pmo-modal-foot{padding:0 16px 16px;display:flex;justify-content:center}
+.pmo-modal-spinner{width:30px;height:30px;margin:0 auto 4px;border:3px solid #bfdbfe;border-top-color:var(--blue);border-radius:50%;animation:spin .85s linear infinite}

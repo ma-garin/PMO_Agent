@@ -1186,7 +1186,6 @@
           </div>
           <div class="s-row-control"><button class="btn-b sm" type="button" id="settings-conntest-btn">疎通確認を実行</button></div>
         </div>
-        <div class="s-note" id="settings-conntest-result" role="status" aria-live="polite" style="display:none;margin-top:10px"></div>
 
 
         <div class="s-row">
@@ -1331,6 +1330,18 @@
         <div class="s-note">APIキーなどの秘密情報はこの画面では表示しません。OpenAI/Ollama設定の保存はマスクした状態で扱います。</div>
       </div>
     </div>
+  </div>
+</div>
+
+<div class="pmo-modal" id="pmoConnModal" aria-hidden="true">
+  <div class="pmo-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="pmoConnModalTitle">
+    <div class="pmo-modal-head"><h2 id="pmoConnModalTitle">LLM疎通確認</h2><button class="pmo-modal-close" type="button" data-pmo-conn-close aria-label="閉じる">×</button></div>
+    <div class="pmo-modal-body">
+      <div class="pmo-modal-icon" id="pmoConnIcon" aria-hidden="true"></div>
+      <div class="pmo-modal-title" id="pmoConnTitle"></div>
+      <div class="pmo-modal-detail" id="pmoConnDetail"></div>
+    </div>
+    <div class="pmo-modal-foot"><button class="btn-b sm" type="button" data-pmo-conn-close>閉じる</button></div>
   </div>
 </div>
 
@@ -5131,16 +5142,24 @@ function initSettingsScreen() {
   });
 
   const connTestBtn = document.getElementById('settings-conntest-btn');
-  const connTestResult = document.getElementById('settings-conntest-result');
+  const connModal = document.getElementById('pmoConnModal');
+  const connSetModal = (icon, title, detail) => {
+    document.getElementById('pmoConnIcon').innerHTML = icon;
+    document.getElementById('pmoConnTitle').textContent = title;
+    document.getElementById('pmoConnDetail').textContent = detail || '';
+  };
+  const connOpenModal = () => { connModal?.classList.add('open'); connModal?.setAttribute('aria-hidden', 'false'); };
+  const connCloseModal = () => { connModal?.classList.remove('open'); connModal?.setAttribute('aria-hidden', 'true'); };
+  connModal?.querySelectorAll('[data-pmo-conn-close]').forEach(b => b.addEventListener('click', connCloseModal));
+  connModal?.addEventListener('click', e => { if (e.target === connModal) connCloseModal(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && connModal?.classList.contains('open')) connCloseModal(); });
   connTestBtn?.addEventListener('click', async () => {
-    if (!connTestResult) return;
     connTestBtn.disabled = true;
     connTestBtn.setAttribute('aria-busy', 'true');
     const originalLabel = connTestBtn.textContent;
     connTestBtn.textContent = '確認中…';
-    connTestResult.style.display = 'block';
-    connTestResult.style.borderColor = 'var(--line)';
-    connTestResult.textContent = 'LLMへ固定pingを送信しています。応答待ちのため数秒〜数十秒かかる場合があります…';
+    connSetModal('<span class="pmo-modal-spinner"></span>', '疎通確認中…', 'LLMへ固定pingを送信しています。応答待ちのため数秒〜数十秒かかる場合があります。');
+    connOpenModal();
     try {
       const response = await fetch(pmoApiConfig.aiTestUrl, {
         method:'POST', credentials:'same-origin',
@@ -5148,21 +5167,17 @@ function initSettingsScreen() {
         body:'{}'
       });
       if (response.status === 429) {
-        connTestResult.style.borderColor = '#fde68a';
-        connTestResult.innerHTML = '<strong>⏳ 実行回数が多すぎます。</strong> 少し待って再実行してください。';
+        connSetModal('⏳', '実行回数が多すぎます', '短時間の実行が多すぎます。少し待って再実行してください。');
         return;
       }
       const data = await response.json();
       if (data.ok) {
-        connTestResult.style.borderColor = '#bbf7d0';
-        connTestResult.innerHTML = `<strong style="color:var(--green)">✅ 疎通OK</strong> — ${pmoTaskEsc(data.provider)} / ${pmoTaskEsc(data.model)}<br><span style="color:var(--muted)">${pmoTaskEsc(data.message || '')}</span>`;
+        connSetModal('✅', '疎通OK', `${data.provider} / ${data.model}\n${data.message || ''}`);
       } else {
-        connTestResult.style.borderColor = '#fecaca';
-        connTestResult.innerHTML = `<strong style="color:var(--red)">❌ 疎通失敗</strong> — ${pmoTaskEsc(data.provider || '')} / ${pmoTaskEsc(data.model || '')}<br><span style="color:var(--muted)">${pmoTaskEsc(data.message || data.error || '接続に失敗しました。案件のLLM設定を確認してください。')}</span>`;
+        connSetModal('❌', '疎通失敗', `${data.provider || ''} / ${data.model || ''}\n${data.message || data.error || '接続に失敗しました。案件のLLM設定を確認してください。'}`);
       }
     } catch (error) {
-      connTestResult.style.borderColor = '#fecaca';
-      connTestResult.innerHTML = `<strong style="color:var(--red)">❌ 実行できませんでした</strong><br><span style="color:var(--muted)">${pmoTaskEsc(String(error?.message || error || ''))}</span>`;
+      connSetModal('❌', '実行できませんでした', String(error?.message || error || '通信に失敗しました。'));
     } finally {
       connTestBtn.disabled = false;
       connTestBtn.removeAttribute('aria-busy');
