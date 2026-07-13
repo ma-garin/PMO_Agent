@@ -1229,13 +1229,13 @@ body.knowledge-maximized .knowledge-max-btn{background:#fff;color:var(--blue);bo
 <!-- S2 進捗予測 -->
 <div class="screen" id="s-progress">
   <div class="ph"><div><div class="pk">AI Project Control</div><h1 class="pt">進捗予測・介入</h1><p class="ps">WBSタスク進捗・ガントチャート・EVM・完了予測</p></div></div>
-  <div class="evm-g">
+  <div class="evm-g" data-demo-only>
     <div class="evm-c"><div class="evm-l">SPI（スケジュール効率）</div><div class="evm-v w">0.94</div></div>
     <div class="evm-c"><div class="evm-l">CPI（コスト効率）</div><div class="evm-v g">1.02</div></div>
     <div class="evm-c"><div class="evm-l">完了予測遅延</div><div class="evm-v bd">+5日</div></div>
   </div>
-  <div class="callout w" style="margin-bottom:14px">⚠ クリティカルパス上に3タスクの遅延が検出されています。早急な介入を推奨します。</div>
-  <div class="card" style="margin-bottom:14px">
+  <div class="callout w" style="margin-bottom:14px" data-demo-only>⚠ クリティカルパス上に3タスクの遅延が検出されています。早急な介入を推奨します。</div>
+  <div class="card" style="margin-bottom:14px" data-demo-only>
     <div class="card-hdr"><span class="card-t">WBSタスク一覧</span><span class="card-act">フィルター</span></div>
     <table class="t"><thead><tr><th>タスク名</th><th>担当</th><th>計画完了日</th><th>実績</th><th>遅延</th><th>PMO判断</th></tr></thead><tbody>
       <tr><td>要件定義書レビュー</td><td>田中</td><td>5/30</td><td><span class="badge g">完了</span></td><td>0日</td><td><span class="badge g">監視継続</span></td></tr>
@@ -1245,7 +1245,7 @@ body.knowledge-maximized .knowledge-max-btn{background:#fff;color:var(--blue);bo
       <tr><td>データ移行計画</td><td>高橋</td><td>6/15</td><td><span class="badge a">進行中</span></td><td>+3日</td><td><span class="badge a">PM判断</span></td></tr>
     </tbody></table>
   </div>
-  <div class="card">
+  <div class="card" data-demo-only>
     <div class="card-hdr"><span class="card-t">ガントチャート（簡易）</span></div>
     <table class="gantt"><thead><tr><th style="width:150px">タスク</th><th>5/01</th><th>5/15</th><th>6/01</th><th>6/15</th><th>7/01</th></tr></thead><tbody>
       <tr><td>要件定義</td><td colspan="2"><div class="gbar g"></div></td><td></td><td></td><td></td></tr>
@@ -1259,13 +1259,13 @@ body.knowledge-maximized .knowledge-max-btn{background:#fff;color:var(--blue);bo
 <!-- S3 品質 -->
 <div class="screen" id="s-quality">
   <div class="ph"><div><div class="pk">AI Project Control</div><h1 class="pt">品質リアルタイム管理</h1><p class="ps">バグ密度・テスト消化率・ゲートチェック</p></div></div>
-  <div class="kpi-g">
+  <div class="kpi-g" data-demo-only>
     <div class="kpi"><div class="kpi-l">テスト消化率</div><div class="kpi-v" style="color:var(--red)">34%</div><div class="kpi-s">計画比 −18%</div><div class="kpi-bar"><div class="kpi-fill r" style="width:34%"></div></div></div>
     <div class="kpi"><div class="kpi-l">バグ検出数（累計）</div><div class="kpi-v">42</div><div class="kpi-s">今週 +8件</div><div class="kpi-bar"><div class="kpi-fill a" style="width:55%"></div></div></div>
     <div class="kpi"><div class="kpi-l">未解決バグ</div><div class="kpi-v" style="color:var(--red)">17</div><div class="kpi-s">重要度High: 5件</div><div class="kpi-bar"><div class="kpi-fill r" style="width:40%"></div></div></div>
     <div class="kpi"><div class="kpi-l">コードレビュー通過率</div><div class="kpi-v" style="color:var(--green)">91%</div><div class="kpi-s">目標 85% 達成</div><div class="kpi-bar"><div class="kpi-fill g" style="width:91%"></div></div></div>
   </div>
-  <div class="sg">
+  <div class="sg" data-demo-only>
     <div class="card">
       <div class="card-hdr"><span class="card-t">品質ゲートチェック</span></div>
       <div style="display:flex;flex-direction:column;gap:7px">
@@ -1289,8 +1289,8 @@ body.knowledge-maximized .knowledge-max-btn{background:#fff;color:var(--blue);bo
 
 <!-- S4 リスク -->
 <div class="screen" id="s-risk">
-  <div class="ph"><div><div class="pk">AI Project Control</div><h1 class="pt">リスク予測・対策</h1><p class="ps">リスクマトリクス・対策状況・AIリスク予測</p></div><div class="ph-right"><button class="btn-b sm">リスク追加</button></div></div>
-  <div class="sg">
+  <div class="ph"><div><div class="pk">AI Project Control</div><h1 class="pt">リスク予測・対策</h1><p class="ps">リスクマトリクス・対策状況・AIリスク予測</p></div><div class="ph-right"><button class="btn-b sm" data-demo-only>リスク追加</button></div></div>
+  <div class="sg" data-demo-only>
     <div class="card">
       <div class="card-hdr"><span class="card-t">リスク一覧</span><span style="font-size:11px;color:var(--muted)">計7件</span></div>
       <table class="t"><thead><tr><th>リスク名</th><th>影響</th><th>確率</th><th>スコア</th><th>対策</th></tr></thead><tbody>
@@ -1328,8 +1328,8 @@ body.knowledge-maximized .knowledge-max-btn{background:#fff;color:var(--blue);bo
 
 <!-- S5 変更 -->
 <div class="screen" id="s-change">
-  <div class="ph"><div><div class="pk">AI Project Control</div><h1 class="pt">変更影響分析</h1><p class="ps">変更要求の影響範囲・工数・スケジュール自動分析</p></div><div class="ph-right"><button class="btn-b sm">変更要求 新規登録</button></div></div>
-  <div class="sg">
+  <div class="ph"><div><div class="pk">AI Project Control</div><h1 class="pt">変更影響分析</h1><p class="ps">変更要求の影響範囲・工数・スケジュール自動分析</p></div><div class="ph-right"><button class="btn-b sm" data-demo-only>変更要求 新規登録</button></div></div>
+  <div class="sg" data-demo-only>
     <div class="card">
       <div class="card-hdr"><span class="card-t">変更要求一覧</span><span style="font-size:11px;color:var(--muted)">計3件</span></div>
       <table class="t"><thead><tr><th>変更ID</th><th>内容</th><th>影響工数</th><th>スケジュール</th><th>状態</th></tr></thead><tbody>
@@ -1348,7 +1348,7 @@ body.knowledge-maximized .knowledge-max-btn{background:#fff;color:var(--blue);bo
       </div>
     </div>
   </div>
-  <div class="ai-p">
+  <div class="ai-p" data-demo-only>
     <div class="ai-ph"><div class="ai-pm">AI</div><div><div class="ai-pt">変更影響AI分析</div><div class="ai-ps">変更要求内容を入力するとAIが影響範囲を自動分析します</div></div></div>
     <div class="ai-pb">
       <div class="ai-bubble">CR-002（API認証方式変更）の影響分析を完了しました。<strong>セキュリティモジュール全体の再テストが必要</strong>であり、現行テスト計画では対応工数が不足しています。CCBでの早急な審議を推奨します。</div>
@@ -1397,7 +1397,8 @@ body.knowledge-maximized .knowledge-max-btn{background:#fff;color:var(--blue);bo
       </div>
       <div class="card">
         <div class="card-hdr"><span class="card-t">参照ドキュメント</span></div>
-        <div style="font-size:11px;color:var(--muted);line-height:1.9">FAISS RAGインデックス<br><span style="color:var(--green);font-weight:700">● 接続済 — 42件のドキュメント</span></div>
+        <div style="font-size:11px;color:var(--muted);line-height:1.9" data-demo-only>FAISS RAGインデックス<br><span style="color:var(--green);font-weight:700">● 接続済 — 42件のドキュメント</span></div>
+        <div style="font-size:11px;color:var(--muted);line-height:1.9" data-empty-only hidden>RAGインデックス<br><span style="color:var(--muted);font-weight:700">● 未連携 — 「ドキュメント登録」から原資料を追加できます</span></div>
       </div>
     </div>
   </div>
@@ -2208,32 +2209,32 @@ function pmoEmptyCustomScreenMessage(screenId){
   return messages[screenId] || ['データは未連携です', 'プロジェクトデータが登録されるまで、サンプル値は表示しません。'];
 }
 function pmoRenderEmptyCustomScreens(){
-  if (!pmoIsEmptyCustomProject()) return;
-  ['progress','quality','risk','change','intervention'].forEach(screenId => {
+  // 実案件(デモ値なし)または空カスタム案件では、ハードコードのデモ値を出さず未連携カードを出す。
+  // デモ値カード自体は data-demo-only で非表示にし、AIコマンドパネル等の実機能は残す。
+  if (pmoUseDemoData && !pmoIsEmptyCustomProject()) return;
+  ['progress','quality','risk','change'].forEach(screenId => {
     const screen = document.getElementById(`s-${screenId}`);
-    if (!screen) return;
-    Array.from(screen.children).forEach(child => {
-      if (child.classList && child.classList.contains('ph')) return;
-      if (child.dataset.emptyCustomState !== undefined) return;
-      child.hidden = true;
-      child.style.display = 'none';
-    });
-    if (screen.querySelector('[data-empty-custom-state]')) return;
+    if (!screen || screen.querySelector('[data-empty-custom-state]')) return;
     const [title, body] = pmoEmptyCustomScreenMessage(screenId);
     const card = document.createElement('div');
     card.className = 'card';
     card.dataset.emptyCustomState = '';
     card.innerHTML = `<div class="card-hdr"><span class="card-t">${pmoTaskEsc(title)}</span><span class="card-act">未連携</span></div><div style="padding:18px 2px 4px;color:var(--muted);font-size:13px;line-height:1.75">${pmoTaskEsc(body)}</div>`;
-    screen.appendChild(card);
+    const anchor = screen.querySelector('[data-pmo-ai-screen]') || screen.querySelector('.ph');
+    if (anchor) anchor.insertAdjacentElement('afterend', card);
+    else screen.appendChild(card);
   });
 }
 function pmoApplyDemoVisibility(){
-  if (!pmoUseDemoData) {
-    document.querySelectorAll('[data-demo-only]').forEach(el => {
-      el.hidden = true;
-      el.style.display = 'none';
-    });
-  }
+  const showEmptyState = !pmoUseDemoData;
+  document.querySelectorAll('[data-demo-only]').forEach(el => {
+    el.hidden = showEmptyState;
+    el.style.display = showEmptyState ? 'none' : '';
+  });
+  document.querySelectorAll('[data-empty-only]').forEach(el => {
+    el.hidden = !showEmptyState;
+    el.style.display = showEmptyState ? '' : 'none';
+  });
   pmoRenderEmptyCustomScreens();
 }
 function pmoTaskEsc(value){ return String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
