@@ -2182,7 +2182,7 @@ const pmoTaskProjectKey = '__PROJECT_TASK_STORE_KEY__';
 const pmoTaskSourceVersion = '__PROJECT_TASK_SOURCE_VERSION__';
 const pmoTaskServerSavedAt = '__PMO_TASKS_SAVED_AT__';
 const pmoTaskServerStoreHash = '__PMO_TASKS_STORE_HASH__';
-const pmoApiConfig = {tasksUrl:'__PMO_TASKS_API_URL__', storesBase:'__PMO_STORES_API_BASE__', csrfToken:'__PMO_CSRF_TOKEN__'};
+const pmoApiConfig = {tasksUrl:'__PMO_TASKS_API_URL__', storesBase:'__PMO_STORES_API_BASE__', aiRunUrl:'__PMO_AI_RUN_URL__', csrfToken:'__PMO_CSRF_TOKEN__'};
 async function pmoStorePost(kind, payload){
   try {
     const response = await fetch(`${pmoApiConfig.storesBase}${kind}/`, {
@@ -2798,18 +2798,34 @@ function pmoAiRun(screen, action, requestText, resultElementId, title, extraCont
   };
   pmoAiSetPending(resultElementId, title);
   window.pmoAiLastRunRequest = payload;
-  // 送付用MVPでは外部AI・APIを呼ばず、画面確認用のローカル結果だけを返す。
-  window.setTimeout(() => {
-    const localAnswer = `## ${title}\n\n- **現状**: 主要タスクとリスクを確認対象として整理しました。\n- **推奨アクション**: 担当者・期限・次回確認日を合意し、週次報告へ反映してください。\n- **確認ポイント**: 重要な判断はPM/PMOが内容を確認してから採用してください。\n\n> この結果は送付用MVPのローカル疑似応答です。外部AI、RAG、DBには接続していません。`;
-    const row = {
-      request_id:requestId, screen, action, status:'completed', provider:'local_demo', used_fallback:true,
-      answer:localAnswer, created_at:new Date().toISOString(), evidence_refs:[],
-      structured_result:{summary:'ローカル疑似応答を表示しました。', human_review_required:true, adoption_policy:'提案内容は人が確認・編集・承認します。'}
-    };
+  const commitRow = (row) => {
     pmoAiActionInjected.actions = pmoAiActionRows().filter(item => item.screen !== screen).concat(row);
     pmoAiActionInjected.latest_by_screen = {...(pmoAiActionInjected.latest_by_screen || {}), [screen]:requestId};
     pmoAiRenderResult(screen, resultElementId, title);
-  }, 420);
+  };
+  const screenText = (extraContext && extraContext.screenText) || pmoAiScreenText(screen);
+  fetch(pmoApiConfig.aiRunUrl, {
+    method:'POST', credentials:'same-origin',
+    headers:{'Content-Type':'application/json', 'X-CSRFToken':pmoApiConfig.csrfToken},
+    body:JSON.stringify({screen, action, requestText, screenText})
+  }).then(async response => {
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+    commitRow({
+      request_id:requestId, screen, action, status:'completed',
+      provider:data.provider || 'llm', used_fallback:Boolean(data.usedFallback),
+      answer:data.answer || '', created_at:data.createdAt || new Date().toISOString(), evidence_refs:[],
+      structured_result:{human_review_required:true, adoption_policy:'生成結果は参考情報です。採用・修正・承認はPM/PMOが行います。'}
+    });
+  }).catch(error => {
+    window.pmoAiDebugLastError = String(error?.message || error || '');
+    commitRow({
+      request_id:requestId, screen, action, status:'completed', provider:'unavailable', used_fallback:true,
+      answer:`## 生成AIを実行できませんでした\n\n- サーバーへの接続に失敗しました(${window.pmoAiDebugLastError})。\n- 時間をおいて再実行するか、案件のLLM設定を確認してください。`,
+      created_at:new Date().toISOString(), evidence_refs:[],
+      structured_result:{human_review_required:true, adoption_policy:'生成結果は参考情報です。採用・修正・承認はPM/PMOが行います。'}
+    });
+  });
 }
 function pmoAiRenderAllResults(){
   pmoAiRenderResult('dashboard', 'dashboardAiResult', 'AI診断結果');

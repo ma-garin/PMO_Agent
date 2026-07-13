@@ -13,6 +13,8 @@ from django.views.decorators.http import require_http_methods
 
 from audit.services import record
 from engagements.models import Engagement
+from llm.prompt_utils import EXTERNAL_DATA_GUARD, wrap_external
+from llm.services import LlmError, run_completion
 
 from .models import PmoJsonStore, PmoTaskStore
 
@@ -115,6 +117,7 @@ def _server_tokens(request: HttpRequest, engagement: Engagement) -> dict[str, st
         "__PMO_STORES_API_BASE__": reverse("pmo_agent:stores_api", args=["_kind_"]).replace(
             "_kind_/", ""
         ),
+        "__PMO_AI_RUN_URL__": reverse("pmo_agent:ai_run"),
         "__PMO_CSRF_TOKEN__": get_token(request),
         # ヘッダー右端(ユーザーメニュー/案件切替/ログアウト)用
         "__PMO_USER_NAME__": escape(request.user.get_full_name() or request.user.username),
@@ -242,3 +245,76 @@ def stores_api(request: HttpRequest, kind: str) -> JsonResponse:
         detail=str(payload.get("action", "save")),
     )
     return JsonResponse({"ok": True, "savedAt": store.saved_at})
+
+
+AI_SYSTEM = (
+    "あなたはPMO(プロジェクトマネジメントオフィス)支援AIです。"
+    "第三者検証会社のPMO実務向けに、日本語で簡潔に、確認・判断に使える形へ整理してください。"
+    "見出しと箇条書きを使い、根拠が無い主張は『要確認』と明記し、最終判断・採用・承認は人が行う前提で書いてください。\n"
+    + EXTERNAL_DATA_GUARD
+)
+AI_FALLBACK = (
+    "## 生成AIは現在利用できません\n\n"
+    "- LLMプロバイダへの接続に失敗しました(モデル未取得・APIキー未設定・接続不可などの可能性)。\n"
+    "- 案件の「LLM設定」でプロバイダ/モデル/APIキーを確認し、再実行してください。\n"
+    "- それまでは画面上のデータ(WBS・KPI・提案・根拠)を人が直接確認してください。"
+)
+
+
+@login_required
+@require_http_methods(["POST"])
+def ai_run(request: HttpRequest) -> JsonResponse:
+    """全画面の「生成AIで〜」を案件のLLM設定で実行する。
+
+    失敗時(LLM不通など)はフォールバック文言を返し、画面が壊れないようにする。
+    呼び出しはllm.services経由でLlmCallLogに記録される。
+    """
+    engagement = _current_engagement(request)
+    if engagement is None:
+        return JsonResponse({"error": "engagement_not_selected"}, status=403)
+    try:
+        payload = json.loads(request.body.decode("utf-8"))
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return JsonResponse({"error": "invalid_json"}, status=400)
+
+    screen = str(payload.get("screen", ""))[:40]
+    action = str(payload.get("action", ""))[:60]
+    request_text = str(payload.get("requestText", "")).strip()[:2000]
+    screen_text = str(payload.get("screenText", "")).strip()[:4000]
+    if not screen or not action or not request_text:
+        return JsonResponse({"error": "missing_fields"}, status=400)
+
+    prompt = f"{request_text}\n\n参考(現在の画面のデータ):\n{wrap_external(screen_text)}"
+    created_at = timezone.now().isoformat()
+    try:
+        answer = run_completion(
+            engagement,
+            purpose=f"pmo_{action}"[:60],
+            prompt=prompt,
+            system=AI_SYSTEM,
+            max_tokens=1200,
+            user=request.user,
+        )
+        used_fallback = not (answer and answer.strip())
+        if used_fallback:
+            answer = AI_FALLBACK
+        record(request.user, "pmo_ai_run", engagement, detail=f"{screen}/{action}")
+        return JsonResponse(
+            {
+                "answer": answer,
+                "provider": engagement.llm_provider,
+                "usedFallback": used_fallback,
+                "createdAt": created_at,
+            }
+        )
+    except LlmError as exc:
+        record(request.user, "pmo_ai_run_failed", engagement, detail=f"{screen}/{action}: {exc}"[:200])
+        return JsonResponse(
+            {
+                "answer": AI_FALLBACK,
+                "provider": engagement.llm_provider,
+                "usedFallback": True,
+                "error": str(exc)[:200],
+                "createdAt": created_at,
+            }
+        )
