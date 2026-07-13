@@ -62,6 +62,13 @@ def test_pmo_agent_injects_engagement_data(client: Client, user: User, engagemen
     # トークン残留・verbatim残留がない(JS内の文字列リテラル '__PROJECT_' 判定は除く)
     assert re.search(r"__PROJECT_[A-Z_]+__", body) is None
     assert "{% verbatim %}" not in body
+    # ヘッダー右端: ユーザーメニュー(ログアウト/アカウント設定/案件切替)・テーマ切替・ヘルプ導線
+    assert reverse("accounts:logout") in body
+    assert reverse("accounts:profile") in body
+    assert reverse("engagements:select") in body
+    assert 'id="pmoThemeToggle"' in body
+    assert 'id="pmoInfoBtn"' in body
+    assert "csrfmiddlewaretoken" in body
 
 
 @pytest.mark.django_db

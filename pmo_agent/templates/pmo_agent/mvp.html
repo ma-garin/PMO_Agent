@@ -30,7 +30,7 @@ a{color:inherit;text-decoration:none}
 .shell{display:grid;grid-template-columns:var(--sidebar-w) 1fr;grid-template-rows:var(--header-h) 1fr;height:100vh;overflow:hidden}
 
 /* Header */
-.hdr{grid-column:1/-1;display:flex;align-items:center;gap:10px;padding:0 226px 0 0;background:var(--surface);border-bottom:1px solid var(--line);box-shadow:0 1px 2px rgba(16,24,40,.04);z-index:10}
+.hdr{grid-column:1/-1;display:flex;align-items:center;gap:10px;padding:0 14px 0 0;background:var(--surface);border-bottom:1px solid var(--line);box-shadow:0 1px 2px rgba(16,24,40,.04);z-index:10}
 .hdr-brand{display:flex;align-items:center;gap:10px;width:var(--sidebar-w);padding:0 14px;flex-shrink:0}
 .hdr-mark{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:9px;background:var(--blue);color:#fff;font-size:11px;font-weight:900}
 .hdr-name{color:var(--ink);font-size:13px;font-weight:800;line-height:1.25}
@@ -41,6 +41,20 @@ a{color:inherit;text-decoration:none}
 .hdr-chip:hover{background:var(--bg)}
 .hdr-chip.active{background:var(--blue);border-color:var(--blue);color:#fff}
 .hdr-project{max-width:360px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:4px 11px;border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--ink);font-size:11px;font-weight:900}
+.hdr-tools{display:flex;gap:6px;align-items:center;margin-left:4px}
+.hdr-icon{display:inline-grid;place-items:center;width:30px;height:30px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--muted);font-size:13px;font-weight:900;cursor:pointer}
+.hdr-icon:hover{background:var(--bg);color:var(--ink)}
+.hdr-user{position:relative}
+.hdr-user summary{list-style:none;display:inline-grid;place-items:center;width:30px;height:30px;border-radius:999px;background:var(--blue);color:#fff;font-size:11px;font-weight:900;cursor:pointer}
+.hdr-user summary::-webkit-details-marker{display:none}
+.hdr-user-panel{position:absolute;right:0;top:38px;z-index:70;min-width:220px;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:0 12px 32px rgba(15,23,42,.20);padding:6px;display:grid;gap:2px}
+.hdr-user-head{padding:8px 10px;border-bottom:1px solid var(--line);margin-bottom:4px}
+.hdr-user-head strong{display:block;font-size:12px;color:var(--ink)}
+.hdr-user-head span{display:block;font-size:11px;color:var(--muted);overflow-wrap:anywhere}
+.hdr-user-panel form{display:contents}
+.hdr-user-item{display:block;width:100%;padding:7px 10px;border:0;border-radius:7px;background:transparent;color:var(--ink);font:inherit;font-size:12px;font-weight:700;text-align:left;cursor:pointer;text-decoration:none}
+.hdr-user-item:hover{background:var(--bg)}
+.hdr-logout{color:var(--red)}
 .hdr-badge{padding:3px 9px;border-radius:999px;font-size:10px;font-weight:900}
 .hdr-badge.g{background:var(--green-soft);color:var(--green)}
 .hdr-badge.a{background:var(--yellow-soft);color:var(--yellow)}
@@ -512,7 +526,7 @@ body.knowledge-maximized .knowledge-max-btn{background:#fff;color:var(--blue);bo
 }
 @media (max-width: 900px){
   .knowledge-native-frame{height:calc(100vh - var(--header-h) - 104px);min-height:340px}
-  .hdr{padding-right:166px}
+  .hdr{padding-right:10px}
   body.knowledge-maximized .hdr-chips .hdr-badge,
   body.knowledge-maximized .hdr-chips .hdr-chip.active{display:none}
 }
@@ -744,6 +758,47 @@ body.knowledge-maximized .knowledge-max-btn{background:#fff;color:var(--blue);bo
 }
 
 .screen{display:none}.screen.active{display:block}
+
+/* Dark theme */
+:root[data-theme="dark"]{
+  --bg:#0f1522; --surface:#161e2e; --ink:#e6edf6; --muted:#94a3b8;
+  --line:#2a3548; --nav:#131b2b;
+  --nav-text:#c7d2e0; --nav-muted:#7c8a9e;
+  --nav-hover:#1d2a3f; --nav-active:#1d3557;
+  --blue:#3b82f6; --blue-soft:#1a2c4d;
+  --red:#f87171; --red-soft:#3b1d24;
+  --green:#4ade80; --green-soft:#12301f;
+  --orange:#fb923c; --orange-soft:#3b2413;
+  --yellow:#facc15; --yellow-soft:#39300f;
+  --purple:#c084fc; --purple-soft:#2d2244;
+  --shadow:0 1px 3px rgba(0,0,0,.5),0 1px 2px rgba(0,0,0,.4);
+}
+:root[data-theme="dark"] .hdr{box-shadow:0 1px 2px rgba(0,0,0,.4)}
+:root[data-theme="dark"] .sb-badge{background:#1f2b3f;color:var(--nav-muted)}
+:root[data-theme="dark"] .sb-item.active .sb-badge{background:#264a7a;color:#93c5fd}
+:root[data-theme="dark"] .sb-tag{border-color:var(--line);color:var(--nav-muted)}
+:root[data-theme="dark"] .sb-tag.ai{background:#1a2c4d;border-color:#2c4a7c;color:#93c5fd}
+:root[data-theme="dark"] .sb-tag.rag{background:#12301f;border-color:#1e4d33;color:#86efac}
+:root[data-theme="dark"] .dashboard-health,:root[data-theme="dark"] .dashboard-metric,:root[data-theme="dark"] .dashboard-panel,:root[data-theme="dark"] .dashboard-alert,:root[data-theme="dark"] .proposal-queue,:root[data-theme="dark"] .proposal-detail,:root[data-theme="dark"] .proposal-card,:root[data-theme="dark"] .proposal-metric,:root[data-theme="dark"] .proposal-claim,:root[data-theme="dark"] .report-kpi,:root[data-theme="dark"] .report-panel,:root[data-theme="dark"] .validation-panel,:root[data-theme="dark"] .validation-metric,:root[data-theme="dark"] .validation-table-wrap,:root[data-theme="dark"] .validation-sheet,:root[data-theme="dark"] .kpi-effect-card,:root[data-theme="dark"] .kpi-effect-panel,:root[data-theme="dark"] .kpi-effect-fact,:root[data-theme="dark"] .kpi-effect-list-item,:root[data-theme="dark"] .kpi-effect-evidence,:root[data-theme="dark"] .task-gantt-panel,:root[data-theme="dark"] .task-table-wrap,:root[data-theme="dark"] .task-dialog,:root[data-theme="dark"] .ai-result-dialog,:root[data-theme="dark"] .ai-action-result,:root[data-theme="dark"] .knowledge-panel,:root[data-theme="dark"] .prompt-card,:root[data-theme="dark"] .help-row,:root[data-theme="dark"] .mock-list-item,:root[data-theme="dark"] .int-item,:root[data-theme="dark"] .evm-c,:root[data-theme="dark"] .doc-item,:root[data-theme="dark"] .rag-result,:root[data-theme="dark"] .task-acc,:root[data-theme="dark"] .task-pmo-panel,:root[data-theme="dark"] .task-pmo-check,:root[data-theme="dark"] .score-card,:root[data-theme="dark"] .task-decision-card,:root[data-theme="dark"] .dashboard-alert-rank,:root[data-theme="dark"] .s-menu,:root[data-theme="dark"] .s-panel,:root[data-theme="dark"] .mock-tabs{background:var(--surface);border-color:var(--line)}
+:root[data-theme="dark"] .dashboard-health-head,:root[data-theme="dark"] .dashboard-panel-head,:root[data-theme="dark"] .dashboard-alert:hover,:root[data-theme="dark"] .task-gantt-head,:root[data-theme="dark"] .task-gantt-head>div:first-child,:root[data-theme="dark"] .task-gantt-name,:root[data-theme="dark"] .task-table th,:root[data-theme="dark"] .dashboard-risk-table th,:root[data-theme="dark"] .validation-table th,:root[data-theme="dark"] .kpi-effect-table th,:root[data-theme="dark"] .ai-result-table th,:root[data-theme="dark"] .report-panel-head,:root[data-theme="dark"] .kpi-effect-panel-head,:root[data-theme="dark"] .kpi-effect-evidence-head,:root[data-theme="dark"] .validation-panel-head,:root[data-theme="dark"] .task-modal-head,:root[data-theme="dark"] .ai-result-head,:root[data-theme="dark"] .ai-action-head,:root[data-theme="dark"] .task-acc-btn,:root[data-theme="dark"] .proposal-log-item,:root[data-theme="dark"] .report-log-item,:root[data-theme="dark"] .task-history,:root[data-theme="dark"] .knowledge-status,:root[data-theme="dark"] .knowledge-compose,:root[data-theme="dark"] .gen-bar,:root[data-theme="dark"] .del-sb,:root[data-theme="dark"] .edu-cat,:root[data-theme="dark"] .mock-mini,:root[data-theme="dark"] .prompt-code,:root[data-theme="dark"] .ai-result-code,:root[data-theme="dark"] .ai-action-ev,:root[data-theme="dark"] .task-pmo-panel-head,:root[data-theme="dark"] .ai-bubble,:root[data-theme="dark"] .bubble-ai,:root[data-theme="dark"] .knowledge-msg.ai,:root[data-theme="dark"] .help-side,:root[data-theme="dark"] .help-chat,:root[data-theme="dark"] .help-intro,:root[data-theme="dark"] .ai-ph,:root[data-theme="dark"] .proposal-empty,:root[data-theme="dark"] .task-datetime-block,:root[data-theme="dark"] .task-handoff-block,:root[data-theme="dark"] .task-effort-summary div,:root[data-theme="dark"] .task-ai-impact-head,:root[data-theme="dark"] .help-chat-window,:root[data-theme="dark"] .help-msg.bot,:root[data-theme="dark"] .s-info-panel{background:var(--bg);border-color:var(--line);color:var(--ink)}
+:root[data-theme="dark"] .task-input,:root[data-theme="dark"] .task-select,:root[data-theme="dark"] .task-area,:root[data-theme="dark"] .task-mini-select,:root[data-theme="dark"] .s-inp,:root[data-theme="dark"] .ai-inp,:root[data-theme="dark"] .chat-inp,:root[data-theme="dark"] .edu-ta,:root[data-theme="dark"] .knowledge-input,:root[data-theme="dark"] .knowledge-textarea,:root[data-theme="dark"] .proposal-input,:root[data-theme="dark"] .proposal-textarea,:root[data-theme="dark"] .report-input,:root[data-theme="dark"] .report-note,:root[data-theme="dark"] .report-editor,:root[data-theme="dark"] .report-editor-title,:root[data-theme="dark"] .kpi-effect-num,:root[data-theme="dark"] .help-input{background:var(--surface);border-color:var(--line);color:var(--ink)}
+:root[data-theme="dark"] .task-mini-btn,:root[data-theme="dark"] .task-tabs button,:root[data-theme="dark"] .task-scale button,:root[data-theme="dark"] .validation-tabs button,:root[data-theme="dark"] .report-tab,:root[data-theme="dark"] .help-tab,:root[data-theme="dark"] .ai-result-tab,:root[data-theme="dark"] .ai-result-close,:root[data-theme="dark"] .task-close,:root[data-theme="dark"] .task-toggle,:root[data-theme="dark"] .ai-action-btn,:root[data-theme="dark"] .task-danger,:root[data-theme="dark"] .int-ev-link,:root[data-theme="dark"] .rag-chip,:root[data-theme="dark"] .help-chip,:root[data-theme="dark"] .qa-chip,:root[data-theme="dark"] .s-info{background:var(--surface);border-color:var(--line);color:var(--ink)}
+:root[data-theme="dark"] .task-mini-btn:hover,:root[data-theme="dark"] .task-tabs button:hover{background:var(--nav-hover);border-color:var(--line)}
+:root[data-theme="dark"] .task-tabs button.active,:root[data-theme="dark"] .task-scale button.active,:root[data-theme="dark"] .validation-tabs button.active,:root[data-theme="dark"] .report-tab.active,:root[data-theme="dark"] .ai-result-tab.active,:root[data-theme="dark"] .mock-tab.active,:root[data-theme="dark"] .task-mini-btn.active{background:var(--blue);border-color:var(--blue);color:#fff}
+:root[data-theme="dark"] .ai-action-btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}
+:root[data-theme="dark"] .project-strip,:root[data-theme="dark"] .task-strip,:root[data-theme="dark"] .validation-note,:root[data-theme="dark"] .validation-next,:root[data-theme="dark"] .s-provider-summary,:root[data-theme="dark"] .int-evidence,:root[data-theme="dark"] .pmo-ai-command,:root[data-theme="dark"] .report-evidence-item,:root[data-theme="dark"] .kpi-effect-evidence-item,:root[data-theme="dark"] .ai-result-evidence-item,:root[data-theme="dark"] .ai-result-score,:root[data-theme="dark"] .knowledge-drop,:root[data-theme="dark"] .ai-action-inline-detail,:root[data-theme="dark"] .task-related-links button,:root[data-theme="dark"] .pmo-ai-chip,:root[data-theme="dark"] .ai-action-meta span,:root[data-theme="dark"] .ai-result-chip{background:var(--blue-soft);border-color:#2c4a7c;color:#bcd3f5}
+:root[data-theme="dark"] .project-strip strong,:root[data-theme="dark"] .task-strip strong,:root[data-theme="dark"] .ai-result-score strong{color:var(--ink)}
+:root[data-theme="dark"] .project-strip em,:root[data-theme="dark"] .task-strip em{background:var(--surface);border-color:#2c4a7c;color:#bcd3f5}
+:root[data-theme="dark"] .task-gantt-lane{background:repeating-linear-gradient(to right,var(--surface) 0,var(--surface) calc(var(--task-gantt-tick-width) - 1px),var(--line) calc(var(--task-gantt-tick-width) - 1px),var(--line) var(--task-gantt-tick-width))}
+:root[data-theme="dark"] .task-gantt-row:hover,:root[data-theme="dark"] .task-gantt-row:hover .task-gantt-name,:root[data-theme="dark"] .task-table tbody tr:hover td,:root[data-theme="dark"] .dashboard-risk-table tbody tr:hover td{background:var(--nav-hover)}
+:root[data-theme="dark"] .task-gantt-row.selected,:root[data-theme="dark"] .task-gantt-row.selected .task-gantt-name,:root[data-theme="dark"] .task-table tbody tr.selected td{background:var(--nav-active)}
+:root[data-theme="dark"] .task-gantt-today{background:#e2e8f0}
+:root[data-theme="dark"] .task-bar{background:#2a3548}
+:root[data-theme="dark"] .ai-result-md,:root[data-theme="dark"] .ai-action-summary-text,:root[data-theme="dark"] .pmo-ai-command-note,:root[data-theme="dark"] .int-ev-snippet,:root[data-theme="dark"] .mock-text,:root[data-theme="dark"] .ai-result-code,:root[data-theme="dark"] .prompt-code,:root[data-theme="dark"] .knowledge-drop,:root[data-theme="dark"] .task-datetime-read strong,:root[data-theme="dark"] .kpi-effect-card-value,:root[data-theme="dark"] .ai-result-md strong,:root[data-theme="dark"] .ai-result-md code{color:var(--ink)}
+:root[data-theme="dark"] .out-hdr{background:var(--purple-soft);color:var(--purple)}
+:root[data-theme="dark"] .del-chat,:root[data-theme="dark"] .out-col,:root[data-theme="dark"] .edu-inp-panel,:root[data-theme="dark"] .edu-rev,:root[data-theme="dark"] .knowledge-log,:root[data-theme="dark"] .chat-log,:root[data-theme="dark"] .edu-ta,:root[data-theme="dark"] .qa-row,:root[data-theme="dark"] .chat-input-row,:root[data-theme="dark"] .edu-act{background:var(--surface)}
+:root[data-theme="dark"] .hdr-badge.n{background:#26334a;color:#9fb0c7}
+:root[data-theme="dark"] .task-priority{background:var(--bg);border-color:var(--line);color:var(--muted)}
 </style>
 </head>
 <body>
@@ -760,6 +815,19 @@ body.knowledge-maximized .knowledge-max-btn{background:#fff;color:var(--blue);bo
     <span class="hdr-badge a">● __PROJECT_RAG_TEXT__</span>
     <span class="hdr-badge g">__PROJECT_STATUS_TEXT__</span>
     <span class="hdr-chip active" style="cursor:default">PMO Agent</span>
+  </div>
+  <div class="hdr-tools">
+    <button class="hdr-icon" type="button" id="pmoInfoBtn" title="ヘルプ・使い方ガイド">?</button>
+    <button class="hdr-icon" type="button" id="pmoThemeToggle" title="ライト/ダーク切替">☾</button>
+    <details class="hdr-user" id="pmoUserMenu">
+      <summary title="__PMO_USER_NAME__">__PMO_USER_INITIALS__</summary>
+      <div class="hdr-user-panel">
+        <div class="hdr-user-head"><strong>__PMO_USER_NAME__</strong><span>__PMO_USER_EMAIL__</span></div>
+        <a class="hdr-user-item" href="__PMO_PROFILE_URL__">&#9881; アカウント設定</a>
+        <a class="hdr-user-item" href="__PMO_SELECT_URL__">&#128257; 案件を切替</a>
+        <form method="post" action="__PMO_LOGOUT_URL__"><input type="hidden" name="csrfmiddlewaretoken" value="__PMO_CSRF_TOKEN__"><button class="hdr-user-item hdr-logout" type="submit">&#8594; ログアウト</button></form>
+      </div>
+    </details>
   </div>
 </header>
 
@@ -5230,6 +5298,37 @@ document.querySelectorAll('[data-help-open-settings]').forEach(btn => btn.addEve
 document.getElementById('pmoHelpForm')?.addEventListener('submit', event => {
   event.preventDefault();
   pmoHelpSubmit(document.getElementById('pmoHelpQuestion')?.value || '');
+});
+
+// Header tools: theme / info / user menu
+const pmoThemeStorageKey = 'verirag:pmo-agent:theme';
+function pmoApplyTheme(theme){
+  const dark = theme === 'dark';
+  if (dark) document.documentElement.setAttribute('data-theme', 'dark');
+  else document.documentElement.removeAttribute('data-theme');
+  const toggle = document.getElementById('pmoThemeToggle');
+  if (toggle) {
+    toggle.textContent = dark ? '☀' : '☾';
+    toggle.title = dark ? 'ライトモードへ切替' : 'ダークモードへ切替';
+  }
+}
+(function pmoInitTheme(){
+  let saved = '';
+  try { saved = window.localStorage?.getItem(pmoThemeStorageKey) || ''; } catch (error) { saved = ''; }
+  const theme = saved || (window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  pmoApplyTheme(theme);
+})();
+document.getElementById('pmoThemeToggle')?.addEventListener('click', () => {
+  const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  try { window.localStorage?.setItem(pmoThemeStorageKey, next); } catch (error) { /* private mode等では保存しない */ }
+  pmoApplyTheme(next);
+});
+document.getElementById('pmoInfoBtn')?.addEventListener('click', () => {
+  document.querySelector('.sb-item[data-s="help"]')?.click();
+});
+document.addEventListener('click', event => {
+  const menu = document.getElementById('pmoUserMenu');
+  if (menu?.open && !menu.contains(event.target)) menu.removeAttribute('open');
 });
 
 // Navigation

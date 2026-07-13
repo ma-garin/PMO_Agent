@@ -95,6 +95,13 @@ def _server_tokens(request: HttpRequest, engagement: Engagement) -> dict[str, st
         "__PMO_TASKS_STORE_HASH__": escape(store.store_hash if store else ""),
         "__PMO_TASKS_API_URL__": reverse("pmo_agent:tasks_api"),
         "__PMO_CSRF_TOKEN__": get_token(request),
+        # ヘッダー右端(ユーザーメニュー/案件切替/ログアウト)用
+        "__PMO_USER_NAME__": escape(request.user.get_full_name() or request.user.username),
+        "__PMO_USER_EMAIL__": escape(request.user.email or ""),
+        "__PMO_USER_INITIALS__": escape((request.user.username[:2] or "PM").upper()),
+        "__PMO_PROFILE_URL__": reverse("accounts:profile"),
+        "__PMO_SELECT_URL__": reverse("engagements:select"),
+        "__PMO_LOGOUT_URL__": reverse("accounts:logout"),
     }
 
 
