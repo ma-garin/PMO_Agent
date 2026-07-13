@@ -123,6 +123,7 @@ def _server_tokens(request: HttpRequest, engagement: Engagement) -> dict[str, st
         "__PMO_PROFILE_URL__": reverse("accounts:profile"),
         "__PMO_SELECT_URL__": reverse("engagements:select"),
         "__PMO_LOGOUT_URL__": reverse("accounts:logout"),
+        "__PMO_LLM_SETTINGS_URL__": reverse("engagements:llm_settings"),
     }
 
 

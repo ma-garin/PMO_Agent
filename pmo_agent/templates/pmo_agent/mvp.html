@@ -20,7 +20,12 @@
   --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.04);
   --sidebar-w:252px; --header-h:52px;
   --r-sm:8px; --r-md:10px; --r-lg:12px;
+  color-scheme:light;
 }
+.task-field-invalid,.task-field-invalid:focus{border-color:var(--red)!important;box-shadow:0 0 0 2px rgba(220,38,38,.18)!important}
+.task-form-error{display:none;margin:8px 0 0;padding:9px 11px;border:1px solid #fecaca;border-radius:8px;background:var(--red-soft);color:#991b1b;font-size:12px;font-weight:800}
+.task-form-error.show{display:block}
+.edu-inline-error{margin:8px 14px 0;padding:9px 11px;border:1px solid #fecaca;border-radius:8px;background:var(--red-soft);color:#991b1b;font-size:12px;font-weight:800}
 *,*::before,*::after{box-sizing:border-box}
 html,body{margin:0;padding:0;height:100%;overflow:hidden;background:var(--bg)}
 body{font-family:"Noto Sans JP","Yu Gothic UI","Yu Gothic",Meiryo,sans-serif;font-size:14px;line-height:1.6;color:var(--ink)}
@@ -761,6 +766,7 @@ body.knowledge-maximized .knowledge-max-btn{background:#fff;color:var(--blue);bo
 
 /* Dark theme */
 :root[data-theme="dark"]{
+  color-scheme:dark;
   --bg:#0f1522; --surface:#161e2e; --ink:#e6edf6; --muted:#94a3b8;
   --line:#2a3548; --nav:#131b2b;
   --nav-text:#c7d2e0; --nav-muted:#7c8a9e;
@@ -1092,6 +1098,7 @@ body.knowledge-maximized .knowledge-max-btn{background:#fff;color:var(--blue);bo
           </aside>
         </div>
       </div>
+      <div class="task-form-error" id="taskFormError" role="alert" aria-live="assertive"></div>
       <div class="task-modal-actions"><button class="task-danger" id="taskArchiveBtn" type="button">削除</button><div><button class="task-mini-btn" id="taskDiscardBtn" type="button">破棄</button><button class="btn-b sm" id="taskSaveBtn" type="button">保存</button></div></div>
     </section>
   </div>
@@ -1969,6 +1976,7 @@ body.knowledge-maximized .knowledge-max-btn{background:#fff;color:var(--blue);bo
     <div class="s-panel">
       <div class="s-tab-panel active" data-settings-panel="ai">
         <div class="s-sec-t">AIモデル設定</div>
+        <div class="s-note" style="border:1px solid #bfdbfe;background:#eff6ff;color:#1e3a8a;padding:10px 12px;border-radius:8px;margin:0 0 14px">この画面はプレビューです。実際にLLM実行へ使われる案件別のプロバイダ・モデル・APIキーは <a href="__PMO_LLM_SETTINGS_URL__" style="color:var(--blue);font-weight:900;text-decoration:underline">案件のLLM設定</a> で管理します。</div>
         <div class="s-provider-summary"><span id="settings-provider-summary">OpenAI API / gpt-5.5 / text-embedding-3-small</span><span class="s-pill">VeriRAG標準</span></div>
 
         <div class="s-row">
@@ -3778,6 +3786,7 @@ function pmoTaskForm(){
 }
 function pmoTaskOpenModal(task){
   taskEl('taskArchiveConfirm')?.classList.remove('open');
+  pmoTaskShowFormError('');
   pmoTaskFill(task);
   taskEl('taskModal').classList.add('open');
   taskEl('taskModal').setAttribute('aria-hidden','false');
@@ -3806,9 +3815,32 @@ function pmoTaskRenderAll(){
   if (taskEl('taskModal')?.classList.contains('open')) pmoTaskFill(pmoTaskSelected());
   if (taskEl('taskHistoryText')) taskEl('taskHistoryText').textContent = pmoTaskState.history.slice(0,4).join(' / ');
 }
+function pmoTaskShowFormError(message){
+  const box = taskEl('taskFormError');
+  ['taskFieldId','taskFieldName','taskFieldOwner'].forEach(id => {
+    const el = taskEl(id);
+    if (el) { el.classList.remove('task-field-invalid'); el.removeAttribute('aria-invalid'); }
+  });
+  if (!box) return;
+  box.textContent = message || '';
+  box.classList.toggle('show', Boolean(message));
+}
 async function pmoTaskSave(){
   const t = pmoTaskForm();
-  if (!t.id || !t.name || !t.owner) { alert('WBS ID、タスク名、担当は必須です。'); return; }
+  const missing = [];
+  if (!t.id) missing.push(['taskFieldId', 'WBS ID']);
+  if (!t.name) missing.push(['taskFieldName', 'タスク名']);
+  if (!t.owner) missing.push(['taskFieldOwner', '担当']);
+  if (missing.length) {
+    pmoTaskShowFormError(`${missing.map(m => m[1]).join('・')} は必須です。`);
+    missing.forEach(([id]) => {
+      const el = taskEl(id);
+      if (el) { el.classList.add('task-field-invalid'); el.setAttribute('aria-invalid', 'true'); }
+    });
+    taskEl(missing[0][0])?.focus();
+    return;
+  }
+  pmoTaskShowFormError('');
   const idx = pmoTasks.findIndex(x => x.id === t.id);
   if (idx >= 0) { pmoTasks[idx] = {...pmoTasks[idx], ...t}; pmoTaskState.history.unshift(`${t.id} を更新しました。`); }
   else { pmoTasks.push(t); pmoTaskState.history.unshift(`${t.id} を追加しました。`); }
@@ -4685,9 +4717,9 @@ function pmoKpiRenderRows(){
     return `
       <tr data-kpi-row="${pmoTaskEsc(metric.id)}">
         <td><div class="kpi-effect-metric-name">${pmoTaskEsc(metric.label)}</div><div class="kpi-effect-metric-note">${pmoTaskEsc(metric.note || metric.owner || '')}</div></td>
-        <td><input class="kpi-effect-num" data-kpi-field="baseline" value="${pmoTaskEsc(metric.baseline)}"></td>
-        <td><input class="kpi-effect-num" data-kpi-field="current" value="${pmoTaskEsc(metric.current)}"></td>
-        <td><input class="kpi-effect-num" data-kpi-field="target" value="${pmoTaskEsc(metric.target)}"></td>
+        <td><input class="kpi-effect-num" data-kpi-field="baseline" aria-label="${pmoTaskEsc(metric.label)} Before" value="${pmoTaskEsc(metric.baseline)}"></td>
+        <td><input class="kpi-effect-num" data-kpi-field="current" aria-label="${pmoTaskEsc(metric.label)} After/現状" value="${pmoTaskEsc(metric.current)}"></td>
+        <td><input class="kpi-effect-num" data-kpi-field="target" aria-label="${pmoTaskEsc(metric.label)} 目標" value="${pmoTaskEsc(metric.target)}"></td>
         <td><span class="kpi-effect-delta ${state}">${pmoTaskEsc(pmoKpiDeltaText(metric))}</span></td>
         <td><div class="kpi-effect-bar" title="${attainment}%"><div class="kpi-effect-fill ${state}" style="width:${Math.min(100, Math.max(0, attainment))}%"></div></div></td>
         <td>${pmoTaskEsc(evidence)}</td>
@@ -5336,6 +5368,31 @@ document.addEventListener('click', event => {
   if (menu?.open && !menu.contains(event.target)) menu.removeAttribute('open');
 });
 
+// Accessibility: ラベルを持たない主要コントロールにaria-labelを補う
+function pmoA11yInit(){
+  const labels = {
+    taskSearchInput:'タスクを検索', taskOwnerFilter:'担当で絞り込み', taskPriorityFilter:'優先度で絞り込み',
+    taskStatusFilter:'状態で絞り込み', taskRagFilter:'RAGで絞り込み', taskDueFilter:'期限で絞り込み',
+    taskSortSelect:'並び替え', dashboardRiskSortSelect:'リスク観点ソート',
+    'rag-q':'RAG検索キーワード', 'chat-input':'チャット入力', 'del-inp':'相談内容の入力',
+    'edu-ta':'相談・ドラフト入力', pmoHelpQuestion:'ヘルプへの質問', consultationAiInput:'状況の入力',
+    'doc-title':'ドキュメントタイトル', 'doc-memo':'ドキュメントのメモ・分類',
+    pmoReportTitle:'報告タイトル', pmoReportBody:'報告本文'
+  };
+  Object.entries(labels).forEach(([id, label]) => {
+    const el = document.getElementById(id);
+    if (el && !el.getAttribute('aria-label')) el.setAttribute('aria-label', label);
+  });
+  // プレースホルダのみの入力(id無しのデモAI入力欄など)はプレースホルダをaria-labelに転用
+  document.querySelectorAll('input[placeholder], textarea[placeholder]').forEach(el => {
+    if (!el.getAttribute('aria-label') && !el.id) el.setAttribute('aria-label', el.getAttribute('placeholder'));
+  });
+  document.querySelectorAll('.task-close,.ai-result-close,#taskModalClose').forEach(b => {
+    if (!b.getAttribute('aria-label')) b.setAttribute('aria-label', '閉じる');
+  });
+}
+pmoA11yInit();
+
 // Navigation
 document.querySelectorAll('.sb-item[data-s]').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -5579,9 +5636,23 @@ eduSubBtns.forEach(btn => {
   });
 });
 document.getElementById('edu-clear').addEventListener('click', () => { eduTa.value = ''; });
+function eduShowError(message){
+  let el = document.getElementById('edu-inline-error');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'edu-inline-error';
+    el.className = 'edu-inline-error';
+    el.setAttribute('role', 'alert');
+    const act = document.querySelector('#s-education .edu-act');
+    if (act) act.parentNode.insertBefore(el, act);
+  }
+  el.textContent = message || '';
+  el.style.display = message ? 'block' : 'none';
+}
 document.getElementById('edu-run').addEventListener('click', () => {
   const ta = eduTa;
-  if (!ta.value.trim()) { alert('内容を入力してください'); return; }
+  if (!ta.value.trim()) { eduShowError('相談・ドラフト内容を入力してください。'); ta.focus(); return; }
+  eduShowError('');
   const rb = document.getElementById('edu-rev-body');
   rb.innerHTML = '<div style="color:var(--muted);font-size:12px;text-align:center;padding:30px">AIレビュー中…</div>';
   setTimeout(() => {
@@ -5794,12 +5865,20 @@ function initSettingsScreen() {
   });
 
   root.querySelectorAll('.toggle').forEach(t => {
+    t.setAttribute('role', 'switch');
     t.setAttribute('aria-pressed', t.classList.contains('on') ? 'true' : 'false');
+    const rowLabel = t.closest('.s-row')?.querySelector('.s-row-l')?.textContent?.trim();
+    if (rowLabel && !t.getAttribute('aria-label')) t.setAttribute('aria-label', rowLabel);
     t.addEventListener('click', () => {
       t.classList.toggle('on');
       t.setAttribute('aria-pressed', t.classList.contains('on') ? 'true' : 'false');
       settingsUpdateProviderMode(false);
     });
+  });
+  // ラベル<label for>を持たない設定入力にaria-labelを補う
+  root.querySelectorAll('.s-inp').forEach(el => {
+    const rowLabel = el.closest('.s-row')?.querySelector('.s-row-l')?.textContent?.trim();
+    if (rowLabel && !el.getAttribute('aria-label')) el.setAttribute('aria-label', rowLabel);
   });
 
   settingsApply(settingsReadStored());
