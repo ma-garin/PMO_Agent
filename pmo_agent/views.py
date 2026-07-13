@@ -6,6 +6,7 @@ from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.middleware.csrf import get_token
 from django.shortcuts import redirect
 from django.template.loader import render_to_string
+from django.templatetags.static import static
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.html import escape
@@ -17,6 +18,7 @@ from llm.prompt_utils import EXTERNAL_DATA_GUARD, wrap_external
 from llm.services import LlmError, run_completion
 
 from .models import PmoJsonStore, PmoTaskStore
+from .throttle import throttle
 
 # クライアントは全量保存のため、異常な巨大リクエストだけを弾く上限
 MAX_TASKS = 500
@@ -118,6 +120,7 @@ def _server_tokens(request: HttpRequest, engagement: Engagement) -> dict[str, st
             "_kind_/", ""
         ),
         "__PMO_AI_RUN_URL__": reverse("pmo_agent:ai_run"),
+        "__PMO_CSS_URL__": static("pmo_agent/pmo_agent.css"),
         "__PMO_CSRF_TOKEN__": get_token(request),
         # ヘッダー右端(ユーザーメニュー/案件切替/ログアウト)用
         "__PMO_USER_NAME__": escape(request.user.get_full_name() or request.user.username),
@@ -151,6 +154,7 @@ def home(request: HttpRequest) -> HttpResponse:
 
 @login_required
 @require_http_methods(["GET", "POST"])
+@throttle("tasks_save", limit=40)
 def tasks_api(request: HttpRequest) -> JsonResponse:
     """案件単位のタスクストアAPI。GET=取得 / POST=全量保存(楽観ロック付き)。"""
     engagement = _current_engagement(request)
@@ -206,6 +210,7 @@ def tasks_api(request: HttpRequest) -> JsonResponse:
 
 @login_required
 @require_http_methods(["GET", "POST"])
+@throttle("stores_save", limit=40)
 def stores_api(request: HttpRequest, kind: str) -> JsonResponse:
     """報告/KPI/AI提案の汎用JSONストアAPI。GET=取得 / POST=全量保存。
 
@@ -263,6 +268,7 @@ AI_FALLBACK = (
 
 @login_required
 @require_http_methods(["POST"])
+@throttle("ai_run", limit=15)
 def ai_run(request: HttpRequest) -> JsonResponse:
     """全画面の「生成AIで〜」を案件のLLM設定で実行する。
 
