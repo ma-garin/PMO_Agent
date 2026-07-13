@@ -811,3 +811,16 @@ body.knowledge-maximized .knowledge-max-btn{background:#fff;color:var(--blue);bo
 .pmo-modal-body .pmo-modal-detail{font-size:12.5px;color:var(--muted);line-height:1.7;text-align:center;overflow-wrap:anywhere}
 .pmo-modal-foot{padding:0 16px 16px;display:flex;justify-content:center}
 .pmo-modal-spinner{width:30px;height:30px;margin:0 auto 4px;border:3px solid #bfdbfe;border-top-color:var(--blue);border-radius:50%;animation:spin .85s linear infinite}
+
+/* AI実行の事前確認ポップアップ(モデル・内部プロンプト・推定トークンの明示) */
+.pmo-modal-dialog.pmo-modal-wide{width:min(680px,calc(100vw - 32px));max-height:calc(100vh - 40px);display:flex;flex-direction:column}
+.pmo-ai-confirm{overflow:auto;display:grid;gap:10px}
+.pmo-ai-confirm-row{display:grid;grid-template-columns:96px minmax(0,1fr);gap:10px;align-items:baseline}
+.pmo-ai-confirm-row .k{font-size:11px;font-weight:900;color:var(--muted)}
+.pmo-ai-confirm-row .v{font-size:13px;font-weight:800;color:var(--ink);overflow-wrap:anywhere}
+.pmo-ai-confirm-prompt{border:1px solid var(--line);border-radius:8px;background:var(--bg);overflow:hidden}
+.pmo-ai-confirm-prompt summary{cursor:pointer;padding:8px 11px;font-size:12px;font-weight:900;color:#1d4ed8;background:#eff6ff}
+.pmo-ai-confirm-prompt pre{margin:0;padding:11px;font-size:11.5px;line-height:1.7;color:#1f2937;white-space:pre-wrap;overflow:auto;max-height:220px;font-family:Consolas,"Noto Sans JP",monospace;background:var(--surface)}
+.pmo-ai-confirm-note{font-size:11.5px;line-height:1.65;color:var(--muted);border-top:1px solid var(--line);padding-top:9px}
+:root[data-theme="dark"] .pmo-ai-confirm-prompt summary{background:#1a2c4d;color:#93c5fd}
+:root[data-theme="dark"] .pmo-ai-confirm-prompt pre{background:var(--surface);color:var(--ink)}

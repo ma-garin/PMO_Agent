@@ -121,6 +121,9 @@ def _server_tokens(request: HttpRequest, engagement: Engagement) -> dict[str, st
         ),
         "__PMO_AI_RUN_URL__": reverse("pmo_agent:ai_run"),
         "__PMO_AI_TEST_URL__": reverse("pmo_agent:ai_test"),
+        "__PMO_LLM_PROVIDER_LABEL__": escape(engagement.get_llm_provider_display()),
+        "__PMO_LLM_MODEL_LABEL__": escape(engagement.llm_model or "既定モデル"),
+        "__PMO_AI_SYSTEM__": _json_for_script(AI_SYSTEM),
         "__PMO_CSS_URL__": static("pmo_agent/pmo_agent.css"),
         "__PMO_CSRF_TOKEN__": get_token(request),
         # ヘッダー右端(ユーザーメニュー/案件切替/ログアウト)用

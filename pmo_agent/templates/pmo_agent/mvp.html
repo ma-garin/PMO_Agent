@@ -1404,6 +1404,9 @@ const pmoTaskSourceVersion = '__PROJECT_TASK_SOURCE_VERSION__';
 const pmoTaskServerSavedAt = '__PMO_TASKS_SAVED_AT__';
 const pmoTaskServerStoreHash = '__PMO_TASKS_STORE_HASH__';
 const pmoApiConfig = {tasksUrl:'__PMO_TASKS_API_URL__', storesBase:'__PMO_STORES_API_BASE__', aiRunUrl:'__PMO_AI_RUN_URL__', aiTestUrl:'__PMO_AI_TEST_URL__', csrfToken:'__PMO_CSRF_TOKEN__'};
+const pmoLlmProviderLabel = '__PMO_LLM_PROVIDER_LABEL__';
+const pmoLlmModelLabel = '__PMO_LLM_MODEL_LABEL__';
+const pmoAiSystemPrompt = __PMO_AI_SYSTEM__;
 async function pmoStorePost(kind, payload){
   try {
     const response = await fetch(`${pmoApiConfig.storesBase}${kind}/`, {
@@ -1984,7 +1987,7 @@ function pmoAiInjectScreenPanels(){
         </div>
         <button class="btn-b sm" type="button" id="${pmoTaskEsc(cfg.buttonId)}">${pmoTaskEsc(cfg.buttonLabel)}</button>
       </div>
-      <div class="pmo-ai-command-chips"><span class="pmo-ai-chip">LLM/ローカル fallback</span><span class="pmo-ai-chip">RAG根拠確認</span><span class="pmo-ai-chip">PMO確認待ち</span></div>
+      <div class="pmo-ai-command-chips"><span class="pmo-ai-chip">🧠 ${pmoTaskEsc(pmoLlmProviderLabel)} / ${pmoTaskEsc(pmoLlmModelLabel)}</span><span class="pmo-ai-chip">実行前にプロンプト確認</span><span class="pmo-ai-chip">PMO確認待ち</span></div>
       <div class="ai-action-result is-empty" id="${pmoTaskEsc(cfg.resultId)}" aria-live="polite"></div>
     `;
     const header = screenNode.querySelector('.ph');
@@ -2002,11 +2005,59 @@ function pmoAiBindScreenActions(){
     });
   });
 }
+// 日本語混在のざっくり見積り(約3文字≒1token)。あくまで目安。
+function pmoAiEstimateTokens(text){ return Math.max(1, Math.round(String(text || '').length / 3)); }
+function pmoAiCloseConfirm(){ const m = document.getElementById('pmoAiConfirmModal'); if (m){ m.classList.remove('open'); m.setAttribute('aria-hidden', 'true'); } }
+function pmoAiEnsureConfirmModal(){
+  let modal = document.getElementById('pmoAiConfirmModal');
+  if (modal) return modal;
+  document.body.insertAdjacentHTML('beforeend', `
+    <div class="pmo-modal" id="pmoAiConfirmModal" aria-hidden="true">
+      <div class="pmo-modal-dialog pmo-modal-wide" role="dialog" aria-modal="true" aria-labelledby="pmoAiConfirmTitle">
+        <div class="pmo-modal-head"><h2 id="pmoAiConfirmTitle">生成AIを実行します</h2><button class="pmo-modal-close" type="button" data-ai-confirm-close aria-label="閉じる">×</button></div>
+        <div class="pmo-modal-body pmo-ai-confirm">
+          <div class="pmo-ai-confirm-row"><span class="k">実行モデル</span><span class="v" id="pmoAiConfirmModel"></span></div>
+          <div class="pmo-ai-confirm-row"><span class="k">この機能</span><span class="v" id="pmoAiConfirmFeature"></span></div>
+          <div class="pmo-ai-confirm-row"><span class="k">推定送信量</span><span class="v" id="pmoAiConfirmTokens"></span></div>
+          <details class="pmo-ai-confirm-prompt"><summary>内部プロンプト（システム指示）を見る</summary><pre id="pmoAiConfirmSystem"></pre></details>
+          <details class="pmo-ai-confirm-prompt" open><summary>送信内容（この機能の指示 ＋ 画面データ抜粋）を見る</summary><pre id="pmoAiConfirmRequest"></pre></details>
+          <div class="pmo-ai-confirm-note">この画面データはインジェクション対策のうえ外部LLMへ送信されます。生成結果は参考情報で、採用・修正・承認はPM/PMOが行います。</div>
+        </div>
+        <div class="pmo-modal-foot" style="justify-content:flex-end;gap:8px"><button class="btn-out sm" type="button" data-ai-confirm-close>キャンセル</button><button class="btn-b sm" type="button" id="pmoAiConfirmRun">実行する</button></div>
+      </div>
+    </div>`);
+  modal = document.getElementById('pmoAiConfirmModal');
+  modal.querySelectorAll('[data-ai-confirm-close]').forEach(b => b.addEventListener('click', pmoAiCloseConfirm));
+  modal.addEventListener('click', e => { if (e.target === modal) pmoAiCloseConfirm(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && modal.classList.contains('open')) pmoAiCloseConfirm(); });
+  return modal;
+}
+function pmoAiOpenConfirm(params){
+  const modal = pmoAiEnsureConfirmModal();
+  const requestBody = `${params.requestText}\n\n参考(現在の画面のデータ):\n${params.screenText}`;
+  const totalChars = pmoAiSystemPrompt.length + requestBody.length;
+  const tokens = pmoAiEstimateTokens(pmoAiSystemPrompt) + pmoAiEstimateTokens(requestBody);
+  document.getElementById('pmoAiConfirmModel').textContent = `${pmoLlmProviderLabel} / ${pmoLlmModelLabel}`;
+  document.getElementById('pmoAiConfirmFeature').textContent = params.title;
+  document.getElementById('pmoAiConfirmTokens').textContent = `約 ${totalChars.toLocaleString()} 文字（≒ ${tokens.toLocaleString()} tokens の目安）`;
+  document.getElementById('pmoAiConfirmSystem').textContent = pmoAiSystemPrompt;
+  document.getElementById('pmoAiConfirmRequest').textContent = requestBody;
+  document.getElementById('pmoAiConfirmRun').onclick = () => {
+    pmoAiCloseConfirm();
+    pmoAiExecute(params.screen, params.action, params.requestText, params.resultElementId, params.title, params.extraContext);
+  };
+  modal.classList.add('open');
+  modal.setAttribute('aria-hidden', 'false');
+}
 function pmoAiRun(screen, action, requestText, resultElementId, title, extraContext = {}){
   if (!pmoAiFeatureEnabled(screen)) {
     pmoAiRenderStatus(taskEl(resultElementId), title, ['AI機能OFF'], 'この画面のAI実行はFeature Flagで無効化されています。');
     return;
   }
+  const screenText = (extraContext && extraContext.screenText) || pmoAiScreenText(screen);
+  pmoAiOpenConfirm({screen, action, requestText, resultElementId, title, extraContext, screenText});
+}
+function pmoAiExecute(screen, action, requestText, resultElementId, title, extraContext = {}){
   const requestId = `${screen}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   const payload = {
     kind:'pmo_ai_action_request',
