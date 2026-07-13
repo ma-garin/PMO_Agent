@@ -57,6 +57,8 @@ class Engagement(models.Model):
     size_metric_value = models.DecimalField(
         "規模の値", max_digits=12, decimal_places=2, null=True, blank=True
     )
+    # 案件ごとの月間トークン上限(0=無制限)。LLMコスト管理・暴走防止に使う。
+    monthly_token_limit = models.PositiveIntegerField("月間トークン上限(0=無制限)", default=0)
     updated_at = models.DateTimeField("更新日時", auto_now=True)
     created_at = models.DateTimeField("作成日時", auto_now_add=True)
 

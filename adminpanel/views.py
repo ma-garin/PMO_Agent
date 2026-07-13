@@ -15,6 +15,8 @@ from engagements.models import Engagement
 from llm.models import LlmCallLog
 from llm.services import usage_summary
 
+from pmo_agent.models import UserAiQuota
+
 from .forms import AdminEngagementForm
 
 User = get_user_model()
@@ -106,7 +108,18 @@ def users(request: HttpRequest) -> HttpResponse:
     if request.method == "POST":
         target = get_object_or_404(User, pk=request.POST.get("user_id"))
         field = request.POST.get("field")
-        if target.pk == request.user.pk:
+        if field == "monthly_token_limit":
+            try:
+                limit = max(0, int(request.POST.get("value") or 0))
+            except (TypeError, ValueError):
+                messages.error(request, "トークン上限は0以上の整数で入力してください。")
+                return redirect("adminpanel:users")
+            quota, _ = UserAiQuota.objects.get_or_create(user=target)
+            quota.monthly_token_limit = limit
+            quota.save()
+            record(request.user, "user_quota_edit", target, detail=f"limit={limit}")
+            messages.success(request, f"{target.username} の月間トークン上限を {limit:,} に設定しました。")
+        elif target.pk == request.user.pk:
             messages.error(request, "自分自身の権限は変更できません。")
         elif field in ("is_active", "is_staff"):
             setattr(target, field, not getattr(target, field))
@@ -114,8 +127,14 @@ def users(request: HttpRequest) -> HttpResponse:
             record(request.user, "user_edit", target, detail=f"{field}={getattr(target, field)}")
             messages.success(request, f"{target.username} の {field} を更新しました。")
         return redirect("adminpanel:users")
-    qs = User.objects.order_by("username")
+    qs = User.objects.select_related("ai_quota").order_by("username")
     page_obj = Paginator(qs, 25).get_page(request.GET.get("page"))
+    # 今月の推定トークン使用量(ユーザー別)
+    from pmo_agent.views import _month_token_usage
+
+    for u in page_obj:
+        u.token_limit = getattr(getattr(u, "ai_quota", None), "monthly_token_limit", 0) or 0
+        u.token_used = _month_token_usage(user=u)
     return render(request, "adminpanel/users.html", {**_base_context("users"), "page_obj": page_obj})
 
 
@@ -131,18 +150,44 @@ def _month_from_request(request: HttpRequest) -> tuple[int, int]:
 
 @admin_required
 def llm_usage(request: HttpRequest) -> HttpResponse:
+    from llm.models import LlmCallLog
+    from pmo_agent.views import _estimate_tokens
+
     year, month = _month_from_request(request)
     rows = usage_summary(year, month)
+    total_chars = sum(r["total_chars"] or 0 for r in rows)
     totals = {
         "calls": sum(r["call_count"] for r in rows),
-        "chars": sum(r["total_chars"] or 0 for r in rows),
+        "chars": total_chars,
+        "tokens": _estimate_tokens(total_chars),
         "failures": sum(r["failure_count"] for r in rows),
         "warnings": sum(1 for r in rows if r.get("warning")),
     }
+    # 案件別のトークン上限 vs 今月の使用
+    per_engagement = (
+        LlmCallLog.objects.filter(created_at__year=year, created_at__month=month)
+        .values("engagement_id", "engagement__name", "engagement__monthly_token_limit")
+        .annotate(chars=Sum("prompt_chars") + Sum("response_chars"))
+        .order_by("engagement__name")
+    )
+    engagement_quota = []
+    for row in per_engagement:
+        limit = row["engagement__monthly_token_limit"] or 0
+        used = _estimate_tokens(row["chars"] or 0)
+        engagement_quota.append(
+            {
+                "name": row["engagement__name"] or "(案件なし)",
+                "limit": limit,
+                "used": used,
+                "over": bool(limit and used >= limit),
+                "pct": int(min(100, used * 100 / limit)) if limit else 0,
+            }
+        )
     context = {
         **_base_context("llm_usage"),
         "rows": rows,
         "totals": totals,
+        "engagement_quota": engagement_quota,
         "month_value": f"{year}-{month:02d}",
     }
     return render(request, "adminpanel/llm_usage.html", context)

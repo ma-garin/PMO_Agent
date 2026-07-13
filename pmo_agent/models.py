@@ -65,3 +65,16 @@ class PmoJsonStore(models.Model):
 
     def __str__(self) -> str:
         return f"{self.engagement.name} / {self.get_kind_display()}"
+
+
+class UserAiQuota(models.Model):
+    """ユーザーごとの月間トークン上限(0=無制限)。LLMコスト管理に使う。"""
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="ai_quota"
+    )
+    monthly_token_limit = models.PositiveIntegerField("月間トークン上限(0=無制限)", default=0)
+    updated_at = models.DateTimeField("更新日時", auto_now=True)
+
+    def __str__(self) -> str:
+        return f"{self.user.username}: {self.monthly_token_limit}"

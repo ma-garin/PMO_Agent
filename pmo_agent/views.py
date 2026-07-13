@@ -1,7 +1,7 @@
 import json
 
 from django.contrib.auth.decorators import login_required
-from django.db.models import Q
+from django.db.models import Q, Sum
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.middleware.csrf import get_token
 from django.shortcuts import redirect
@@ -14,11 +14,47 @@ from django.views.decorators.http import require_http_methods
 
 from audit.services import record
 from engagements.models import Engagement
+from llm.models import LlmCallLog
 from llm.prompt_utils import EXTERNAL_DATA_GUARD, wrap_external
 from llm.services import LlmError, run_completion, test_connection
 
-from .models import PmoJsonStore, PmoTaskStore
+from .models import PmoJsonStore, PmoTaskStore, UserAiQuota
 from .throttle import throttle
+
+# 文字数からトークンをざっくり見積る(日本語混在で約3文字≒1token)。表示・上限判定の目安。
+TOKENS_PER_CHAR_DIVISOR = 3
+
+
+def _estimate_tokens(chars: int) -> int:
+    return int((chars or 0) // TOKENS_PER_CHAR_DIVISOR)
+
+
+def _month_token_usage(engagement=None, user=None) -> int:
+    """今月の推定トークン使用量(engagement単位 / user単位)。"""
+    now = timezone.localtime()
+    logs = LlmCallLog.objects.filter(created_at__year=now.year, created_at__month=now.month)
+    if engagement is not None:
+        logs = logs.filter(engagement=engagement)
+    if user is not None:
+        logs = logs.filter(created_by=user)
+    chars = logs.aggregate(total=Sum("prompt_chars") + Sum("response_chars"))["total"] or 0
+    return _estimate_tokens(chars)
+
+
+def check_ai_quota(engagement, user) -> tuple[bool, str]:
+    """案件・ユーザーの月間トークン上限を確認する。超過なら(False, 理由)を返す。"""
+    limit = getattr(engagement, "monthly_token_limit", 0) or 0
+    if limit > 0:
+        used = _month_token_usage(engagement=engagement)
+        if used >= limit:
+            return False, f"案件の月間トークン上限（{limit:,}）に達しています（今月の使用 約{used:,}）。"
+    quota = getattr(user, "ai_quota", None)
+    user_limit = quota.monthly_token_limit if quota else 0
+    if user_limit and user_limit > 0:
+        used = _month_token_usage(user=user)
+        if used >= user_limit:
+            return False, f"あなたの月間トークン上限（{user_limit:,}）に達しています（今月の使用 約{used:,}）。"
+    return True, ""
 
 # クライアントは全量保存のため、異常な巨大リクエストだけを弾く上限
 MAX_TASKS = 500
@@ -295,6 +331,20 @@ def ai_run(request: HttpRequest) -> JsonResponse:
     screen_text = str(payload.get("screenText", "")).strip()[:4000]
     if not screen or not action or not request_text:
         return JsonResponse({"error": "missing_fields"}, status=400)
+
+    quota_ok, quota_message = check_ai_quota(engagement, request.user)
+    if not quota_ok:
+        record(request.user, "pmo_ai_quota_blocked", engagement, detail=f"{screen}/{action}"[:200])
+        return JsonResponse(
+            {
+                "answer": f"## トークン上限に達しました\n\n- {quota_message}\n- 管理コンソールの「LLM利用・トークン」で上限や使用量を確認してください。",
+                "provider": engagement.llm_provider,
+                "usedFallback": True,
+                "error": "quota_exceeded",
+                "createdAt": timezone.now().isoformat(),
+            },
+            status=429,
+        )
 
     prompt = f"{request_text}\n\n参考(現在の画面のデータ):\n{wrap_external(screen_text)}"
     created_at = timezone.now().isoformat()

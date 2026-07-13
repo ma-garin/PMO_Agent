@@ -1,17 +1,26 @@
 {% extends "adminpanel/_base.html" %}
+{% load humanize %}
 {% block admin_content %}
-<div class="admin-note">ユーザーの有効/無効と管理者権限を切り替えられます。自分自身の権限は変更できません。パスワード発行・新規作成はDjango管理サイトで行います。</div>
+<div class="admin-note">ユーザーの有効/無効・管理者権限・<strong>月間トークン上限</strong>を管理できます。上限0は無制限。トークンは処理文字数からの推定です。パスワード発行・新規作成はDjango管理サイトで行います。</div>
 <div class="admin-table-wrap">
   <table class="admin-table">
-    <thead><tr><th>ユーザー名</th><th>氏名</th><th>メール</th><th>状態</th><th>権限</th><th>操作</th></tr></thead>
+    <thead><tr><th>ユーザー名</th><th>氏名</th><th>状態</th><th>権限</th><th>月間トークン上限</th><th class="num">今月の使用</th><th>操作</th></tr></thead>
     <tbody>
       {% for u in page_obj %}
       <tr>
-        <td><strong>{{ u.username }}</strong></td>
+        <td><strong>{{ u.username }}</strong><br><span style="color:var(--ink-2,#64748b);font-size:11px">{{ u.email|default:"—" }}</span></td>
         <td>{{ u.get_full_name|default:"—" }}</td>
-        <td>{{ u.email|default:"—" }}</td>
         <td><span class="admin-pill {% if u.is_active %}ok{% else %}ng{% endif %}">{% if u.is_active %}有効{% else %}無効{% endif %}</span></td>
         <td><span class="admin-pill {% if u.is_staff %}warn{% else %}muted{% endif %}">{% if u.is_superuser %}スーパー{% elif u.is_staff %}管理者{% else %}一般{% endif %}</span></td>
+        <td>
+          <form method="post" style="display:flex;gap:6px;align-items:center">
+            <input type="hidden" name="user_id" value="{{ u.pk }}"><input type="hidden" name="field" value="monthly_token_limit">{% csrf_token %}
+            <input type="number" name="value" value="{{ u.token_limit }}" min="0" step="1000" style="width:110px;min-height:32px;padding:5px 8px;border:1px solid var(--line,#e3e8ef);border-radius:7px" aria-label="{{ u.username }} の月間トークン上限">
+            <button class="admin-btn" type="submit">保存</button>
+          </form>
+          {% if u.token_limit %}<span style="font-size:11px;color:var(--ink-2,#64748b)">上限 {{ u.token_limit|intcomma }}</span>{% else %}<span class="admin-pill muted">無制限</span>{% endif %}
+        </td>
+        <td class="num {% if u.token_limit and u.token_used >= u.token_limit %}"><span class="admin-pill ng">{{ u.token_used|intcomma }}</span{% else %}">{{ u.token_used|intcomma }}{% endif %}</td>
         <td>
           {% if u.pk == request.user.pk %}<span style="color:var(--ink-2,#64748b);font-size:12px">自分</span>{% else %}
           <div class="admin-actions">
@@ -22,7 +31,7 @@
         </td>
       </tr>
       {% empty %}
-      <tr><td colspan="6" class="admin-empty">ユーザーがいません。</td></tr>
+      <tr><td colspan="7" class="admin-empty">ユーザーがいません。</td></tr>
       {% endfor %}
     </tbody>
   </table>

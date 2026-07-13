@@ -9,8 +9,27 @@
 <div class="admin-stat-grid">
   <div class="admin-stat"><div class="k">呼び出し</div><div class="v">{{ totals.calls|intcomma }}</div><div class="s">当月合計</div></div>
   <div class="admin-stat"><div class="k">処理文字数</div><div class="v">{{ totals.chars|intcomma }}</div><div class="s">≒トークン量の目安</div></div>
+  <div class="admin-stat"><div class="k">推定トークン</div><div class="v">{{ totals.tokens|intcomma }}</div><div class="s">当月合計(目安)</div></div>
   <div class="admin-stat{% if totals.failures %} danger{% endif %}"><div class="k">失敗</div><div class="v">{{ totals.failures }}</div><div class="s">エラー応答</div></div>
   <div class="admin-stat{% if totals.warnings %} warn{% endif %}"><div class="k">警告</div><div class="v">{{ totals.warnings }}</div><div class="s">機密案件でクラウド送信の疑い</div></div>
+</div>
+<div class="admin-note">案件・ユーザーの月間トークン上限で、LLMのコスト暴走を防ぎます。案件別の上限は「プロジェクト」タブの編集、ユーザー別は「ユーザー」タブで設定します（0=無制限）。上限到達時はその案件/ユーザーの生成AI実行がブロックされます。</div>
+<div class="admin-table-wrap" style="margin-bottom:18px">
+  <table class="admin-table">
+    <thead><tr><th>案件</th><th class="num">月間トークン上限</th><th class="num">今月の使用(推定)</th><th>消化率</th></tr></thead>
+    <tbody>
+      {% for q in engagement_quota %}
+      <tr>
+        <td>{{ q.name }}</td>
+        <td class="num">{% if q.limit %}{{ q.limit|intcomma }}{% else %}<span class="admin-pill muted">無制限</span>{% endif %}</td>
+        <td class="num">{% if q.over %}<span class="admin-pill ng">{{ q.used|intcomma }}</span>{% else %}{{ q.used|intcomma }}{% endif %}</td>
+        <td>{% if q.limit %}{{ q.pct }}%{% else %}—{% endif %}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="4" class="admin-empty">対象月の利用はありません。</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
 </div>
 <div class="admin-table-wrap">
   <table class="admin-table">

@@ -52,7 +52,7 @@ class TestEngagementCrud:
         client.force_login(staff)
         resp = client.post(
             reverse("adminpanel:engagement_edit", args=[engagement.pk]),
-            {"name": "案件X改", "description": "更新", "status": "on_hold", "progress": 80, "owner": staff.pk, "members": [staff.pk]},
+            {"name": "案件X改", "description": "更新", "status": "on_hold", "progress": 80, "owner": staff.pk, "members": [staff.pk], "monthly_token_limit": 0},
         )
         assert resp.status_code == 302
         engagement.refresh_from_db()
@@ -63,7 +63,7 @@ class TestEngagementCrud:
         client.force_login(staff)
         resp = client.post(
             reverse("adminpanel:engagement_edit", args=[engagement.pk]),
-            {"name": "X", "description": "", "status": "active", "progress": 150, "owner": staff.pk, "members": [staff.pk]},
+            {"name": "X", "description": "", "status": "active", "progress": 150, "owner": staff.pk, "members": [staff.pk], "monthly_token_limit": 0},
         )
         assert resp.status_code == 200  # 再表示(バリデーションエラー)
         engagement.refresh_from_db()

@@ -2124,7 +2124,8 @@ function pmoAiExecute(screen, action, requestText, resultElementId, title, extra
     headers:{'Content-Type':'application/json', 'X-CSRFToken':pmoApiConfig.csrfToken},
     body:JSON.stringify({screen, action, requestText, screenText})
   }).then(async response => {
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    // 429(トークン上限)はbodyにメッセージがあるので、その内容を表示する
+    if (!response.ok && response.status !== 429) throw new Error(`HTTP ${response.status}`);
     const data = await response.json();
     commitRow({
       request_id:requestId, screen, action, status:'completed',
