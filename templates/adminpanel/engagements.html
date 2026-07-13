@@ -1,0 +1,33 @@
+{% extends "adminpanel/_base.html" %}
+{% block admin_content %}
+<form method="get" class="admin-toolbar">
+  <input type="text" name="q" value="{{ q }}" placeholder="案件名・概要で検索" aria-label="案件を検索">
+  <select name="status" aria-label="状態で絞り込み">
+    <option value="">状態すべて</option>
+    {% for value, label in status_choices %}<option value="{{ value }}"{% if status == value %} selected{% endif %}>{{ label }}</option>{% endfor %}
+  </select>
+  <button type="submit" class="admin-btn primary">絞り込み</button>
+  <a href="{% url 'engagements:create' %}" class="admin-btn" style="margin-left:auto">＋ 新規案件</a>
+</form>
+<div class="admin-table-wrap">
+  <table class="admin-table">
+    <thead><tr><th>案件名</th><th>状態</th><th class="num">進捗</th><th>オーナー</th><th class="num">メンバー</th><th>更新</th><th>操作</th></tr></thead>
+    <tbody>
+      {% for e in page_obj %}
+      <tr>
+        <td><strong>{{ e.name }}</strong><br><span style="color:var(--ink-2,#64748b);font-size:11.5px">{{ e.description|default:"概要未設定" }}</span></td>
+        <td><span class="admin-pill {% if e.status == 'active' %}ok{% elif e.status == 'completed' %}muted{% else %}warn{% endif %}">{{ e.get_status_display }}</span></td>
+        <td class="num">{{ e.progress }}%</td>
+        <td>{{ e.owner.username }}</td>
+        <td class="num">{{ e.member_total }}</td>
+        <td>{{ e.updated_at|date:"Y/m/d" }}</td>
+        <td><div class="admin-actions"><a class="admin-btn" href="{% url 'adminpanel:engagement_edit' e.pk %}">編集</a><a class="admin-btn danger" href="{% url 'adminpanel:engagement_delete' e.pk %}">削除</a></div></td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="7" class="admin-empty">該当する案件はありません。</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% include "partials/pagination.html" %}
+{% endblock %}

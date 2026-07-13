@@ -29,6 +29,7 @@
       <summary title="__PMO_USER_NAME__">__PMO_USER_INITIALS__</summary>
       <div class="hdr-user-panel">
         <div class="hdr-user-head"><strong>__PMO_USER_NAME__</strong><span>__PMO_USER_EMAIL__</span></div>
+        <a class="hdr-user-item" id="pmoAdminLink" href="__PMO_ADMIN_URL__" hidden>&#128737; 管理コンソール</a>
         <a class="hdr-user-item" href="__PMO_PROFILE_URL__">&#9881; アカウント設定</a>
         <a class="hdr-user-item" href="__PMO_SELECT_URL__">&#128257; 案件を切替</a>
         <form method="post" action="__PMO_LOGOUT_URL__"><input type="hidden" name="csrfmiddlewaretoken" value="__PMO_CSRF_TOKEN__"><button class="hdr-user-item hdr-logout" type="submit">&#8594; ログアウト</button></form>
@@ -4563,6 +4564,8 @@ document.getElementById('pmoHelpForm')?.addEventListener('submit', event => {
 });
 
 // Header tools: theme / info / user menu
+const pmoIsStaff = __PMO_IS_STAFF__;
+if (pmoIsStaff) document.getElementById('pmoAdminLink')?.removeAttribute('hidden');
 const pmoThemeStorageKey = 'verirag:pmo-agent:theme';
 function pmoApplyTheme(theme){
   const dark = theme === 'dark';

@@ -1,0 +1,31 @@
+{% extends "adminpanel/_base.html" %}
+{% block admin_content %}
+<div class="admin-note">ユーザーの有効/無効と管理者権限を切り替えられます。自分自身の権限は変更できません。パスワード発行・新規作成はDjango管理サイトで行います。</div>
+<div class="admin-table-wrap">
+  <table class="admin-table">
+    <thead><tr><th>ユーザー名</th><th>氏名</th><th>メール</th><th>状態</th><th>権限</th><th>操作</th></tr></thead>
+    <tbody>
+      {% for u in page_obj %}
+      <tr>
+        <td><strong>{{ u.username }}</strong></td>
+        <td>{{ u.get_full_name|default:"—" }}</td>
+        <td>{{ u.email|default:"—" }}</td>
+        <td><span class="admin-pill {% if u.is_active %}ok{% else %}ng{% endif %}">{% if u.is_active %}有効{% else %}無効{% endif %}</span></td>
+        <td><span class="admin-pill {% if u.is_staff %}warn{% else %}muted{% endif %}">{% if u.is_superuser %}スーパー{% elif u.is_staff %}管理者{% else %}一般{% endif %}</span></td>
+        <td>
+          {% if u.pk == request.user.pk %}<span style="color:var(--ink-2,#64748b);font-size:12px">自分</span>{% else %}
+          <div class="admin-actions">
+            <form method="post" style="display:inline"><input type="hidden" name="user_id" value="{{ u.pk }}"><input type="hidden" name="field" value="is_active">{% csrf_token %}<button class="admin-btn" type="submit">{% if u.is_active %}無効化{% else %}有効化{% endif %}</button></form>
+            <form method="post" style="display:inline"><input type="hidden" name="user_id" value="{{ u.pk }}"><input type="hidden" name="field" value="is_staff">{% csrf_token %}<button class="admin-btn" type="submit">{% if u.is_staff %}管理者解除{% else %}管理者に{% endif %}</button></form>
+          </div>
+          {% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="6" class="admin-empty">ユーザーがいません。</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% include "partials/pagination.html" %}
+{% endblock %}

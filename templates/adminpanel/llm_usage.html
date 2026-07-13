@@ -1,0 +1,35 @@
+{% extends "adminpanel/_base.html" %}
+{% load humanize %}
+{% block admin_content %}
+<form method="get" class="admin-toolbar">
+  <label for="month" style="font-size:12px;font-weight:700;color:var(--ink-2,#64748b)">対象月</label>
+  <input type="month" id="month" name="month" value="{{ month_value }}">
+  <button type="submit" class="admin-btn primary">表示</button>
+</form>
+<div class="admin-stat-grid">
+  <div class="admin-stat"><div class="k">呼び出し</div><div class="v">{{ totals.calls|intcomma }}</div><div class="s">当月合計</div></div>
+  <div class="admin-stat"><div class="k">処理文字数</div><div class="v">{{ totals.chars|intcomma }}</div><div class="s">≒トークン量の目安</div></div>
+  <div class="admin-stat{% if totals.failures %} danger{% endif %}"><div class="k">失敗</div><div class="v">{{ totals.failures }}</div><div class="s">エラー応答</div></div>
+  <div class="admin-stat{% if totals.warnings %} warn{% endif %}"><div class="k">警告</div><div class="v">{{ totals.warnings }}</div><div class="s">機密案件でクラウド送信の疑い</div></div>
+</div>
+<div class="admin-table-wrap">
+  <table class="admin-table">
+    <thead><tr><th>案件</th><th>プロバイダ</th><th>用途</th><th class="num">呼び出し</th><th class="num">文字数</th><th class="num">失敗</th><th>警告</th></tr></thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td>{{ r.engagement__name|default:"(案件なし)" }}</td>
+        <td>{{ r.provider }}</td>
+        <td>{{ r.purpose }}</td>
+        <td class="num">{{ r.call_count|intcomma }}</td>
+        <td class="num">{{ r.total_chars|default:0|intcomma }}</td>
+        <td class="num">{{ r.failure_count }}</td>
+        <td>{% if r.warning %}<span class="admin-pill warn">要確認</span>{% else %}—{% endif %}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="7" class="admin-empty">対象月のLLM呼び出しはありません。</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -8,5 +8,6 @@
     <a href="{% url 'pmo_agent:home' %}" class="nav-item{% if nav_active == 'pmo_agent' %} active{% endif %}" title="PMO Agent">&#129517; <span class="nav-label">PMO Agent</span></a>
     <a href="{% url 'engagements:select' %}" class="nav-item{% if nav_active == 'engagements' %} active{% endif %}" title="案件を切替">&#128257; <span class="nav-label">案件を切替</span></a>
     <a href="{% url 'accounts:profile' %}" class="nav-item{% if nav_active == 'settings' %} active{% endif %}" title="設定">&#9881; <span class="nav-label">設定</span></a>
+    {% if user.is_staff %}<a href="{% url 'adminpanel:home' %}" class="nav-item{% if nav_active == 'manage' %} active{% endif %}" title="管理コンソール">&#128737; <span class="nav-label">管理</span></a>{% endif %}
   </nav>
 </aside>

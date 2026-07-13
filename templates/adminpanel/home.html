@@ -1,0 +1,24 @@
+{% extends "adminpanel/_base.html" %}
+{% load humanize %}
+{% block admin_content %}
+<div class="admin-stat-grid">
+  <div class="admin-stat"><div class="k">案件</div><div class="v">{{ engagement_count }}</div><div class="s">進行中 {{ active_count }}</div></div>
+  <div class="admin-stat"><div class="k">ユーザー</div><div class="v">{{ user_count }}</div><div class="s">管理者 {{ staff_count }}</div></div>
+  <div class="admin-stat{% if llm_fail_month %} warn{% endif %}"><div class="k">今月のLLM呼び出し</div><div class="v">{{ llm_calls_month|intcomma }}</div><div class="s">失敗 {{ llm_fail_month }} 件</div></div>
+  <div class="admin-stat"><div class="k">今月の処理文字数</div><div class="v">{{ llm_chars_month|intcomma }}</div><div class="s">プロンプト＋応答（≒トークン量の目安）</div></div>
+  <div class="admin-stat"><div class="k">監査ログ</div><div class="v">{{ audit_count|intcomma }}</div><div class="s">累計の操作記録</div></div>
+</div>
+<div class="admin-note">管理コンソールでは、案件のCRUD・ユーザー権限・LLM利用量（トークン）・AIエージェントの呼び出しログ・アクセス（監査）ログを一元管理できます。破壊的操作（案件削除など）は確認のうえ監査ログに記録されます。</div>
+<div class="admin-table-wrap">
+  <table class="admin-table">
+    <thead><tr><th>日時</th><th>操作者</th><th>操作</th><th>対象</th></tr></thead>
+    <tbody>
+      {% for log in recent_audit %}
+      <tr><td>{{ log.created_at|date:"Y/m/d H:i" }}</td><td>{{ log.actor.username|default:"—" }}</td><td>{{ log.action_label }}</td><td>{{ log.target_type }}{% if log.target_id %} #{{ log.target_id }}{% endif %} {{ log.detail }}</td></tr>
+      {% empty %}
+      <tr><td colspan="4" class="admin-empty">記録はまだありません。</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

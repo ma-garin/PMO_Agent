@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}管理 | PMO Agent{% endblock %}
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/app_shell.css' %}">
+  <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+  <link rel="stylesheet" href="{% static 'css/tickets.css' %}">
+  <link rel="stylesheet" href="{% static 'css/adminpanel.css' %}">
+{% endblock %}
+{% block body %}
+<div class="app-shell">
+  {% include "partials/sidebar.html" %}
+  <div style="flex:1; display:flex; flex-direction:column;">
+    {% include "partials/header.html" %}
+    <main class="app-main">
+      <div class="breadcrumb">/ manage / {{ admin_active }}</div>
+      <h1 class="page-title">管理コンソール</h1>
+      <p class="page-lead">案件・ユーザー・LLM利用（トークン）・AI呼び出し・アクセスログを管理します（管理者のみ）。</p>
+      <nav class="admin-tabs">
+        <a href="{% url 'adminpanel:home' %}" class="{% if admin_active == 'home' %}active{% endif %}">概要</a>
+        <a href="{% url 'adminpanel:engagements' %}" class="{% if admin_active == 'engagements' %}active{% endif %}">プロジェクト</a>
+        <a href="{% url 'adminpanel:users' %}" class="{% if admin_active == 'users' %}active{% endif %}">ユーザー</a>
+        <a href="{% url 'adminpanel:llm_usage' %}" class="{% if admin_active == 'llm_usage' %}active{% endif %}">LLM利用・トークン</a>
+        <a href="{% url 'adminpanel:ai_logs' %}" class="{% if admin_active == 'ai_logs' %}active{% endif %}">AI呼び出しログ</a>
+        <a href="{% url 'adminpanel:audit' %}" class="{% if admin_active == 'audit' %}active{% endif %}">アクセスログ</a>
+      </nav>
+      {% if messages %}{% for message in messages %}<div class="alert{% if 'error' in message.tags %} alert-danger{% else %} alert-success{% endif %}">{{ message }}</div>{% endfor %}{% endif %}
+      {% block admin_content %}{% endblock %}
+    </main>
+  </div>
+</div>
+{% endblock %}

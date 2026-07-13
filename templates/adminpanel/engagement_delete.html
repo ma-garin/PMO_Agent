@@ -1,0 +1,16 @@
+{% extends "adminpanel/_base.html" %}
+{% block admin_content %}
+<div class="card panel" style="max-width:560px">
+  <div class="panel-head"><h2>案件を削除</h2></div>
+  <div class="admin-note" style="background:#fef2f2;border-color:#fecaca;color:#991b1b">
+    案件「<strong>{{ engagement.name }}</strong>」を削除します。この操作は取り消せません。案件に紐づくタスク・報告・KPI・提案・LLMログもすべて削除されます。
+  </div>
+  <form method="post">
+    {% csrf_token %}
+    <div class="admin-form-actions">
+      <button type="submit" class="btn btn-primary" style="background:#dc2626;border-color:#dc2626">削除する</button>
+      <a href="{% url 'adminpanel:engagements' %}" class="admin-btn">キャンセル</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

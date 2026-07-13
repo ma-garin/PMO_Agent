@@ -1,0 +1,33 @@
+{% extends "adminpanel/_base.html" %}
+{% block admin_content %}
+<form method="get" class="admin-toolbar">
+  <select name="status" aria-label="状態で絞り込み">
+    <option value="">状態すべて</option>
+    <option value="success"{% if status == 'success' %} selected{% endif %}>成功</option>
+    <option value="failed"{% if status == 'failed' %} selected{% endif %}>失敗</option>
+  </select>
+  <button type="submit" class="admin-btn primary">絞り込み</button>
+</form>
+<div class="admin-table-wrap">
+  <table class="admin-table">
+    <thead><tr><th>日時</th><th>案件</th><th>プロバイダ</th><th>用途</th><th>状態</th><th class="num">応答文字</th><th class="num">所要</th><th>実行者</th></tr></thead>
+    <tbody>
+      {% for log in page_obj %}
+      <tr>
+        <td>{{ log.created_at|date:"Y/m/d H:i" }}</td>
+        <td>{{ log.engagement.name|default:"—" }}</td>
+        <td>{{ log.provider }}</td>
+        <td>{{ log.purpose }}</td>
+        <td><span class="admin-pill {% if log.status == 'success' %}ok{% else %}ng{% endif %}">{{ log.get_status_display }}</span>{% if log.error_message %}<br><span style="color:#991b1b;font-size:11px">{{ log.error_message|truncatechars:60 }}</span>{% endif %}</td>
+        <td class="num">{{ log.response_chars }}</td>
+        <td class="num">{{ log.duration_ms }}ms</td>
+        <td>{{ log.created_by.username|default:"—" }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="8" class="admin-empty">AI呼び出しの記録はまだありません。</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% include "partials/pagination.html" %}
+{% endblock %}

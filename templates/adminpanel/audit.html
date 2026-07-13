@@ -1,0 +1,30 @@
+{% extends "adminpanel/_base.html" %}
+{% block admin_content %}
+<form method="get" class="admin-toolbar">
+  <input type="text" name="actor" value="{{ actor }}" placeholder="操作者(ユーザー名)" aria-label="操作者で絞り込み">
+  <select name="action" aria-label="操作で絞り込み">
+    <option value="">操作すべて</option>
+    {% for a in actions %}<option value="{{ a }}"{% if action == a %} selected{% endif %}>{{ a }}</option>{% endfor %}
+  </select>
+  <button type="submit" class="admin-btn primary">絞り込み</button>
+</form>
+<div class="admin-table-wrap">
+  <table class="admin-table">
+    <thead><tr><th>日時</th><th>操作者</th><th>操作</th><th>対象</th><th>詳細</th></tr></thead>
+    <tbody>
+      {% for log in page_obj %}
+      <tr>
+        <td>{{ log.created_at|date:"Y/m/d H:i:s" }}</td>
+        <td>{{ log.actor.username|default:"—" }}</td>
+        <td>{{ log.action_label }}</td>
+        <td>{{ log.target_type }}{% if log.target_id %} #{{ log.target_id }}{% endif %}</td>
+        <td style="color:var(--ink-2,#64748b)">{{ log.detail|default:"—" }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5" class="admin-empty">監査ログはまだありません。</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% include "partials/pagination.html" %}
+{% endblock %}

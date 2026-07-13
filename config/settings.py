@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     "engagements",
     "llm",
     "audit",
+    "adminpanel",
     "pmo_agent",
     "axes",
 ]

@@ -1,0 +1,20 @@
+{% extends "adminpanel/_base.html" %}
+{% block admin_content %}
+<div class="card panel" style="max-width:640px">
+  <div class="panel-head"><h2>案件を編集: {{ engagement.name }}</h2></div>
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% for field in form %}
+    <div class="form-group">
+      <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+      {{ field }}
+      {% for error in field.errors %}<div class="form-error-text">{{ error }}</div>{% endfor %}
+    </div>
+    {% endfor %}
+    <div class="admin-form-actions">
+      <button type="submit" class="btn btn-primary">保存する</button>
+      <a href="{% url 'adminpanel:engagements' %}" class="admin-btn">キャンセル</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

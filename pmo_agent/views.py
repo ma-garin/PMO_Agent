@@ -131,6 +131,8 @@ def _server_tokens(request: HttpRequest, engagement: Engagement) -> dict[str, st
         "__PMO_SELECT_URL__": reverse("engagements:select"),
         "__PMO_LOGOUT_URL__": reverse("accounts:logout"),
         "__PMO_LLM_SETTINGS_URL__": reverse("engagements:llm_settings"),
+        "__PMO_ADMIN_URL__": reverse("adminpanel:home"),
+        "__PMO_IS_STAFF__": "true" if request.user.is_staff else "false",
     }
 
 

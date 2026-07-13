@@ -24,5 +24,6 @@ urlpatterns = [
     path("accounts/", include("accounts.urls")),
     path("engagements/", include("engagements.urls")),
     path("pmo-agent/", include("pmo_agent.urls")),
+    path("manage/", include("adminpanel.urls")),
     path("", RedirectView.as_view(pattern_name="engagements:select", permanent=False)),
 ]
