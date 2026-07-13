@@ -1,11 +1,23 @@
+import json
+
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest, HttpResponse, JsonResponse
+from django.middleware.csrf import get_token
 from django.shortcuts import redirect
 from django.template.loader import render_to_string
+from django.urls import reverse
+from django.utils import timezone
 from django.utils.html import escape
+from django.views.decorators.http import require_http_methods
 
+from audit.services import record
 from engagements.models import Engagement
+
+from .models import PmoTaskStore
+
+# クライアントは全量保存のため、異常な巨大リクエストだけを弾く上限
+MAX_TASKS = 500
 
 
 def _current_engagement(request: HttpRequest) -> Engagement | None:
@@ -22,12 +34,21 @@ def _current_engagement(request: HttpRequest) -> Engagement | None:
     )
 
 
+def _json_for_script(value) -> str:
+    """<script>内へ安全に埋め込むJSON文字列(タグ閉じ・行区切り文字を無害化)。"""
+    return (
+        json.dumps(value, ensure_ascii=False)
+        .replace("<", "\\u003c")
+        .replace(" ", "\\u2028")
+        .replace(" ", "\\u2029")
+    )
+
+
 def _project_tokens(engagement: Engagement) -> dict[str, str]:
     """MVPテンプレートの __PROJECT_*__ トークンへ注入する実データ。
 
     Engagementに存在する値のみ実値を入れ、未連携ドメイン(文書/RAG/リスク/AI提案)は
-    偽の数値を見せず「未連携」「0」を明示する。全トークンを置換するため、
-    テンプレート末尾のデモ補完IIFEは実行されても何も書き換えない。
+    偽の数値を見せず「未連携」「0」を明示する。
     """
     progress = str(int(engagement.progress or 0))
     return {
@@ -64,19 +85,88 @@ def _project_tokens(engagement: Engagement) -> dict[str, str]:
     }
 
 
+def _server_tokens(request: HttpRequest, engagement: Engagement) -> dict[str, str]:
+    """サーバー保存データとAPI設定をMVPテンプレートへ注入するトークン。"""
+    store = PmoTaskStore.objects.filter(engagement=engagement).first()
+    return {
+        "__PMO_TASKS_JSON__": _json_for_script(store.tasks if store else []),
+        "__PMO_USE_DEMO__": "false",
+        "__PMO_TASKS_SAVED_AT__": escape(store.saved_at if store else ""),
+        "__PMO_TASKS_STORE_HASH__": escape(store.store_hash if store else ""),
+        "__PMO_TASKS_API_URL__": reverse("pmo_agent:tasks_api"),
+        "__PMO_CSRF_TOKEN__": get_token(request),
+    }
+
+
 @login_required
 def home(request: HttpRequest) -> HttpResponse:
     """PMO Agent MVPシェルを、選択中Engagementの実データを注入して配信する。
 
     MVPは ``__PROJECT_*__`` トークンをサーバー側で置換する前提で設計されており、
-    ここでは選択案件の実値を注入する。案件未選択(または権限なし)の場合は
-    案件選択画面へ戻す。
+    ここでは選択案件の実値とサーバー保存済みタスクを注入する。
+    案件未選択(または権限なし)の場合は案件選択画面へ戻す。
     """
     engagement = _current_engagement(request)
     if engagement is None:
         return redirect("engagements:select")
 
     html = render_to_string("pmo_agent/mvp.html")
-    for token, value in _project_tokens(engagement).items():
+    tokens = {**_project_tokens(engagement), **_server_tokens(request, engagement)}
+    for token, value in tokens.items():
         html = html.replace(token, value)
     return HttpResponse(html)
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def tasks_api(request: HttpRequest) -> JsonResponse:
+    """案件単位のタスクストアAPI。GET=取得 / POST=全量保存(楽観ロック付き)。"""
+    engagement = _current_engagement(request)
+    if engagement is None:
+        return JsonResponse({"error": "engagement_not_selected"}, status=403)
+
+    if request.method == "GET":
+        store = PmoTaskStore.objects.filter(engagement=engagement).first()
+        return JsonResponse(
+            {
+                "tasks": store.tasks if store else [],
+                "savedAt": store.saved_at if store else "",
+                "storeHash": store.store_hash if store else "",
+                "sourceVersion": f"dj-{engagement.pk}-v1",
+            }
+        )
+
+    try:
+        payload = json.loads(request.body.decode("utf-8"))
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return JsonResponse({"error": "invalid_json"}, status=400)
+
+    tasks = payload.get("tasks")
+    if (
+        not isinstance(tasks, list)
+        or len(tasks) > MAX_TASKS
+        or not all(isinstance(t, dict) for t in tasks)
+    ):
+        return JsonResponse({"error": "invalid_tasks"}, status=400)
+
+    store, _created = PmoTaskStore.objects.get_or_create(engagement=engagement)
+    base_hash = str(payload.get("baseStoreHash") or "")
+    if store.store_hash and base_hash and base_hash != store.store_hash:
+        # 別端末が先に保存済み。クライアントは「更新」で再取得する。
+        return JsonResponse(
+            {"error": "conflict", "savedAt": store.saved_at, "storeHash": store.store_hash},
+            status=409,
+        )
+
+    store.tasks = tasks
+    store.store_hash = str(payload.get("storeHash") or "")[:64]
+    store.saved_at = timezone.now().isoformat()
+    store.updated_by = request.user
+    store.save()
+    record(
+        request.user,
+        "pmo_task_store_save",
+        engagement,
+        detail=f"{payload.get('action', 'save')} / {len(tasks)}件",
+    )
+    return JsonResponse({"ok": True, "savedAt": store.saved_at, "storeHash": store.store_hash})
